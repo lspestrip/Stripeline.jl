@@ -1,4 +1,4 @@
-export Flat128RNG, initflatrng128, GaussRNG, randoof2, randoof
+export Flat128RNG, initflatrng128, GaussRNG, Oof2RNG, OofRNG, randoof2, randoof
 
 const scalefactor = 1 / (1 + 0xFFFFFFFF)
 
@@ -128,7 +128,7 @@ mutable struct OofRNG
     oof2states::Array{Oof2RNG}
 end
 
-wminmax(fmin::Number, fknee::Number) = (log10(2    π * fmin), log10(2    π * fknee))
+wminmax(fmin::Number, fknee::Number) = (log10(2 * π * fmin), log10(2 * π * fknee))
 
 function numofpoles(fmin::Number, fknee::Number, fsample::Number)
     (wmin, wmax) = wminmax(fmin, fknee)

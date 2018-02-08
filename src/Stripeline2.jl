@@ -1,4 +1,4 @@
-module Tmp
+module Stripeline2
 
 include("instrumentdb.jl")
 include("rng.jl")

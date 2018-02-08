@@ -1,6 +1,4 @@
-import Stripeline2
-
-const sl2 = Stripeline2
+using Stripeline2
 
 # RNG tests
 
