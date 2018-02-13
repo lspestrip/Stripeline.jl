@@ -1,7 +1,18 @@
 using Quaternions
 import Healpix
 
-export timetorotang
+export TENERIFE_LATITUDE_DEG, timetorotang, genpointings
+
+TENERIFE_LATITUDE_DEG = 28.29
+
+
+"""
+    timetorotang(time, rpm)
+
+Convert a time into a rotation angle, given the number of rotations per minute.
+The time should be expressed in seconds. The return value is in radians.
+`time` can either be a scalar or a vector.
+"""
 
 function timetorotang(time, rpm)
     if rpm == 0
@@ -10,6 +21,39 @@ function timetorotang(time, rpm)
         2 * π * time * (rpm / 60)
     end
 end
+
+
+"""
+    genpointings(wheelanglesfn, dir, timerange_s; latitude_deg=0.0)
+
+Generate a set of pointings for some STRIP detector. The parameter
+`wheelanglesfn` must be a function which takes as input a time in seconds
+and returns a 3-tuple containing the angles (in radians) of the three
+motors:
+1. The boresight motor
+2. The altitude motor
+3. The ground motor
+
+The parameter `dir` must be a normalized vector which tells the pointing
+direction of the beam (boresight is [0, 0, 1]). The parameter `timerange_s`
+is either a range or a vector which specifies at which times (in second)
+the pointings should be computed. The keyword `latitude_deg` should contain
+the latitude (in degrees, N is positive) of the location where the observation
+is made.
+
+Return a 2-tuple containing the directions (a N×2 array containing the
+colatitude and the longitude) and the polarization angles at each time step.
+
+Example:
+`````julia
+genpointings([0, 0, 1], 0:0.1:1) do time_s
+    # Boresight motor keeps a constant angle equal to 0°
+    # Altitude motor remains at 20° from the Zenith
+    # Ground motor spins at 1 RPM
+    return (0.0, 20.0, timetorotang(time_s, 1))
+end
+`````
+"""
 
 function genpointings(wheelanglesfn, dir, timerange_s; latitude_deg=0.0)
     
