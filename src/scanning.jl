@@ -63,7 +63,7 @@ function genpointings(wheelanglesfn, dir, timerange_s; latitude_deg=0.0)
     for (idx, time_s) = enumerate(timerange_s)
         (wheel1ang, wheel2ang, wheel3ang) = wheelanglesfn(time_s)
         
-        qwheel1 = qrotation(dir, wheel1ang)
+        qwheel1 = qrotation([0, 0, 1], wheel1ang)
         qwheel2 = qrotation([1, 0, 0], wheel2ang)
         qwheel3 = qrotation([0, 0, 1], wheel3ang)
         
@@ -76,7 +76,7 @@ function genpointings(wheelanglesfn, dir, timerange_s; latitude_deg=0.0)
         quat = earthq * (locq * groundq)
         rotmatr = rotationmatrix(quat)
         
-        vector = rotmatr * [0; 0; 1]
+        vector = rotmatr * dir
         poldir = rotmatr * [1; 0; 0]
         
         # The North for a vector v is just dv/dθ, as θ is the
