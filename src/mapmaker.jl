@@ -28,11 +28,10 @@ end
 function applyz_and_sum(pix_idx, tod, baseline_dim, num_of_pixels; unseen=NaN)
     @assert length(tod) == length(pix_idx)
 
-    num_of_baselines = length(baseline_dim)
-    baselines_sum = zeros(Float64, num_of_baselines)
     binned_map = tod2map(pix_idx, tod, num_of_pixels, unseen=unseen)
 
     startidx = 1
+    baselines_sum = zeros(Float64, length(baseline_dim))
     for i in eachindex(baseline_dim)
         endidx = baseline_dim[i] + startidx - 1
 
@@ -42,7 +41,7 @@ function applyz_and_sum(pix_idx, tod, baseline_dim, num_of_pixels; unseen=NaN)
         #
         # but roundoff errors are reduced
         for j in startidx:endidx
-            baselines_sum[i] += tod[i] - binned_map[pix_idx[i]]
+            baselines_sum[i] += tod[j] - binned_map[pix_idx[j]]
         end
 
         startidx += baseline_dim[i]
