@@ -25,25 +25,27 @@ function tod2map(pix_idx, tod, num_of_pixels; unseen = NaN)
     binned_map
 end
 
-# Z = 1 - P*inv(M)*P'.  subtract the sky signal from the TOD
-function applyz(pix_idx, tod, num_of_pixels; unseen=NaN)
-    @assert length(tod) == length(pix_idx)
-    
-    binned_map = tod2map(pix_idx, tod, num_of_pixels, unseen=unseen)
-    tod - binned_map[pix_idx]
-end
-
 function applyz_and_sum(pix_idx, tod, baseline_dim, num_of_pixels; unseen=NaN)
     @assert length(tod) == length(pix_idx)
 
     num_of_baselines = length(baseline_dim)
     baselines_sum = zeros(Float64, num_of_baselines)
-    noise_tod = applyz(pix_idx, tod, num_of_pixels, unseen=unseen)
+    binned_map = tod2map(pix_idx, tod, num_of_pixels, unseen=unseen)
 
-    count = 0
+    startidx = 1
     for i in eachindex(baseline_dim)
-        baselines_sum[i] = sum(noise_tod[(count + 1):(baseline_dim[i] + count)])
-        count += baseline_dim[i]
+        endidx = baseline_dim[i] + startidx - 1
+
+        # The inner for is equivalent to
+        #
+        #   baselines_sum[i] += sum(tod[startidx:endidx] - binned_map[pix_idx[startidx:endidx]])
+        #
+        # but roundoff errors are reduced
+        for j in startidx:endidx
+            baselines_sum[i] += tod[i] - binned_map[pix_idx[i]]
+        end
+
+        startidx += baseline_dim[i]
     end
     
     baselines_sum
