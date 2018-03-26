@@ -54,7 +54,6 @@ genpointings([0, 0, 1], 0:0.1:1) do time_s
 end
 `````
 """
-
 function genpointings(wheelanglesfn, dir, timerange_s; latitude_deg=0.0)
     
     dirs = Array{Float64}(length(timerange_s), 2)
