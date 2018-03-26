@@ -25,6 +25,12 @@ oofnoise = baseline2tod(true_baselines, tod, baseline_len)
 @test applyz_and_sum(pix_idx, tod, baseline_len, num_of_pixels) == zeros(length(true_baselines))
 @test applya(true_baselines, pix_idx, tod, baseline_len, num_of_pixels) ≈ [2.5, -6.25, 3.75]
 
+# Signal only, but with an unseen pixel (the last one)
+@test tod2map(pix_idx, tod, num_of_pixels + 1, unseen=-1) ≈ [true_map; -1]
+@test applyz(pix_idx, tod, num_of_pixels + 1, unseen=-1) ≈ zeros(length(tod))
+@test applyz_and_sum(pix_idx, tod, baseline_len, num_of_pixels + 1, unseen=-1) == zeros(length(true_baselines))
+@test applya(true_baselines, pix_idx, tod, baseline_len, num_of_pixels + 1, unseen=-1) ≈ [2.5, -6.25, 3.75]
+
 # Signal + noise
 @test tod2map(pix_idx, tod + oofnoise, num_of_pixels) ≈ [4.25, 20.0, 10.0]
 @test applyz(pix_idx, tod + oofnoise, num_of_pixels) ≈ [0.75, 0.75, 1.0, -2.25, -2.0, -2.0, 1.0, 0.75, 1.0, 1.0]
