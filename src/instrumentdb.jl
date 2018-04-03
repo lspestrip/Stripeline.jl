@@ -3,9 +3,12 @@ export Horn, Detector, InstrumentDB
 import YAML
 
 """
-    Information about a STRIP horn
+Information about a STRIP horn
 
-You should initialize Horn objects via the InstrumentDB constructor,
+This structure holds a number of parameters relative to each feed horn in the
+STRIP focal plane.
+
+You should initialize `Horn` objects via the `InstrumentDB` constructor,
 which loads their definition from a local STRIP instrument database.
 """
 struct Horn
@@ -25,9 +28,11 @@ struct Horn
 end
 
 """
-    Information about a STRIP detector
+Information about a STRIP detector
 
-You should initialize Detector objects via the InstrumentDB constructor,
+This structure holds information about a STRIP polarimeter.
+
+You should initialize `Detector` objects via the `InstrumentDB` constructor,
 which loads their definition from a local STRIP instrument database.
 """
 struct Detector
@@ -45,7 +50,12 @@ struct Detector
 end
 
 """
-    STRIP instrument database
+STRIP instrument database
+
+The "database" contains information about feed horns (through the structure
+`Horn`) and polarimeters (through the structure `Detector`). You should usually
+create an object of this kind using the default constructor, which parses a
+set of YAML files containing the real parameters of the instrument.
 """
 struct InstrumentDB
     focalplane::Dict{String,Horn}

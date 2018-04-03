@@ -12,6 +12,12 @@ function twiddle(var::UInt32)
     var
 end
 
+doc"""
+    Flat128RNG
+
+State of the base-128 uniform random generator. Initialize this using the
+function `initflatrng128`.
+"""
 mutable struct Flat128RNG <: AbstractRNG
     state::Array{UInt32}
 end
@@ -26,7 +32,19 @@ function nextstate(state::Array{UInt32})
     state
 end
 
-function initflatrng128(xstart=123456789, ystart = 362436069, zstart = 521288629, wstart = 88675123)
+"""
+    initflatrng128(xstart = 123456789, ystart = 362436069, zstart = 521288629, wstart = 88675123)
+
+Initialize a flat random number generator with period 2^128. To draw random numbers,
+use the `Base.rand` function as usual.
+
+Example:
+```
+rng = initflatrng128()
+print([rand(rng) for i in 1:4])
+```
+"""
+function initflatrng128(xstart = 123456789, ystart = 362436069, zstart = 521288629, wstart = 88675123)
     rng = Flat128RNG(Array{UInt32}([xstart, ystart, zstart, wstart]))
     
     # Suffle the bits in the seeds

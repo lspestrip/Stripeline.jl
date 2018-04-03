@@ -13,12 +13,11 @@ Convert a time into a rotation angle, given the number of rotations per minute.
 The time should be expressed in seconds. The return value is in radians.
 `time` can either be a scalar or a vector.
 """
-
-function timetorotang(time, rpm)
+function timetorotang(time_s, rpm)
     if rpm == 0
         0.0
     else
-        2 * π * time * (rpm / 60)
+        2 * π * time_s * (rpm / 60)
     end
 end
 
@@ -50,11 +49,11 @@ genpointings([0, 0, 1], 0:0.1:1) do time_s
     # Boresight motor keeps a constant angle equal to 0°
     # Altitude motor remains at 20° from the Zenith
     # Ground motor spins at 1 RPM
-    return (0.0, 20.0, timetorotang(time_s, 1))
+    return (0.0, deg2rad(20.0), timetorotang(time_s, 1))
 end
 `````
 """
-function genpointings(wheelanglesfn, dir, timerange_s; latitude_deg=0.0)
+function genpointings(wheelanglesfn, dir, timerange_s; latitude_deg = 0.0)
     
     dirs = Array{Float64}(length(timerange_s), 2)
     ψ = Array{Float64}(length(timerange_s))
