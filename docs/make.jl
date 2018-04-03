@@ -1,10 +1,10 @@
 push!(LOAD_PATH, joinpath("..", "src"))
 
-using Documenter, Stripeline2
+using Documenter, Stripeline
 
-makedocs(modules = [Stripeline2],
+makedocs(modules = [Stripeline],
     format = :html,
-    sitename = "Stripeline2.jl",
+    sitename = "Stripeline.jl",
     pages = Any[
         "Introduction" => "index.md",
         "Instrument database" => "instrumentdb.md",
@@ -12,7 +12,7 @@ makedocs(modules = [Stripeline2],
         "Scanning strategy" => "scanning.md",
     ])
 
-deploydocs(repo = "github.com/ziotom78/Stripeline2.jl.git",
+deploydocs(repo = "github.com/ziotom78/Stripeline.jl.git",
     target = "build",
     julia = "0.6",
     deps = nothing,
