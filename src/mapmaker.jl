@@ -7,7 +7,7 @@ import IterativeSolvers
 
 #from TOD to binned map: it computes the mean value of the samples taken in each pixel
 function tod2map(pix_idx, tod, num_of_pixels; unseen = NaN)
-    binned_map = Array{Float64}(num_of_pixels)
+    binned_map = zeros(Float64,num_of_pixels)
     hits = zeros(Int, num_of_pixels)
     for i in eachindex(pix_idx)
         binned_map[pix_idx[i]] = binned_map[pix_idx[i]] + tod[i]
