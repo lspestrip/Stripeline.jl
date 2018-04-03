@@ -1,6 +1,6 @@
 ```@meta
 DocTestSetup = quote
-    using Stripeline2
+    using Stripeline
 end
 ```
 

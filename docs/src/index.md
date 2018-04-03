@@ -1,6 +1,6 @@
 ```@meta
 DocTestSetup = quote
-    using Stripeline2
+    using Stripeline
 end
 ```
 
@@ -8,22 +8,22 @@ end
 
 An implementation of a simulation/data analysis pipeline for the LSPE/STRIP instrument.
 
-To install Stripeline2, start Julia and type the following command:
+To install Stripeline, start Julia and type the following command:
 ```julia
-Pkg.clone("https://github.com/lspestrip/stripeline2")
+Pkg.clone("https://github.com/lspestrip/Stripeline")
 ```
 
 To run the test suite, type the following command:
 ```julia
-Pkg.test("stripeline2")
+Pkg.test("Stripeline")
 ```
 
-In this manual, we will often assume that Stripeline2 has been imported using the following commands:
+In this manual, we will often assume that Stripeline has been imported using the following commands:
 ```julia
-import Stripeline2
-const Sl = Stripeline2
+import Stripeline
+const Sl = Stripeline
 ```
-In this way, we can call functions like [`genpointings`](@ref) using the syntax `Sl.genpointings`, instead of the longer `Stripeline2.genpointings`.
+In this way, we can call functions like [`genpointings`](@ref) using the syntax `Sl.genpointings`, instead of the longer `Stripeline.genpointings`.
 
 ## Documentation
 
