@@ -13,11 +13,9 @@ baseline_len = [3, 3, 4]
 # This TOD does not include 1/f noise
 tod = true_map[pix_idx]
 
-# This TOD only contains 1/f noise
-oofnoise = baseline2tod(true_baselines, tod, baseline_len)
+# This TOD includes 1/f noise only. This must match the definition of "true_baselines" and "baseline_len" above
+oofnoise = [1., 1., 1., -2., -2., -2., 1., 1., 1., 1.]
 
-# This must match the definition of "true_baselines" and "baseline_len" above
-@test oofnoise == [1., 1., 1., -2., -2., -2., 1., 1., 1., 1.]
 
 # Signal only
 @test tod2map(pix_idx, tod, num_of_pixels) ≈ true_map
@@ -33,6 +31,8 @@ oofnoise = baseline2tod(true_baselines, tod, baseline_len)
 @test applya(true_baselines, pix_idx, tod, baseline_len, num_of_pixels + 1, unseen = -1) ≈ [2.5, -6.25, 3.75]
 
 # Signal + noise
+# This map only contains 1/f noise
+@test baseline2map(pix_idx, true_baselines, baseline_len, num_of_pixels) ≈ [0.25, 0., 0.]
 @test tod2map(pix_idx, tod + oofnoise, num_of_pixels) ≈ [4.25, 20.0, 10.0]
 @test applyz_and_sum(pix_idx, tod + oofnoise, baseline_len, num_of_pixels) ≈ [2.5, -6.25, 3.75]
 @test applya(true_baselines, pix_idx, tod + oofnoise, baseline_len, num_of_pixels) ≈ [2.5, -6.25, 3.75]
