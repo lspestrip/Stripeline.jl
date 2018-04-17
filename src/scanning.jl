@@ -58,6 +58,8 @@ function genpointings(wheelanglesfn, dir, timerange_s; latitude_deg = 0.0)
     dirs = Array{Float64}(length(timerange_s), 2)
     ψ = Array{Float64}(length(timerange_s))
 
+    earthaxistilt = deg2rad(23.5)
+
     for (idx, time_s) = enumerate(timerange_s)
         (wheel1ang, wheel2ang, wheel3ang) = wheelanglesfn(time_s)
         
@@ -71,7 +73,9 @@ function genpointings(wheelanglesfn, dir, timerange_s; latitude_deg = 0.0)
         # Now from the ground reference frame to the Earth reference frame
         locq = qrotation([1, 0, 0], deg2rad(90 - latitude_deg))
         earthq = qrotation([0, 0, 1], 2 * π * time_s / 86400)
-        quat = earthq * (locq * groundq)
+
+        # Include the tilt of the Earth's spin axis
+        quat = qrotation([1, 0, 0], earthaxistilt) * (earthq * (locq * groundq))
         rotmatr = rotationmatrix(quat)
         
         vector = rotmatr * dir
