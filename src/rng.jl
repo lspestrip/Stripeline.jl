@@ -74,6 +74,13 @@ mutable struct GaussRNG
     gset
 end
 
+doc"""
+    GaussRNG(flatrng::AbstractRNG)
+    GaussRNG(seed=0)
+
+Initialize a Gaussian RNG. The parameter `flatrng` must be a uniform RNG.
+If a `seed` is used, then a `MersenneTwister` RNG is used.
+"""
 GaussRNG(flatrng::AbstractRNG) = GaussRNG(flatrng, true, 0)
 GaussRNG(seed=0) = GaussRNG(MersenneTwister(seed))
 
@@ -112,6 +119,19 @@ mutable struct Oof2RNG
     y1::Float64
 end
 
+doc"""
+    Oof2RNG(normrng, fmin, fknee, fsample)
+
+Create a `Oof2RNG` RNG object. It requires a gaussian RNG generator in `normrng` (use `GaussRNG`),
+the minimum frequency (longest period) in `fmin`, the knee frequency and the sampling frequency.
+The measure unit of the three frequencies must be the same (e.g., Hz).
+
+Use `randoof2` to draw samples from a `Oof2RNG` object, as in the following example:
+```
+rng = Oof2RNG(GaussRNG(), 1e-3, 1.0, 1e2)
+print([randoof2(rng) for i in 1:4])
+```
+"""
 function Oof2RNG(normrng, fmin::Number, fknee::Number, fsample::Number)
     w0 = π * fmin / fsample
     w1 = π * fknee / fsample
@@ -132,6 +152,11 @@ function oof2filter(rng::Oof2RNG, x2::Float64)
     y2
 end
 
+doc"""
+    randoof2(rng::Oof2RNG)
+
+Draw a random sample from a 1/f^2 distribution.
+"""
 randoof2(rng::Oof2RNG) = oof2filter(rng, randn(rng.normrng))
 
 
@@ -157,6 +182,20 @@ end
 const OOF2STATESIZE = 5
 oofstatesize(fmin::Number, fknee::Number, fsample::Number) = OOF2STATESIZE * numofpoles(fmin, fknee, fsample)
 
+doc"""
+    OofRNG(normrng, fmin, fknee, fsample)
+
+Create a `OofRNG` RNG object. It requires a gaussian RNG generator in `normrng`
+(use `GaussRNG`), the slope α of the noise in `slope`, the minimum frequency
+(longest period) in `fmin`, the knee frequency and the sampling frequency. The
+measure unit of the three frequencies must be the same (e.g., Hz).
+
+Use `randoof` to draw samples from a `OofRNG` object, as in the following example:
+```
+rng = OofRNG(GaussRNG(), 1.5, 1e-3, 1.0, 1e2)
+print([randoof(rng) for i in 1:4])
+```
+"""
 function OofRNG(normrng, slope::Number, fmin::Number, fknee::Number, fsample::Number)
     (wmin, wmax) = wminmax(fmin, fknee)
     a = -slope
@@ -177,6 +216,11 @@ function OofRNG(normrng, slope::Number, fmin::Number, fknee::Number, fsample::Nu
     OofRNG(normrng, slope, fmin, fknee, fsample, oof2states)
 end
 
+doc"""
+    randoof(rng::OofRNG)
+
+Draw a random sample from a 1/f^α distribution.
+"""
 function randoof(rng::OofRNG)
     x2 = randn(rng.normrng)
     for curstate in rng.oof2states
