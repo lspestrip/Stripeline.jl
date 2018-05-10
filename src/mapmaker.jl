@@ -1,7 +1,21 @@
-export tod2map, baseline2map, applyz_and_sum, applya, mpi_dot_prod, conj_grad, destriped_map, destripe
+export tod2map_mpi, destripe
 
 
-function tod2map(pix_idx, tod, num_of_pixels; unseen = NaN)   
+"""
+    tod2map(pix_idx, tod, num_of_pixels) -> binned_map
+This function create a binned map from a TOD, removing white noise.
+This is a MPI based function: each MPI process computes a map from its available data.
+All partial maps are then combined together with MPI.allreduce.
+
+It requires in input:
+-the array of pointed pixels
+-the TOD
+-the desired number of pixels of the output map
+
+pix_idx and tod must be array of the same length.
+
+"""
+function tod2map_mpi(pix_idx, tod, num_of_pixels; unseen = NaN)   
 
     partial_map = zeros(Float64,num_of_pixels)
     partial_hits = zeros(Int, num_of_pixels)
@@ -26,7 +40,7 @@ function tod2map(pix_idx, tod, num_of_pixels; unseen = NaN)
 end
 
 
-function baseline2map(pix_idx, baselines, baseline_dim, num_of_pixels; unseen=NaN)
+function baseline2map_mpi(pix_idx, baselines, baseline_dim, num_of_pixels; unseen=NaN)
 
     partial_map = zeros(Float64, num_of_pixels)
     partial_hits = zeros(Int, num_of_pixels)
@@ -60,7 +74,7 @@ end
 function applyz_and_sum(pix_idx, tod, baseline_dim, num_of_pixels; unseen=NaN)
     @assert length(tod) == length(pix_idx)
 
-    binned_map = tod2map(pix_idx, tod, num_of_pixels, unseen=unseen)
+    binned_map = tod2map_mpi(pix_idx, tod, num_of_pixels, unseen=unseen)
 
     startidx = 1
     baselines_sum = zeros(Float64, length(baseline_dim))
@@ -87,7 +101,7 @@ end
 function applya(baselines, pix_idx, tod, baseline_dim, num_of_pixels; unseen=NaN)
     @assert length(tod) == length(pix_idx)
 
-    binned_map = baseline2map(pix_idx, baselines, baseline_dim, num_of_pixels; unseen=NaN)
+    binned_map = baseline2map_mpi(pix_idx, baselines, baseline_dim, num_of_pixels; unseen=NaN)
     startidx = 1
     baselines_sum = zeros(Float64, length(baseline_dim))
 
@@ -147,12 +161,27 @@ end
 
 function destriped_map(baselines, pix_idx, tod, baseline_dim, num_of_pixels; unseen=NaN)
     @assert length(tod) == length(pix_idx)
-    tod2map(pix_idx, tod, num_of_pixels) - baseline2map(pix_idx, baselines, baseline_dim, num_of_pixels)
+    tod2map_mpi(pix_idx, tod, num_of_pixels) - baseline2map_mpi(pix_idx, baselines, baseline_dim, num_of_pixels)
 end
 
 
+"""
+    destripe(pix_idx, tod, num_of_pixels::Integer, baseline_dim) -> (pixels, baselines)
 
-function destripe(tod, pix_idx, baseline_dim, num_of_pixels; unseen=NaN)
+This MPI based function create a map from a TOD and removes both 1/f and white noise, using the destriping technique. 
+
+It requires in input:
+-the array of pointed pixels
+-the TOD
+-the desired number of pixels of the output map
+-the array containg the dimension of each 1/f baseline.
+
+pix_idx and tod must be array of the same length and sum(baseline_dim) must be equal to the length of `tod`.
+
+It returns a tuple containing the destriped map itself and the estimated array of 1/f baselines.
+    
+"""
+function destripe(pix_idx, tod, num_of_pixels, baseline_dim; unseen=NaN)
     @assert sum(baseline_dim) == length(tod)
 
     start_baselines = zeros(Float64, length(baseline_dim))
