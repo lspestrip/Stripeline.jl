@@ -42,6 +42,7 @@ is made.
 
 Return a 2-tuple containing the directions (a N×2 array containing the
 colatitude and the longitude) and the polarization angles at each time step.
+Directions are expressed in equatorial coordinates.
 
 Example:
 `````julia
@@ -53,12 +54,10 @@ genpointings([0, 0, 1], 0:0.1:1) do time_s
 end
 `````
 """
-function genpointings(wheelanglesfn, dir, timerange_s; latitude_deg = 0.0)
+function genpointings(wheelanglesfn, dir, timerange_s; latitude_deg=0.0)
     
     dirs = Array{Float64}(length(timerange_s), 2)
     ψ = Array{Float64}(length(timerange_s))
-
-    earthaxistilt = deg2rad(23.5)
 
     for (idx, time_s) = enumerate(timerange_s)
         (wheel1ang, wheel2ang, wheel3ang) = wheelanglesfn(time_s)
@@ -74,22 +73,21 @@ function genpointings(wheelanglesfn, dir, timerange_s; latitude_deg = 0.0)
         locq = qrotation([1, 0, 0], deg2rad(90 - latitude_deg))
         earthq = qrotation([0, 0, 1], 2 * π * time_s / 86400)
 
-        # Include the tilt of the Earth's spin axis
-        quat = qrotation([1, 0, 0], earthaxistilt) * (earthq * (locq * groundq))
+        quat = earthq * (locq * groundq)
         rotmatr = rotationmatrix(quat)
         
         vector = rotmatr * dir
         poldir = rotmatr * [1; 0; 0]
-        
-        # The North for a vector v is just dv/dθ, as θ is the
+
+        # The North for a vector v is just -dv/dθ, as θ is the
         # colatitude and moves along the meridian
         (θ, ϕ) = Healpix.vec2ang(vector[1], vector[2], vector[3])
         dirs[idx, :] = [θ, ϕ]
-        northdir = [cos(θ) * cos(ϕ); cos(θ) * sin(ϕ); sin(θ)]
+        northdir = [-cos(θ) * cos(ϕ); -cos(θ) * sin(ϕ); sin(θ)]
         
         cosψ = clamp(dot(northdir, poldir), -1, 1)
         crosspr = northdir × poldir
-        sinψ = clamp(dot(crosspr, crosspr), -1, 1)
+        sinψ = clamp(sqrt(dot(crosspr, crosspr)), -1, 1)
         ψ[idx] = atan2(cosψ, sinψ) * sign(dot(crosspr, vector))
     end
     
