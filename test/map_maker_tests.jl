@@ -1,5 +1,7 @@
 using Base.Test
 
+comm = Nullable{}()
+
 # Index of the pixels: this fixes the length of the TOD as well
 pix_idx = [1, 1, 2, 1, 2, 3, 3, 1, 3, 2]
 # The sky map
@@ -18,27 +20,19 @@ oofnoise = [1., 1., 1., -2., -2., -2., 1., 1., 1., 1.]
 
 
 # Signal only
-@test tod2map(pix_idx, tod, num_of_pixels) ≈ true_map
-@test applyz_and_sum(pix_idx, tod, baseline_len, num_of_pixels) == zeros(length(true_baselines))
-@test applya(true_baselines, pix_idx, tod, baseline_len, num_of_pixels) ≈ [2.5, -6.25, 3.75]
-(pixels, baselines) = destripe(tod, pix_idx, baseline_len, num_of_pixels)
+@test tod2map_mpi(pix_idx, tod, num_of_pixels, comm) ≈ true_map
+(pixels, baselines) = destripe(pix_idx, tod, num_of_pixels, baseline_len, comm)
 @test pixels ≈ true_map
 @test baselines ≈ zeros(length(baselines))
 
 # Signal only, but with an unseen pixel (the last one)
-@test tod2map(pix_idx, tod, num_of_pixels + 1, unseen = -1) ≈ [true_map; -1]
-@test applyz_and_sum(pix_idx, tod, baseline_len, num_of_pixels + 1, unseen = -1) == zeros(length(true_baselines))
-@test applya(true_baselines, pix_idx, tod, baseline_len, num_of_pixels + 1, unseen = -1) ≈ [2.5, -6.25, 3.75]
+@test tod2map_mpi(pix_idx, tod, num_of_pixels + 1, comm, unseen = -1) ≈ [true_map; -1]
 
 # Signal + noise
 # This map only contains 1/f noise
-@test baseline2map(pix_idx, true_baselines, baseline_len, num_of_pixels) ≈ [0.25, 0., 0.]
-@test tod2map(pix_idx, tod + oofnoise, num_of_pixels) ≈ [4.25, 20.0, 10.0]
-@test applyz_and_sum(pix_idx, tod + oofnoise, baseline_len, num_of_pixels) ≈ [2.5, -6.25, 3.75]
-@test applya(true_baselines, pix_idx, tod + oofnoise, baseline_len, num_of_pixels) ≈ [2.5, -6.25, 3.75]
-@test destriped_map(true_baselines, pix_idx, tod + oofnoise, baseline_len, num_of_pixels) ≈ true_map
+@test tod2map_mpi(pix_idx, tod + oofnoise, num_of_pixels, comm) ≈ [4.25, 20.0, 10.0]
 
 # Full process (destriping + map making)
-(pixels, baselines) = destripe(tod + oofnoise, pix_idx, baseline_len, num_of_pixels)
+(pixels, baselines) = destripe(pix_idx, tod + oofnoise, num_of_pixels, baseline_len, comm)
 @test pixels ≈ true_map
 @test baselines ≈ true_baselines
