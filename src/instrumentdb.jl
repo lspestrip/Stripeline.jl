@@ -1,4 +1,5 @@
 export Horn, Detector, InstrumentDB, BandshapeInfo, SpectrumInfo, NoiseTemperatureInfo
+export InstrumentDB, defaultdbfolder, parsefpdict, parsedetdict
 
 import YAML
 
@@ -154,6 +155,15 @@ struct InstrumentDB
     detectors::Dict{Int,Detector}
 end
 
+doc"""
+    parsefpdict(fpdict)
+
+Return a dictionary associating an horn name (e.g., `I0`) to a `Horn` object
+containing information about some horn in the STRIP focal plane. The information
+are parsed from `fpdict`, which should be a dictionary loaded from a YAML file.
+The default YAML file to be used is located in the folder returned by
+[`defaultdbfolder`](@ref) and is usually named `strip_focal_plane.yaml`
+"""
 function parsefpdict(fpdict::Dict{Any,Any})
     focalplane = Dict{String,Horn}()
     for (key, value) in fpdict["horns"]
@@ -226,6 +236,16 @@ function parsetnoise(tnoisedict::Dict{Any,Any})
         get(tnoisedict, "values_k", Float64[]))
 end
 
+doc"""
+    parsedetdict(detdict)
+
+Return a dictionary associating an integer number to a `Detector` object
+containing information about the STRIP detector with the corresponding number.
+The information are parsed from `detdict`, which should be a dictionary loaded
+from a YAML file. The default YAML file to be used is located in the folder
+returned by [`defaultdbfolder`](@ref) and is usually named
+`strip_detectors.yaml`
+"""
 function parsedetdict(detdict)
     detectors = Dict{Int,Detector}()
     for curdet in detdict
@@ -247,12 +267,12 @@ function parsedetdict(detdict)
 end
 
 doc"""
-    InstrumentDB(dbpath)
+    InstrumentDB(dbpath::AbstractString)
 
 Load the STRIP instrument database from the specified path.
 Return an instance of a InstrumentDB object.
 """
-function InstrumentDB(dbpath)
+function InstrumentDB(dbpath::AbstractString)
     focalplanedict = open(joinpath(dbpath, "strip_focal_plane.yaml")) do f
         YAML.load(f)
     end
@@ -265,8 +285,16 @@ function InstrumentDB(dbpath)
 end
 
 doc"""
+    defaultdbfolder()
+
+Return a string containing the (local) full path to the YAML files containing
+the reference instrument DB.
+"""
+defaultdbfolder() = joinpath(Pkg.dir("Stripeline"), "instrumentdb")
+
+doc"""
     InstrumentDB()
 
 Load the default STRIP instrument database. Return an instance of
 a InstrumentDB object."""
-InstrumentDB() = InstrumentDB(joinpath(Pkg.dir("Stripeline"), "instrumentdb"))
+InstrumentDB() = InstrumentDB(defaultdbfolder())

@@ -39,3 +39,14 @@ BandshapeInfo
 SpectrumInfo
 NoiseTemperatureInfo
 ```
+
+## Loading custom databases
+
+It is not needed to load the default instrument database, as Stripeline provides
+a number of additional functions to build mock databases from dictionaries.
+
+```@docs
+defaultdbfolder
+parsefpdict
+parsedetdict
+```
