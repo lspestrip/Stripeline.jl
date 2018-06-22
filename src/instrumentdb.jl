@@ -307,10 +307,17 @@ end
 doc"""
 STRIP instrument database
 
-The "database" contains information about feed horns (through the structure
-`Horn`) and polarimeters (through the structure `Detector`). You should usually
-create an object of this kind using the default constructor, which parses a
-set of YAML files containing the real parameters of the instrument.
+The "database" contains information about feed horns and polarimeters:
+
+- The field `focalplane` is a dictionary (mapping) associating the string
+  identifying a horn (e.g., `I0`) with a [`Horn`](@ref) structure;
+
+- The field `detectors` is a dictionary associating the ID of the
+  polarimeter (e.g., 2 stands for `STRIP02`) with a [`Detector`](@ref) structure.
+
+You should usually create an object of this kind using the default constructor,
+which parses a set of YAML files containing the real parameters of the
+instrument.
 
 # Examples
 
