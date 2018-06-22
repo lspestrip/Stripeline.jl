@@ -12,7 +12,7 @@ makedocs(modules = [Stripeline],
         "Scanning strategy" => "scanning.md",
     ])
 
-deploydocs(repo = "github.com/ziotom78/Stripeline.jl.git",
+deploydocs(repo = "github.com/lspestrip/Stripeline.jl.git",
     target = "build",
     julia = "0.6",
     deps = nothing,
