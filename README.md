@@ -1,5 +1,9 @@
 # Stripeline.jl
 
+[![Build Status](https://travis-ci.org/lspestrip/Stripeline.jl.svg?branch=master)](https://travis-ci.org/lspestrip/Stripeline.jl)
+[![](https://img.shields.io/badge/docs-latest-blue.svg)](https://lspestrip.github.io/Stripeline.jl/latest)
+[![Coverage Status](https://img.shields.io/coveralls/lspestrip/Stripeline.jl.svg)](https://coveralls.io/r/lspestrip/Stripeline.jl?branch=master)
+
 Next generation of the STRIP pipeline, written in [Julia](https://julialang.org)
 (see [here](https://github.com/lspestrip/stipelinepy) for the previous version,
 written in Python).
