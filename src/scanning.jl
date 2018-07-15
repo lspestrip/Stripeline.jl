@@ -1,5 +1,6 @@
 using Quaternions
 import Healpix
+using StaticArrays
 
 export TENERIFE_LATITUDE_DEG, timetorotang, genpointings
 
@@ -59,6 +60,7 @@ function genpointings(wheelanglesfn, dir, timerange_s; latitude_deg=0.0)
     dirs = Array{Float64}(length(timerange_s), 2)
     ψ = Array{Float64}(length(timerange_s))
 
+    zaxis = [1; 0; 0]
     for (idx, time_s) = enumerate(timerange_s)
         (wheel1ang, wheel2ang, wheel3ang) = wheelanglesfn(time_s)
         
@@ -77,18 +79,19 @@ function genpointings(wheelanglesfn, dir, timerange_s; latitude_deg=0.0)
         rotmatr = rotationmatrix(quat)
         
         vector = rotmatr * dir
-        poldir = rotmatr * [1; 0; 0]
+        poldir = rotmatr * zaxis
 
         # The North for a vector v is just -dv/dθ, as θ is the
         # colatitude and moves along the meridian
         (θ, ϕ) = Healpix.vec2ang(vector[1], vector[2], vector[3])
-        dirs[idx, :] = [θ, ϕ]
-        northdir = [-cos(θ) * cos(ϕ); -cos(θ) * sin(ϕ); sin(θ)]
+        dirs[idx, 1] = θ
+        dirs[idx, 2] = ϕ
+        northdir = @SArray [-cos(θ) * cos(ϕ), -cos(θ) * sin(ϕ), sin(θ)]
         
         cosψ = clamp(dot(northdir, poldir), -1, 1)
         crosspr = northdir × poldir
         sinψ = clamp(sqrt(dot(crosspr, crosspr)), -1, 1)
-        ψ[idx] = atan2(cosψ, sinψ) * sign(dot(crosspr, vector))
+        ψ[idx] = atan2(cosψ, sinψ)
     end
     
     (dirs, ψ)

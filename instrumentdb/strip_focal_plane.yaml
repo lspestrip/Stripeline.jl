@@ -1,0 +1,717 @@
+---
+# Associations between symmetric horns in the focal plane. If an entry in the database for
+# horn X is missing, you can assume it is roughly the same as the entry for horn Y, if they
+# are symmetric.
+pairs:
+    V1: R5
+    V2: R4
+    V3: R3
+    V0: R0
+    V6: R6
+    V5: R1
+    V4: R2
+
+    B1: O5
+    B2: O4
+    B3: O3
+    B0: O0
+    B6: O6
+    B5: O1
+    B4: O2
+
+    G1: Y5
+    G2: Y4
+    G3: Y3
+    G0: Y0
+    G6: Y6
+    G5: Y1
+    G4: Y2
+
+# The 49 STRIP Q-band horns
+horns:
+    I0:
+        id: 0
+        module_id: 0
+        polarimeter_id: 1
+        color: indigo
+        fwhm_x_deg: 0.347
+        fwhm_y_deg: 0.344
+        ellipticity: 1.008
+        directivity_dbi: 54.76
+        xpd_db: 44.53
+        sub_spillover: 0.013964
+        main_spillover: 0.016704
+        orientation:
+        - 4.720000e-06
+        - -0.000000e+00
+        - 1.000000e+00
+
+    I1:
+        id: 1
+        module_id: 1
+        polarimeter_id: 2
+        color: "indigo"
+        fwhm_x_deg: 0.347
+        fwhm_y_deg: 0.345
+        ellipticity: 1.006
+        directivity_dbi: 54.75
+        xpd_db: 43.93
+        sub_spillover: 0.013704
+        main_spillover: 0.017151
+        orientation:
+        - -1.077670e-02
+        - -1.876756e-02
+        - 9.997658e-01
+
+    I2:
+        id: 2
+        module_id: 2
+        polarimeter_id: 3
+        color: "indigo"
+        fwhm_x_deg: 0.348
+        fwhm_y_deg: 0.345
+        ellipticity: 1.009
+        directivity_dbi: 54.74
+        xpd_db: 44.19
+        sub_spillover: 0.01397
+        main_spillover: 0.016905
+        orientation:
+        - 1.089801e-02
+        - -1.876751e-02
+        - 9.997645e-01
+
+    I3:
+        id: 3
+        module_id: 3
+        polarimeter_id: 4
+        color: "indigo"
+        fwhm_x_deg: 0.349
+        fwhm_y_deg: 0.344
+        ellipticity: 1.013
+        directivity_dbi: 54.74
+        xpd_db: 44.14
+        sub_spillover: 0.014094
+        main_spillover: 0.01677
+        orientation:
+        - 2.173680e-02
+        - -0.000000e+00
+        - 9.997637e-01
+
+    I4:
+        id: 4
+        module_id: 4
+        polarimeter_id: 5
+        color: "indigo"
+        fwhm_x_deg: 0.348
+        fwhm_y_deg: 0.345
+        ellipticity: 1.009
+        directivity_dbi: 54.74
+        xpd_db: 44.19
+        sub_spillover: 0.01397
+        main_spillover: 0.016905
+        orientation:
+        - 1.089801e-02
+        - 1.876750e-02
+        - 9.997645e-01
+
+    I5:
+        id: 5
+        module_id: 5
+        polarimeter_id: 6
+        color: "indigo"
+        fwhm_x_deg: 0.347
+        fwhm_y_deg: 0.345
+        ellipticity: 1.006
+        directivity_dbi: 54.75
+        xpd_db: 43.93
+        sub_spillover: 0.013704
+        main_spillover: 0.017151
+        orientation:
+        - -1.077669e-02
+        - 1.876958e-02
+        - 9.997658e-01
+
+    I6:
+        id: 6
+        module_id: 6
+        polarimeter_id: 7
+        color: "indigo"
+        fwhm_x_deg: 0.348
+        fwhm_y_deg: 0.345
+        ellipticity: 1.008
+        directivity_dbi: 54.75
+        xpd_db: 44.06
+        sub_spillover: 0.013562
+        main_spillover: 0.017287
+        orientation:
+        - -2.161760e-02
+        - -2.647392e-18
+        - 9.997663e-01
+
+    Y0:
+        id: 7
+        module_id: 0
+        polarimeter_id: 8
+        color: "yellow"
+        fwhm_x_deg: 0.348
+        fwhm_y_deg: 0.345
+        ellipticity: 1.009
+        directivity_dbi: 54.73
+        xpd_db: 41.47
+        sub_spillover: 0.013383
+        main_spillover: 0.017513
+        orientation:
+        - -5.782401e-02
+        - -3.369521e-02
+        - 9.977580e-01
+
+    Y1:
+        id: 8
+        module_id: 1
+        polarimeter_id: 9
+        color: "yellow"
+        fwhm_x_deg: 0.349
+        fwhm_y_deg: 0.346
+        ellipticity: 1.009
+        directivity_dbi: 54.69
+        xpd_db: 41.00
+        sub_spillover: 0.01296
+        main_spillover: 0.018043
+        orientation:
+        - -6.840827e-02
+        - -5.237539e-02
+        - 9.962817e-01
+
+    Y2:
+        id: 9
+        module_id: 2
+        polarimeter_id: 10
+        color: "yellow"
+        fwhm_x_deg: 0.348
+        fwhm_y_deg: 0.346
+        ellipticity: 1.004
+        directivity_dbi: 54.71
+        xpd_db: 41.45
+        sub_spillover: 0.013402
+        main_spillover: 0.017683
+        orientation:
+        - -4.684010e-02
+        - -5.249990e-02
+        - 9.975218e-01
+
+    Y3:
+        id: 10
+        module_id: 3
+        polarimeter_id: 11
+        color: "yellow"
+        fwhm_x_deg: 0.348
+        fwhm_y_deg: 0.345
+        ellipticity: 1.008
+        directivity_dbi: 54.72
+        xpd_db: 41.93
+        sub_spillover: 0.013783
+        main_spillover: 0.017615
+        orientation:
+        - -3.639192e-02
+        - -3.381160e-02
+        - 9.987654e-01
+
+    Y4:
+        id: 11
+        module_id: 4
+        polarimeter_id: 12
+        color: "yellow"
+        fwhm_x_deg: 0.348
+        fwhm_y_deg: 0.345
+        ellipticity: 1.008
+        directivity_dbi: 54.73
+        xpd_db: 41.98
+        sub_spillover: 0.013652
+        main_spillover: 0.017715
+        orientation:
+        - -4.712833e-02
+        - -1.499608e-02
+        - 9.987763e-01
+
+    Y5:
+        id: 12
+        module_id: 5
+        polarimeter_id: 13
+        color: "yellow"
+        fwhm_x_deg: 0.349
+        fwhm_y_deg: 0.345
+        ellipticity: 1.010
+        directivity_dbi: 54.71
+        xpd_db: 41.49
+        sub_spillover: 0.013154
+        main_spillover: 0.017977
+        orientation:
+        - -6.850693e-02
+        - -1.489075e-02
+        - 9.975395e-01
+
+    Y6:
+        id: 13
+        module_id: 6
+        polarimeter_id: 14
+        color: "yellow"
+        fwhm_x_deg: 0.350
+        fwhm_y_deg: 0.345
+        ellipticity: 1.013
+        directivity_dbi: 54.69
+        xpd_db: 40.89
+        sub_spillover: 0.012843
+        main_spillover: 0.018255
+        orientation:
+        - -7.914510e-02
+        - -3.358196e-02
+        - 9.962973e-01
+
+    O0:
+        id: 14
+        module_id: 0
+        polarimeter_id: 15
+        color: "orange"
+        fwhm_x_deg: 0.345
+        fwhm_y_deg: 0.348
+        ellipticity: 1.008
+        directivity_dbi: 54.73
+        xpd_db: 42.70
+        sub_spillover: 0.013773
+        main_spillover: 0.016862
+        orientation:
+        - 5.556000e-04
+        - -6.740763e-02
+        - 9.977254e-01
+
+    O1:
+        id: 15
+        module_id: 1
+        polarimeter_id: 16
+        color: "orange"
+        fwhm_x_deg: 0.347
+        fwhm_y_deg: 0.349
+        ellipticity: 1.006
+        directivity_dbi: 54.69
+        xpd_db: 42.17
+        sub_spillover: 0.013305
+        main_spillover: 0.017318
+        orientation:
+        - -9.948900e-03
+        - -8.612668e-02
+        - 9.962345e-01
+
+    O2:
+        id: 16
+        module_id: 2
+        polarimeter_id: 17
+        color: "orange"
+        fwhm_x_deg: 0.350
+        fwhm_y_deg: 0.345
+        ellipticity: 1.014
+        directivity_dbi: 54.69
+        xpd_db: 42.56
+        sub_spillover: 0.013495
+        main_spillover: 0.016988
+        orientation:
+        - 1.190956e-02
+        - -8.615635e-02
+        - 9.962104e-01
+
+    O3:
+        id: 17
+        module_id: 3
+        polarimeter_id: 18
+        color: "orange"
+        fwhm_x_deg: 0.350
+        fwhm_y_deg: 0.345
+        ellipticity: 1.014
+        directivity_dbi: 54.70
+        xpd_db: 42.46
+        sub_spillover: 0.013865
+        main_spillover: 0.016913
+        orientation:
+        - 2.227675e-02
+        - -6.744099e-02
+        - 9.974745e-01
+
+    O4:
+        id: 18
+        module_id: 4
+        polarimeter_id: 19
+        color: "orange"
+        fwhm_x_deg: 0.348
+        fwhm_y_deg: 0.346
+        ellipticity: 1.007
+        directivity_dbi: 54.72
+        xpd_db: 42.97
+        sub_spillover: 0.014065
+        main_spillover: 0.017042
+        orientation:
+        - 1.117476e-02
+        - -4.867104e-02
+        - 9.987523e-01
+
+    O5:
+        id: 19
+        module_id: 5
+        polarimeter_id: 20
+        color: "orange"
+        fwhm_x_deg: 0.347
+        fwhm_y_deg: 0.346
+        ellipticity: 1.003
+        directivity_dbi: 54.73
+        xpd_db: 42.83
+        sub_spillover: 0.013801
+        main_spillover: 0.017203
+        orientation:
+        - -1.049704e-02
+        - -4.863543e-02
+        - 9.987614e-01
+
+    O6:
+        id: 20
+        module_id: 6
+        polarimeter_id: 21
+        color: "orange"
+        fwhm_x_deg: 0.348
+        fwhm_y_deg: 0.346
+        ellipticity: 1.003
+        directivity_dbi: 54.71
+        xpd_db: 42.30
+        sub_spillover: 0.013417
+        main_spillover: 0.017388
+        orientation:
+        - -2.105859e-02
+        - -6.737476e-02
+        - 9.975055e-01
+
+    R0:
+        id: 21
+        module_id: 0
+        polarimeter_id: 22
+        color: "red"
+        fwhm_x_deg: 0.352
+        fwhm_y_deg: 0.343
+        ellipticity: 1.025
+        directivity_dbi: 54.71
+        xpd_db: 41.44
+        sub_spillover: 0.014177
+        main_spillover: 0.016407
+        orientation:
+        - 5.892517e-02
+        - -3.368940e-02
+        - 9.976938e-01
+
+    R1:
+        id: 22
+        module_id: 1
+        polarimeter_id: 23
+        color: "red"
+        fwhm_x_deg: 0.351
+        fwhm_y_deg: 0.344
+        ellipticity: 1.020
+        directivity_dbi: 54.69
+        xpd_db: 41.61
+        sub_spillover: 0.013937
+        main_spillover: 0.016771
+        orientation:
+        - 4.823578e-02
+        - -5.247872e-02
+        - 9.974564e-01
+
+    R2:
+        id: 23
+        module_id: 2
+        polarimeter_id: 24
+        color: "red"
+        fwhm_x_deg: 0.354
+        fwhm_y_deg: 0.344
+        ellipticity: 1.030
+        directivity_dbi: 54.66
+        xpd_db: 40.99
+        sub_spillover: 0.01381
+        main_spillover: 0.016571
+        orientation:
+        - 7.040389e-02
+        - -5.236922e-02
+        - 9.961429e-01
+
+    R3:
+        id: 24
+        module_id: 3
+        polarimeter_id: 25
+        color: "red"
+        fwhm_x_deg: 0.355
+        fwhm_y_deg: 0.343
+        ellipticity: 1.034
+        directivity_dbi: 54.66
+        xpd_db: 40.85
+        sub_spillover: 0.013881
+        main_spillover: 0.01646
+        orientation:
+        - 8.094952e-02
+        - -3.359469e-02
+        - 9.961519e-01
+
+    R4:
+        id: 25
+        module_id: 4
+        polarimeter_id: 26
+        color: "red"
+        fwhm_x_deg: 0.353
+        fwhm_y_deg: 0.344
+        ellipticity: 1.027
+        directivity_dbi: 54.69
+        xpd_db: 41.32
+        sub_spillover: 0.014136
+        main_spillover: 0.016612
+        orientation:
+        - 6.973080e-02
+        - -1.490279e-02
+        - 9.974545e-01
+
+    R5:
+        id: 26
+        module_id: 5
+        polarimeter_id: 27
+        color: "red"
+        fwhm_x_deg: 0.351
+        fwhm_y_deg: 0.344
+        ellipticity: 1.020
+        directivity_dbi: 54.71
+        xpd_db: 41.98
+        sub_spillover: 0.014259
+        main_spillover: 0.016735
+        orientation:
+        - 4.775682e-02
+        - -1.498494e-02
+        - 9.987466e-01
+
+    R6:
+        id: 27
+        module_id: 6
+        polarimeter_id: 28
+        color: "red"
+        fwhm_x_deg: 0.350
+        fwhm_y_deg: 0.344
+        ellipticity: 1.018
+        directivity_dbi: 54.72
+        xpd_db: 42.07
+        sub_spillover: 0.014129
+        main_spillover: 0.016785
+        orientation:
+        - 3.700671e-02
+        - -3.378581e-02
+        - 9.987437e-01
+
+    V0:
+        id: 28
+        module_id: 0
+        polarimeter_id: 29
+        color: "violet"
+        orientation:
+        - 5.892517e-02
+        - 3.368940e-02
+        - 9.976938e-01
+
+    V1:
+        id: 29
+        module_id: 1
+        polarimeter_id: 30
+        color: "violet"
+        orientation:
+        - 4.775682e-02
+        - 1.498494e-02
+        - 9.987466e-01
+
+    V2:
+        id: 30
+        module_id: 2
+        polarimeter_id: 31
+        color: "violet"
+        orientation:
+        - 6.973080e-02
+        - 1.490279e-02
+        - 9.974545e-01
+
+    V3:
+        id: 31
+        module_id: 3
+        polarimeter_id: 32
+        color: "violet"
+        orientation:
+        - 8.094952e-02
+        - 3.359469e-02
+        - 9.961519e-01
+
+    V4:
+        id: 32
+        module_id: 4
+        polarimeter_id: 33
+        color: "violet"
+        orientation:
+        - 7.040389e-02
+        - 5.236922e-02
+        - 9.961429e-01
+
+    V5:
+        id: 33
+        module_id: 5
+        polarimeter_id: 34
+        color: "violet"
+        orientation:
+        - 4.823578e-02
+        - 5.247872e-02
+        - 9.974564e-01
+
+    V6:
+        id: 34
+        module_id: 6
+        polarimeter_id: 35
+        color: "violet"
+        orientation:
+        - 3.700671e-02
+        - 3.378581e-02
+        - 9.987437e-01
+
+    B0:
+        id: 35
+        module_id: 0
+        polarimeter_id: 36
+        color: "blue"
+        orientation:
+        - 5.556000e-04
+        - 6.740763e-02
+        - 9.977254e-01
+
+    B1:
+        id: 36
+        module_id: 1
+        polarimeter_id: 37
+        color: "blue"
+        orientation:
+        - -1.049704e-02
+        - 4.863543e-02
+        - 9.987614e-01
+
+    B2:
+        id: 37
+        module_id: 2
+        polarimeter_id: 38
+        color: "blue"
+        orientation:
+        - 1.117476e-02
+        - 4.867104e-02
+        - 9.987523e-01
+
+    B3:
+        id: 38
+        module_id: 3
+        polarimeter_id: 39
+        color: "blue"
+        orientation:
+        - 2.227675e-02
+        - 6.744099e-02
+        - 9.974745e-01
+
+    B4:
+        id: 39
+        module_id: 4
+        polarimeter_id: 40
+        color: "blue"
+        orientation:
+        - 1.190956e-02
+        - 8.615635e-02
+        - 9.962104e-01
+
+    B5:
+        id: 40
+        module_id: 5
+        polarimeter_id: 41
+        color: "blue"
+        orientation:
+        - -9.948900e-03
+        - 8.612668e-02
+        - 9.962345e-01
+
+    B6:
+        id: 41
+        module_id: 6
+        polarimeter_id: 42
+        color: "blue"
+        orientation:
+        - -2.105859e-02
+        - 6.737476e-02
+        - 9.975055e-01
+
+    G0:
+        id: 42
+        module_id: 0
+        polarimeter_id: 43
+        color: "green"
+        orientation:
+        - -5.782401e-02
+        - 3.369521e-02
+        - 9.977580e-01
+
+    G1:
+        id: 43
+        module_id: 1
+        polarimeter_id: 44
+        color: "green"
+        orientation:
+        - -6.850693e-02
+        - 1.489075e-02
+        - 9.975395e-01
+
+    G2:
+        id: 44
+        module_id: 2
+        polarimeter_id: 45
+        color: "green"
+        orientation:
+        - -4.712833e-02
+        - 1.499608e-02
+        - 9.987763e-01
+
+    G3:
+        id: 45
+        module_id: 3
+        polarimeter_id: 46
+        color: "green"
+        orientation:
+        - -3.639192e-02
+        - 3.381160e-02
+        - 9.987654e-01
+
+    G4:
+        id: 46
+        module_id: 4
+        polarimeter_id: 47
+        color: "green"
+        orientation:
+        - -4.684010e-02
+        - 5.249990e-02
+        - 9.975218e-01
+
+    G5:
+        id: 47
+        module_id: 5
+        polarimeter_id: 48
+        color: "green"
+        orientation:
+        - -6.840827e-02
+        - 5.237539e-02
+        - 9.962817e-01
+
+    G6:
+        id: 48
+        module_id: 6
+        polarimeter_id: 49
+        color: "green"
+        orientation:
+        - -7.914510e-02
+        - 3.358196e-02
+        - 9.962973e-01
+...
