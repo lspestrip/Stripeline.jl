@@ -1,8 +1,5 @@
 using Base.Test
 
-comm = Nullable{}()
-
-
 @test split_into_n(20, 3)  == [6, 7, 7]
 
 num_of_polarimeters = 4
@@ -25,6 +22,7 @@ chunks =  [[datachunk(1, 1, 5, 5), datachunk(2, 1, 1, 1)], [datachunk(2, 2, 5, 4
 chunks2 = [[datachunk(1, 1, 1000, 1000), datachunk(2, 1, 1000, 1000)]]
 baselines_per_process2 = 2000
 rank2=0
+comm = Nullable{}()
 
 noise = generate_noise_mpi(chunks2, baselines_per_process2, baseline_length_s, fsamp_hz, σ_k, fknee_hz, rank2, comm)
 @test length(noise) == fsamp_hz*baseline_length_s*baselines_per_process2
