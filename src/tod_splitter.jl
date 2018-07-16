@@ -229,7 +229,7 @@ doc"""
         for i in 1:length(this_rank_chunk)
             detector_number[i] = this_rank_chunk[i].pol_number
             first_time[i] = (this_rank_chunk[i].first_idx-1)*baseline_length_s
-            last_time[i] = this_rank_chunk[i].last_idx*baseline_length_s
+            last_time[i] = this_rank_chunk[i].last_idx*baseline_length_s -1/fsamp_hz
             num_of_baselines[i] =  this_rank_chunk[i].num_of_elements
             num_of_samples[i] = num_of_baselines[i]*baseline_length_s*fsamp_hz  
         end
