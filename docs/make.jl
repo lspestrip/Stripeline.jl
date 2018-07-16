@@ -8,7 +8,6 @@ makedocs(modules = [Stripeline],
     pages = Any[
         "Introduction" => "index.md",
         "Instrument database" => "instrumentdb.md",
-        "Random numbers" => "rng.md",
         "Scanning strategy" => "scanning.md",
     ])
 
