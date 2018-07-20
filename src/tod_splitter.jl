@@ -270,7 +270,8 @@ function generate_noise_mpi(chunks, baselines_per_process, baseline_length_s, fs
     if rank == 0
         previous_detector = chunks[1][1].pol_number
         noise = Float64[]  #noise rank 0
-        rng = CorrNoise.OofRNG(CorrNoise.GaussRNG(MersenneTwister(1234)), -1, 1.15e-5, fknee_hz, fsamp_hz)
+        seed = rand(1:1000)
+        rng = CorrNoise.OofRNG(CorrNoise.GaussRNG(MersenneTwister(seed)), -1, 1.15e-5, fknee_hz, fsamp_hz)
     
         for i in 1:length(chunks)   #loop on ranks
             num_noise_samples = baselines_per_process[i]*baseline_length_s*fsamp_hz
@@ -293,7 +294,6 @@ function generate_noise_mpi(chunks, baselines_per_process, baseline_length_s, fs
                 end
             end   
         end
-
     else
         noise = Float64[]
         for j in 1:length(chunks[rank+1])
