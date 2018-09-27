@@ -31,7 +31,7 @@ function tod2map_mpi(pix_idx, tod, num_of_pixels, comm; unseen = NaN)
         partial_hits[pix_idx[i]] += 1
     end
 
-    if(!isnull(comm))
+    if(!ismissing(comm))
         binned_map::Array{Float64, 1}= MPI.allreduce(partial_map, MPI.SUM, comm)
         hits::Array{Int, 1} = MPI.allreduce(partial_hits, MPI.SUM, comm)
     else
@@ -67,7 +67,7 @@ function baseline2map_mpi(pix_idx, baselines, baseline_dim, num_of_pixels, comm;
         startidx += baseline_dim[i]
     end 
     
-    if(!isnull(comm))
+    if(!ismissing(comm))
         noise_map::Array{Float64, 1}= MPI.allreduce(partial_map, MPI.SUM, comm)
         hits::Array{Int, 1} = MPI.allreduce(partial_hits, MPI.SUM, comm)
     else 
@@ -139,7 +139,7 @@ end
 function mpi_dot_prod(x, y, comm)
     local_sum = dot(x, y)
 
-    if(!isnull(comm))
+    if(!ismissing(comm))
         total::Float64 = MPI.allreduce([local_sum], MPI.SUM, comm)[1]
     else
         total = local_sum

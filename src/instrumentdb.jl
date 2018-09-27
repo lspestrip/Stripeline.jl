@@ -2,8 +2,10 @@ export Horn, Detector, InstrumentDB, BandshapeInfo, SpectrumInfo, NoiseTemperatu
 export InstrumentDB, defaultdbfolder, parsefpdict, parsedetdict
 
 import YAML
+import Stripeline
+using Printf
 
-doc"""
+@doc raw"""
 Information about a STRIP horn
 
 This structure holds a number of parameters relative to each feed horn in the
@@ -66,7 +68,7 @@ function Base.show(io::IO, horn::Horn)
     end
 end
 
-doc"""
+@doc raw"""
     BandshapeInfo
 
 Information about the spectral band response of a polarimeter.
@@ -118,14 +120,14 @@ function Base.show(io::IO, band::BandshapeInfo)
     end
 end
 
-doc"""
+@doc raw"""
     BandshapeInfo()
 
 Initialize a BandshapeInfo object with all values set to zero.
 """
 BandshapeInfo() = BandshapeInfo(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, Float64[], 0, 0)
 
-doc"""
+@doc raw"""
     SpectrumInfo
 
 Information about the noise spectrum of the output of a polarimeter.
@@ -203,14 +205,14 @@ function Base.show(io::IO, spec::SpectrumInfo)
     end
 end
 
-doc"""
+@doc raw"""
     SpectrumInfo()
 
 Initialize a SpectrumInfo object with all values set to zero.
 """
 SpectrumInfo() = SpectrumInfo(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, 0)
 
-doc"""
+@doc raw"""
     NoiseTemperatureInfo
 
 Information about the noise temperature of a polarimeter. This structure is used
@@ -251,14 +253,14 @@ function Base.show(io::IO, tnoise::NoiseTemperatureInfo)
     end
 end
 
-doc"""
+@doc raw"""
     NoiseTemperatureInfo()
 
 Initialize a NoiseTemperatureInfo object with all values set to zero.
 """
 NoiseTemperatureInfo() = NoiseTemperatureInfo(0.0, 0.0, Int[], Int[], Float64[])
 
-doc"""
+@doc raw"""
 Information about a STRIP detector
 
 This structure holds information about a STRIP polarimeter.
@@ -304,7 +306,7 @@ function Base.show(io::IO, det::Detector)
     end
 end
 
-doc"""
+@doc raw"""
 STRIP instrument database
 
 The "database" contains information about feed horns and polarimeters:
@@ -342,7 +344,7 @@ function Base.show(io::IO, db::InstrumentDB)
             length(keys(db.detectors)))
 end
 
-doc"""
+@doc raw"""
     parsefpdict(fpdict)
 
 Return a dictionary associating an horn name (e.g., `I0`) to a `Horn` object
@@ -423,7 +425,7 @@ function parsetnoise(tnoisedict::Dict{Any,Any})
         get(tnoisedict, "values_k", Float64[]))
 end
 
-doc"""
+@doc raw"""
     parsedetdict(detdict)
 
 Return a dictionary associating an integer number to a `Detector` object
@@ -453,7 +455,7 @@ function parsedetdict(detdict)
     detectors
 end
 
-doc"""
+@doc raw"""
     InstrumentDB(dbpath::AbstractString)
 
 Load the STRIP instrument database from the specified path.
@@ -471,15 +473,15 @@ function InstrumentDB(dbpath::AbstractString)
     InstrumentDB(parsefpdict(focalplanedict), parsedetdict(detectordict))
 end
 
-doc"""
+@doc raw"""
     defaultdbfolder()
 
 Return a string containing the (local) full path to the YAML files containing
 the reference instrument DB.
 """
-defaultdbfolder() = joinpath(Pkg.dir("Stripeline"), "instrumentdb")
+defaultdbfolder() = joinpath(dirname(pathof(Stripeline)), "..", "instrumentdb")
 
-doc"""
+@doc raw"""
     InstrumentDB()
 
 Load the STRIP instrument database from the directory returned by

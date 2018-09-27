@@ -1,6 +1,6 @@
-using Base.Test
+using Test
 
-comm = Nullable{}()
+comm = missing
 
 # Index of the pixels: this fixes the length of the TOD as well
 pix_idx = [1, 1, 2, 1, 2, 3, 3, 1, 3, 2]

@@ -1,4 +1,6 @@
-db = InstrumentDB(joinpath(Pkg.dir("Stripeline"), "instrumentdb"))
+import Stripeline
+
+db = InstrumentDB(joinpath(dirname(pathof(Stripeline)), ".." ,"instrumentdb"))
 
 @test length(db.focalplane) ≥ 49
 @test length(db.detectors) ≥ 55

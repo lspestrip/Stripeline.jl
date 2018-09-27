@@ -1,6 +1,7 @@
 using Quaternions
 import Healpix
 using StaticArrays
+using LinearAlgebra
 
 export TENERIFE_LATITUDE_DEG, timetorotang, genpointings
 
@@ -57,8 +58,8 @@ end
 """
 function genpointings(wheelanglesfn, dir, timerange_s; latitude_deg=0.0)
     
-    dirs = Array{Float64}(length(timerange_s), 2)
-    ψ = Array{Float64}(length(timerange_s))
+    dirs = Array{Float64}(undef, length(timerange_s), 2)
+    ψ = Array{Float64}(undef, length(timerange_s))
 
     zaxis = [1; 0; 0]
     for (idx, time_s) = enumerate(timerange_s)
@@ -91,7 +92,7 @@ function genpointings(wheelanglesfn, dir, timerange_s; latitude_deg=0.0)
         cosψ = clamp(dot(northdir, poldir), -1, 1)
         crosspr = northdir × poldir
         sinψ = clamp(sqrt(dot(crosspr, crosspr)), -1, 1)
-        ψ[idx] = atan2(cosψ, sinψ)
+        ψ[idx] = atan(cosψ, sinψ)
     end
     
     (dirs, ψ)

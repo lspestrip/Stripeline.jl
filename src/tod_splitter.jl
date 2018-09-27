@@ -3,9 +3,8 @@ export split_into_n, split_tod_mpi, get_chunk_properties, generate_noise_mpi
 
 import Healpix
 import CorrNoise
+using Random
 using FITSIO
-import Stripeline
-const Sl = Stripeline
 
 
 try
@@ -14,7 +13,7 @@ catch
 end 
 
 
-doc"""
+"""
 This structure holds a number of parameters relative to a certain chunk of data.
 
 Field              | Type           | Meaning
@@ -40,7 +39,7 @@ struct datachunk
 end 
 
 
-doc"""
+"""
     function split_into_n(length, num_of_segments)
         Given the `length` of the array, it convenientely 
         splits it into `num_of_segments` sections of as similar length as possible.
@@ -66,7 +65,7 @@ function split_into_n(length, num_of_segments)
 end
 
 
-doc"""
+"""
     function split_tod_mpi(total_time, baseline_length_s, baselines_per_process, num_of_MPI_proc)
            
         This function can be used to split the TOD production of many polarimeters among MPI processes.
@@ -183,7 +182,7 @@ function split_tod_mpi(total_time, baseline_length_s, baselines_per_process, num
     
 end
 
-doc"""
+"""
     function get_chunk_properties(chunks, baseline_length_s, fsamp_hz, rank)
     
         Given:
@@ -223,8 +222,8 @@ doc"""
     function get_chunk_properties(chunks, baseline_length_s, fsamp_hz, rank)
 
         this_rank_chunk = chunks[rank+1]
-        first_time, last_time = [Array{Float64}(length(this_rank_chunk)) for i in (1:2)]
-        detector_number, num_of_baselines, baseline_len, num_of_samples = [Array{Int64}(length(this_rank_chunk)) for i in (1:4)]
+        first_time, last_time = [Array{Float64}(undef, length(this_rank_chunk)) for i in (1:2)]
+        detector_number, num_of_baselines, baseline_len, num_of_samples = [Array{Int64}(undef, length(this_rank_chunk)) for i in (1:4)]
     
         for i in 1:length(this_rank_chunk)
             detector_number[i] = this_rank_chunk[i].pol_number
@@ -237,7 +236,7 @@ doc"""
     end
     
 
-doc"""
+"""
     function generate_noise_mpi(chunks, baseline_length_s, baselines_per_process, fsamp_hz, σ_k, fknee_hz, rank, comm)
 
     This MPI based function is useful to generate white noise and 1/f noise when the simulation is splitted in various MPI processes.
@@ -297,7 +296,7 @@ function generate_noise_mpi(chunks, baselines_per_process, baseline_length_s, fs
     else
         noise = Float64[]
         for j in 1:length(chunks[rank+1])
-            cur_noise = Array{Float64}(chunks[rank+1][j].num_of_elements*baseline_length_s*fsamp_hz)
+            cur_noise = Array{Float64}(undef, chunks[rank+1][j].num_of_elements*baseline_length_s*fsamp_hz)
             MPI.Recv!(cur_noise, 0, 0, comm)
             noise = append!(noise, cur_noise)
         end
