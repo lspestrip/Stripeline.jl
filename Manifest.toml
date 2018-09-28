@@ -122,11 +122,12 @@ uuid = "150eb455-5306-5404-9cee-2592286d6298"
 version = "0.5.0"
 
 [[CorrNoise]]
-git-tree-sha1 = "26e6f29dc8325d5a0521fe41861f2e0a4bc3ebab"
+deps = ["Random", "Test"]
+git-tree-sha1 = "103c5ec38919fb23e69ca55d80e0346062e7561f"
 repo-rev = "master"
 repo-url = "https://github.com/ziotom78/CorrNoise.jl"
-uuid = "68d8286f-ae24-578c-b2f2-6a497e3649d8"
-version = "0.0.0"
+uuid = "d5b2c6c8-c265-11e8-014f-49b4891d5439"
+version = "0.1.0"
 
 [[CustomUnitRanges]]
 deps = ["Pkg", "Test"]
