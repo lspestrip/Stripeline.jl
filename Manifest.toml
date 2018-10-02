@@ -125,7 +125,7 @@ version = "0.5.0"
 deps = ["Random", "Test"]
 git-tree-sha1 = "103c5ec38919fb23e69ca55d80e0346062e7561f"
 repo-rev = "master"
-repo-url = "https://github.com/ziotom78/CorrNoise.jl"
+repo-url = "git@github.com:ziotom78/CorrNoise.jl.git"
 uuid = "d5b2c6c8-c265-11e8-014f-49b4891d5439"
 version = "0.1.0"
 
@@ -229,7 +229,7 @@ version = "0.2.1"
 deps = ["Cairo", "ColorSchemes", "FITSIO", "FileIO", "ImageMagick", "Images", "Markdown", "Plots", "Printf", "Test"]
 git-tree-sha1 = "22ed00b47591e1b667a5e9df449d6dca0f4efb44"
 repo-rev = "master"
-repo-url = "https://github.com/ziotom78/Healpix.jl"
+repo-url = "git@github.com:ziotom78/Healpix.jl.git"
 uuid = "0fe3d3e8-c00f-11e8-2353-b5858a79f927"
 version = "1.0.0"
 
@@ -371,10 +371,11 @@ uuid = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 uuid = "56ddb016-857b-54e1-b83d-db4d58db5568"
 
 [[MPI]]
-deps = ["BinDeps", "Compat", "Distributed", "Libdl", "LinearAlgebra", "Pkg", "Printf", "Random", "Statistics", "Test"]
-git-tree-sha1 = "1cbb652a54499f7828f167b0fc633cad633758f3"
+deps = ["BinDeps", "Compat", "Distributed", "Libdl", "Pkg", "Random", "Test"]
+git-tree-sha1 = "273e64c67e11665a4602c048c153f008bd0340e1"
+pinned = true
 uuid = "da04e1cc-30fd-572f-bb4f-1f8673147195"
-version = "0.7.1"
+version = "0.7.0"
 
 [[MacroTools]]
 deps = ["Compat"]
