@@ -3,11 +3,6 @@ import Healpix
 using StaticArrays
 using LinearAlgebra
 
-# using PyCall
-# @pyimport astropy.time as at
-# @pyimport astropy.coordinates as ac
-# @pyimport astropy.units as au
-
 export TENERIFE_LATITUDE_DEG, TENERIFE_LONGITUDE_DEG, TENERIFE_HEIGHT_M
 export timetorotang, genpointings, genskypointings
 
