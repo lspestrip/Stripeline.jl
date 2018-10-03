@@ -107,8 +107,7 @@ end
 
 
 """
-    genskypointings(t_start, t_stop, dirs; latitude_deg=0.0, longitude_deg=0.0,
-                    height_m=0.0)
+    genskypointings(t_start, t_stop, dirs; latitude_deg=0.0, longitude_deg=0.0, height_m=0.0)
 
 Project a set of pointings in the sky.  
 
