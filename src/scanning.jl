@@ -3,10 +3,10 @@ import Healpix
 using StaticArrays
 using LinearAlgebra
 
-using PyCall
-@pyimport astropy.time as at
-@pyimport astropy.coordinates as ac
-@pyimport astropy.units as au
+# using PyCall
+# @pyimport astropy.time as at
+# @pyimport astropy.coordinates as ac
+# @pyimport astropy.units as au
 
 export TENERIFE_LATITUDE_DEG, TENERIFE_LONGITUDE_DEG, TENERIFE_HEIGHT_M
 export timetorotang, genpointings, genskypointings
@@ -136,13 +136,13 @@ function genskypointings(t_start,
                          longitude_deg=0.0,
                          height_m=0.0)
 
-    t_start_s = at.Time(t_start, format="iso", scale="utc")
-    t_stop_s = at.Time(t_stop, format="iso", scale="utc")
+    t_start_s = astropy_time[:Time](t_start, format="iso", scale="utc")
+    t_stop_s = astropy_time[:Time](t_stop, format="iso", scale="utc")
     
     jd_range = range(t_start_s[:jd], stop=t_stop_s[:jd], length=size(dirs)[1])
-    loc = ac.EarthLocation(lat=latitude_deg*au.deg,
-                           lon=longitude_deg*au.deg,
-                           height=height_m*au.meter)
+    loc = astropy_coordinates[:EarthLocation](lon=longitude_deg,
+                                              lat=latitude_deg,
+                                              height=height_m)
     
     skydirs = Array{Float64}(undef, size(dirs))
 
@@ -150,11 +150,12 @@ function genskypointings(t_start,
         Alt_rad = π/2 - dirs[idx, 1] 
         Az_rad = 2π - dirs[idx, 2]
 
-        skycoord = ac.SkyCoord(alt=Alt_rad*au.rad,
-                               az=Az_rad*au.rad,
-                               obstime=at.Time(time_jd, format="jd"),
-                               frame="altaz",
-                               location=loc)
+        skycoord = astropy_coordinates[:SkyCoord](
+            alt=Alt_rad*astropy_units[:rad],
+            az=Az_rad*astropy_units[:rad],
+            obstime=astropy_time[:Time](time_jd, format="jd"),
+            frame="altaz",
+            location=loc)
         
         skydirs[idx, 1] = deg2rad(skycoord[:transform_to]("icrs")[:ra][1]) 
         skydirs[idx, 2] = deg2rad(skycoord[:transform_to]("icrs")[:dec][1])
