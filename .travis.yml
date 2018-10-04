@@ -4,9 +4,6 @@ julia:
 
 notifications:
   email: false
-
-before_install:
-  - julia -e 'import Conda; Conda.add("astropy")'
   
 addons:
   apt:
@@ -15,6 +12,9 @@ addons:
       - gfortran
       - mpich
       - libmpich-dev
+
+before_script:
+  - julia -e 'Pkg.add("Conda"); Conda.add("astropy")'
 
 after_success:
   - julia -e 'cd(Pkg.dir("Stripeline")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())'
