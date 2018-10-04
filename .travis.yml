@@ -6,9 +6,8 @@ notifications:
   email: false
 
 before_install:
-  - sudo apt-get update
-  - sudo apt-get install astropy-utils
-
+  - julia -e 'Conda.add("astropy")'
+  
 addons:
   apt:
     packages:
