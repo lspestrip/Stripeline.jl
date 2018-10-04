@@ -6,7 +6,7 @@ notifications:
   email: false
 
 before_install:
-  - julia -e 'Conda.add("astropy")'
+  - julia -e 'import Conda; Conda.add("astropy")'
   
 addons:
   apt:
