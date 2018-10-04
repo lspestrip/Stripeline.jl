@@ -125,7 +125,7 @@ version = "0.5.0"
 deps = ["Random", "Test"]
 git-tree-sha1 = "103c5ec38919fb23e69ca55d80e0346062e7561f"
 repo-rev = "master"
-repo-url = "git@github.com:ziotom78/CorrNoise.jl.git"
+repo-url = "https://github.com/ziotom78/CorrNoise.jl.git"
 uuid = "d5b2c6c8-c265-11e8-014f-49b4891d5439"
 version = "0.1.0"
 
@@ -229,7 +229,7 @@ version = "0.2.1"
 deps = ["Cairo", "ColorSchemes", "FITSIO", "FileIO", "ImageMagick", "Images", "Markdown", "Plots", "Printf", "Test"]
 git-tree-sha1 = "22ed00b47591e1b667a5e9df449d6dca0f4efb44"
 repo-rev = "master"
-repo-url = "git@github.com:ziotom78/Healpix.jl.git"
+repo-url = "https://github.com/ziotom78/Healpix.jl.git"
 uuid = "0fe3d3e8-c00f-11e8-2353-b5858a79f927"
 version = "1.0.0"
 
