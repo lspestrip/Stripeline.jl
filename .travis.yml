@@ -13,7 +13,7 @@ addons:
       - mpich
       - libmpich-dev
 
-before_install:
+script:
   - julia -e 'using Pkg; Pkg.add("Conda"); Conda.add("astropy")'
 
 after_success:
