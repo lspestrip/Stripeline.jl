@@ -12,9 +12,10 @@ addons:
       - gfortran
       - mpich
       - libmpich-dev
+      - curl
 
 before_install:
-  - julia -e 'using Pkg; Pkg.add("Conda"); Conda.add("astropy")'
+  - julia -e 'using Pkg; Pkg.add("Conda"); import Conda; Conda.add("astropy")'
   
 after_success:
   - julia -e 'cd(Pkg.dir("Stripeline")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())'
