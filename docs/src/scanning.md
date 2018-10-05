@@ -7,6 +7,7 @@ end
 # Simulating the scanning strategy
 
 ```@docs
+genskypointings
 genpointings
 timetorotang
 ```

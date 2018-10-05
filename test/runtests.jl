@@ -26,4 +26,9 @@ include("instrumentdb_tests.jl")
 include("map_maker_tests.jl")
 
 # TOD-splitter
+
 include("tod_splitter_tests.jl")
+
+# Scanning 
+
+include("scanning.jl")
