@@ -54,7 +54,7 @@ baseline_len = repeat([baseline_length_s*fsamp_hz],Int64(total_time/baseline_len
 
 mapfile = Healpix.Map{Float64,Healpix.RingOrder}(NSIDE)
 mapfile.pixels = destr_map
-Healpix.saveToFITS(mapfile, &quot;!results/destriped_map.fits&quot;, typechar = &quot;D&quot;)</code></pre><p>To run this script you can do:</p><pre><code class="language-none">julia simplecase.jl</code></pre><h2><a class="nav-anchor" id=".-General-Case-1" href="#.-General-Case-1">2. General Case</a></h2><p>In realistic cases, TODs are really huge (millions or billions of samples!). This means a lot of memory allocation.</p><p>STRIP case:</p><p>49 polarimeters * 2 years * 365 days * 86400 s * 100 Hz ≈ 300 billion samples</p><p>which means about 2 Terabytes of memory allocation!</p><p>It is much more a single computer can support. It is thus compulsory to split the TOD simulation and analysis between different computing units, by using MPI.</p><p>Let&#39;s go through all the points of the simulation and see how things change:</p><ol><li>You have to add the MPI package to your dependencies. </li></ol><pre><code class="language-none">import MPI
+Healpix.saveToFITS(mapfile, &quot;destriped_map.fits&quot;, typechar = &quot;D&quot;)</code></pre><p>To run this script you can do:</p><pre><code class="language-none">julia simplecase.jl</code></pre><h2><a class="nav-anchor" id=".-General-Case-1" href="#.-General-Case-1">2. General Case</a></h2><p>In realistic cases, TODs are really huge (millions or billions of samples!). This means a lot of memory allocation.</p><p>STRIP case:</p><p>49 polarimeters * 2 years * 365 days * 86400 s * 100 Hz ≈ 300 billion samples</p><p>which means about 2 Terabytes of memory allocation!</p><p>It is much more a single computer can support. It is thus compulsory to split the TOD simulation and analysis between different computing units, by using MPI.</p><p>Let&#39;s go through all the points of the simulation and see how things change:</p><ol><li>You have to add the MPI package to your dependencies. </li></ol><pre><code class="language-none">import MPI
 
 import Healpix
 import Random
@@ -76,13 +76,13 @@ ttel_k = 3
 tnoise_k = 35
 fknee_hz = 0.01
 β_hz = 7e9
-</code></pre><ol><li>you should add the computation of the total number of samples per polarimeter and total number of baselines for polarimeter, which we will need later.</li></ol><pre><code class="language-none">samples_per_pol = total_time*fsamp_hz 
-baselines_per_pol = Int64(total_time/baseline_length_s)
-
-total_time = days_of_observation * 24 * 3600
+</code></pre><ol><li>you should add the computation of the total number of samples per polarimeter and total number of baselines for polarimeter, which we will need later.</li></ol><pre><code class="language-none">total_time = days_of_observation * 24 * 3600
 tsys_k = tnoise_k + tatm_k + ttel_k + tcmb_k
 τ_s = 1 / fsamp_hz
-σ_k = (tsys_k / sqrt(β_hz * τ_s))</code></pre><ol><li>nothing changes.</li></ol><pre><code class="language-none">inputmap = Healpix.readMapFromFITS(raw&quot;PySM_inputmap_nside256.fits&quot;, 2 , Float64)
+σ_k = (tsys_k / sqrt(β_hz * τ_s))
+
+samples_per_pol = total_time*fsamp_hz 
+baselines_per_pol = Int64(total_time/baseline_length_s)</code></pre><ol><li>nothing changes.</li></ol><pre><code class="language-none">inputmap = Healpix.readMapFromFITS(raw&quot;PySM_inputmap_nside256.fits&quot;, 2 , Float64)
 inputmap_resol = inputmap.resolution
 
 resol = Healpix.Resolution(NSIDE) #desired resolution for output map
@@ -101,8 +101,8 @@ this_rank_chunk = chunks[rank+1]
 </code></pre><ol><li>Concerning the production of the sky TOD, of course each computing unit will produce its own partial TOD using the information obtained before.</li></ol><p>A loop on detectors has been added, since in the general case the simulation involves more than one detector, and moreover, each rank may have to simulate partial tods for different detectors.</p><pre><code class="language-none">#Generate sky tod
 
 pix_idx = Int64[]
-pix_idx_planck = Int64[]
-skytod_Q = Float64[]
+pix_idx_inputmap = Int64[]
+sky_tod = Float64[]
 
 
 for i in 1:length(this_rank_chunk)   #loop on detectors
@@ -111,22 +111,22 @@ for i in 1:length(this_rank_chunk)   #loop on detectors
 
     times = first_time[i]:τ_s:last_time[i]
 
-    ltimes= length(times)
+ 
     (dirs, ψ) = Sl.genpointings([0, 0, 1], times; latitude_deg=28.29) do time_s
         return (0.0, deg2rad(20.0), Sl.timetorotang(time_s, 1))
     end
 
-    partial_pix_idx_CMB = Healpix.ang2pixRing.(Ref(CMB_map_resol), dirs[:, 1], dirs[:, 2])
+    partial_pix_idx_inputmap = Healpix.ang2pixRing.(Ref(inputmap_resol), dirs[:, 1], dirs[:, 2])
     partial_pix_idx = Healpix.ang2pixRing.(Ref(resol), dirs[:, 1], dirs[:, 2])
 
     #build the sky tod
-    partial_skytod_Q = CMB_map.pixels[partial_pix_idx_CMB]
-    global skytod_Q = append!(skytod_Q, partial_skytod_Q)
+    partial_sky_tod = inputmap.pixels[partial_pix_idx_CMB]
+    global sky_tod = append!(sky_tod, partial_skytod_Q)
     global pix_idx = append!(pix_idx, partial_pix_idx)
 end
 </code></pre><ol><li>To generate noise, you e can use the <code>generate_noise_mpi</code> function, which directly returns the partial noise TOD for the current rank. </li></ol><pre><code class="language-none">#Generate noise
 
-noise = Sl.generate_noise_mpi(chunks, baselines_per_process, baseline_length_s, fsamp_hz, σ_k, fknee_hz, rank, comm)</code></pre><ol><li>nothing changes.</li></ol><pre><code class="language-none">tod = sky_tod + noise_tod</code></pre><ol><li>nothing changes apart from <code>baseline_len</code> definition (since now different units can have a different amount of baselines to compute).</li></ol><p>The <code>destripe</code> function already takes into account the presence of multiple computing units: each partial TOD is loaded separately and partial maps are build, but then MPI functions are called to make different ranks &quot;talk together&quot; in order to obtain in output a single global destriped map.</p><pre><code class="language-none">#Run the destriper
+noise_tod = Sl.generate_noise_mpi(chunks, baselines_per_process, baseline_length_s, fsamp_hz, σ_k, fknee_hz, rank, comm)</code></pre><ol><li>nothing changes.</li></ol><pre><code class="language-none">tod = sky_tod + noise_tod</code></pre><ol><li>nothing changes apart from <code>baseline_len</code> definition (since now different units can have a different amount of baselines to compute).</li></ol><p>The <code>destripe</code> function already takes into account the presence of multiple computing units: each partial TOD is loaded separately and partial maps are build, but then MPI functions are called to make different ranks &quot;talk together&quot; in order to obtain in output a single global destriped map.</p><pre><code class="language-none">#Run the destriper
 
 baseline_len = repeat([baseline_length_s*fsamp_hz], baselines_per_process[rank+1])
 (destr_map, a) = Sl.destripe(pix_idx, tod, num_of_pixels, baseline_len, comm)</code></pre><ol><li>If you want to save the destriped map in a .fits file, you should make just one rank do that. </li></ol><pre><code class="language-none">#save file 
@@ -134,5 +134,5 @@ baseline_len = repeat([baseline_length_s*fsamp_hz], baselines_per_process[rank+1
 if(rank==0)
     mapfile = Healpix.Map{Float64,Healpix.RingOrder}(NSIDE)
     mapfile.pixels = destr_map
-    Healpix.saveToFITS(mapfile, &quot;!results/destriped_map.fits&quot;, typechar = &quot;D&quot;)
+    Healpix.saveToFITS(mapfile, &quot;destriped_map.fits&quot;, typechar = &quot;D&quot;)
 end</code></pre><ol><li>Finally, end your script by terminating the calling to MPI environment.</li></ol><pre><code class="language-none">MPI.Finalize()</code></pre><p>To run this script you can do (e.g. 3 computing units)</p><pre><code class="language-none">mpirun -n 3 julia generalcase.jl</code></pre><footer><hr/><a class="previous" href="scanning.html"><span class="direction">Previous</span><span class="title">Scanning strategy</span></a></footer></article></body></html>
