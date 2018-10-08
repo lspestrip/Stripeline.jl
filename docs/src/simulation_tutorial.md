@@ -31,7 +31,7 @@ First of all, you should import the following packages:
 
 ```
 import Healpix
-imprt Random
+import Random
 import CorrNoise
 import Stripeline
 const Sl = Stripeline
