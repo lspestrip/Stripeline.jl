@@ -175,7 +175,7 @@ The output of the destriper are:
 
 mapfile = Healpix.Map{Float64,Healpix.RingOrder}(NSIDE)
 mapfile.pixels = destr_map
-Healpix.saveToFITS(mapfile, "!results/destriped_map.fits", typechar = "D")
+Healpix.saveToFITS(mapfile, "destriped_map.fits", typechar = "D")
 ```
 
 To run this script you can do:
@@ -235,13 +235,13 @@ fknee_hz = 0.01
 3. you should add the computation of the total number of samples per polarimeter and total number of baselines for polarimeter, which we will need later.
 
 ```
-samples_per_pol = total_time*fsamp_hz 
-baselines_per_pol = Int64(total_time/baseline_length_s)
-
 total_time = days_of_observation * 24 * 3600
 tsys_k = tnoise_k + tatm_k + ttel_k + tcmb_k
 τ_s = 1 / fsamp_hz
 σ_k = (tsys_k / sqrt(β_hz * τ_s))
+
+samples_per_pol = total_time*fsamp_hz 
+baselines_per_pol = Int64(total_time/baseline_length_s)
 ```
 
 4. nothing changes.
@@ -291,8 +291,8 @@ this_rank_chunk = chunks[rank+1]
 #Generate sky tod
 
 pix_idx = Int64[]
-pix_idx_planck = Int64[]
-skytod_Q = Float64[]
+pix_idx_inputmap = Int64[]
+sky_tod = Float64[]
 
 
 for i in 1:length(this_rank_chunk)   #loop on detectors
@@ -301,17 +301,17 @@ for i in 1:length(this_rank_chunk)   #loop on detectors
 
     times = first_time[i]:τ_s:last_time[i]
 
-    ltimes= length(times)
+ 
     (dirs, ψ) = Sl.genpointings([0, 0, 1], times; latitude_deg=28.29) do time_s
         return (0.0, deg2rad(20.0), Sl.timetorotang(time_s, 1))
     end
 
-    partial_pix_idx_CMB = Healpix.ang2pixRing.(Ref(CMB_map_resol), dirs[:, 1], dirs[:, 2])
+    partial_pix_idx_inputmap = Healpix.ang2pixRing.(Ref(inputmap_resol), dirs[:, 1], dirs[:, 2])
     partial_pix_idx = Healpix.ang2pixRing.(Ref(resol), dirs[:, 1], dirs[:, 2])
 
     #build the sky tod
-    partial_skytod_Q = CMB_map.pixels[partial_pix_idx_CMB]
-    global skytod_Q = append!(skytod_Q, partial_skytod_Q)
+    partial_sky_tod = inputmap.pixels[partial_pix_idx_CMB]
+    global sky_tod = append!(sky_tod, partial_skytod_Q)
     global pix_idx = append!(pix_idx, partial_pix_idx)
 end
 
@@ -322,7 +322,7 @@ end
 ```
 #Generate noise
 
-noise = Sl.generate_noise_mpi(chunks, baselines_per_process, baseline_length_s, fsamp_hz, σ_k, fknee_hz, rank, comm)
+noise_tod = Sl.generate_noise_mpi(chunks, baselines_per_process, baseline_length_s, fsamp_hz, σ_k, fknee_hz, rank, comm)
 ```
 
 7. nothing changes.
@@ -349,7 +349,7 @@ baseline_len = repeat([baseline_length_s*fsamp_hz], baselines_per_process[rank+1
 if(rank==0)
     mapfile = Healpix.Map{Float64,Healpix.RingOrder}(NSIDE)
     mapfile.pixels = destr_map
-    Healpix.saveToFITS(mapfile, "!results/destriped_map.fits", typechar = "D")
+    Healpix.saveToFITS(mapfile, "destriped_map.fits", typechar = "D")
 end
 ```
 
