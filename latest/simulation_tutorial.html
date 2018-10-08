@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Simulation tutorial · Stripeline.jl</title><link href="https://cdnjs.cloudflare.com/ajax/libs/normalize/4.2.0/normalize.min.css" rel="stylesheet" type="text/css"/><link href="https://fonts.googleapis.com/css?family=Lato|Roboto+Mono" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.2.0/require.min.js" data-main="assets/documenter.js"></script><script src="siteinfo.js"></script><script src="../versions.js"></script><link href="assets/documenter.css" rel="stylesheet" type="text/css"/></head><body><nav class="toc"><h1>Stripeline.jl</h1><select id="version-selector" onChange="window.location.href=this.value" style="visibility: hidden"></select><form class="search" id="search-form" action="search.html"><input id="search-query" name="q" type="text" placeholder="Search docs"/></form><ul><li><a class="toctext" href="index.html">Introduction</a></li><li><a class="toctext" href="instrumentdb.html">Instrument database</a></li><li><a class="toctext" href="scanning.html">Scanning strategy</a></li><li class="current"><a class="toctext" href="simulation_tutorial.html">Simulation tutorial</a><ul class="internal"><li><a class="toctext" href="#.-Simple-Case:-small-TOD-1">1. Simple Case: small TOD</a></li></ul></li></ul></nav><article id="docs"><header><nav><ul><li><a href="simulation_tutorial.html">Simulation tutorial</a></li></ul><a class="edit-page" href="https://github.com/lspestrip/Stripeline.jl/blob/master/docs/src/simulation_tutorial.md"><span class="fa"></span> Edit on GitHub</a></nav><hr/><div id="topbar"><span>Simulation tutorial</span><a class="fa fa-bars" href="#"></a></div></header><h1><a class="nav-anchor" id="Simulation-tutorial-1" href="#Simulation-tutorial-1">Simulation tutorial</a></h1><p>This aim of this tutorial is to describe how you can use the functions of Stripeline repository to perform a complete simulation of the LSPE/STRIP experiment. </p><p>So far, the simulation includes:</p><ul><li><p>simulation of the telescope scanning the sky</p></li><li><p>simulation of noise (white and 1/f)</p></li><li><p>production of a tod </p></li><li><p>production of a map by using the destriping technique</p></li></ul><p>Two examples will be presented: </p><ol><li><p>a simple case, in which we produce and analyze a very small TOD (1 day observation)</p></li><li><p>a more general and realistic case, suitable also for the production of large TODs.</p></li></ol><p>In this case it will be necessary to use MPI functions.</p><h2><a class="nav-anchor" id=".-Simple-Case:-small-TOD-1" href="#.-Simple-Case:-small-TOD-1">1. Simple Case: small TOD</a></h2><p>First of all, you should import the following packages:</p><pre><code class="language-none">import Healpix
+imprt Random
+import CorrNoise
+import Stripeline
+const Sl = Stripeline
+using FITSIO
+</code></pre><p>In this simple case we can avoid using MPI, but we need the following line: </p><pre><code class="language-none">comm = missing
+</code></pre><p>since some of the functions we will use (e.g. the <code>destripe</code> function) require the MPI communicator as input parameter. </p><p>Then, you can start by setting the simulation parameters:</p><ul><li><p>the number of days of observation</p></li><li><p>the number of polarimeters to simulate</p></li><li><p>the sampling frequency (Hz)</p></li><li><p>the length of 1/f baselines (s) as input for the destriper</p></li><li><p>the NSIDE you prefer for your output map</p></li><li><p>the temperature of the sky signal (K)</p></li><li><p>the temperature of the atmosphere (K)</p></li><li><p>the temperature of the telescope (K)</p></li><li><p>the noise temperature of the polarimeters (K)</p></li><li><p>the knee frequency of the polarimeters (Hz)</p></li><li><p>the bandwidth of the polarimeters (Hz)</p></li></ul><p>N.B. In the current version of the simulation we consider all polarimeters identical in properties.</p><pre><code class="language-none">#Simulation parameters
+
+days_of_observation = 1
+num_of_polarimeters = 1
+baseline_length_s = 10  
+fsamp_hz = 40
+NSIDE = 256
+
+tcmb_k = 3
+tatm_k = 15
+ttel_k = 3
+tnoise_k = 35
+fknee_hz = 0.01
+β_hz = 7e9
+</code></pre><p>At this point, you can compute some parameters we will need later: the total observation time (in s), the integration time, the total system temperature and the receiver sensitivity. </p><pre><code class="language-none">total_time = days_of_observation * 24 * 3600
+tsys_k = tnoise_k + tatm_k + ttel_k + tcmb_k
+τ_s = 1 / fsamp_hz
+σ_k = (tsys_k / sqrt(β_hz * τ_s))</code></pre><p>Open now the input map, that is to say the sky you want to scan with your instrument.  You can find two example input maps (with two different resolutions) here: https://github.com/lspestrip/Stripeline.jl/tree/master/test/testfiles.</p><p>Those maps have been produced with <a href="https://github.com/bthorne93/PySM_public">PySM</a> and are specific for the STRIP case: they are 43 GHz maps of polarized emission only (cmb, synchrotron and dust). If you want to produce your own input map, you can use this python <a href="https://github.com/silviacaprioli/PySMforSTRIP/blob/master/PySMmap_production.py">script</a>. </p><pre><code class="language-none">inputmap = Healpix.readMapFromFITS(raw&quot;PySM_inputmap_nside256.fits&quot;, 2 , Float64)
+inputmap_resol = inputmap.resolution
+
+resol = Healpix.Resolution(NSIDE) #desired resolution for output map
+num_of_pixels = resol.numOfPixels</code></pre><p>You can now scan the input map according to your scanning strategy, thus producing the pure signal &quot;sky TOD&quot;.</p><p>In this case we use nominal scanning strategy for STRIP (Tenerife latitude, 20 degrees of elevation angle, 1 rpm)</p><pre><code class="language-none">#Generate sky tod
+
+times = 0:τ_s: (total_time-τ_s)
+(dirs, ψ) = Sl.genpointings([0, 0, 1], times; latitude_deg=28.29) do time_s
+    return (0.0, deg2rad(20.0), Sl.timetorotang(time_s, 1))
+end
+
+pix_idx_inputmap = Healpix.ang2pixRing.(Ref(inputmap_resol), dirs[:, 1], dirs[:, 2])
+pix_idx = Healpix.ang2pixRing.(Ref(resol), dirs[:, 1], dirs[:, 2])
+
+sky_tod = inputmap.pixels[pix_idx_inputmap]</code></pre><p>Now you should add noise to your sky tod. </p><p>We simulate both white noise and 1/f noise, in accordance with the noise properties of the polarimeters specified at the beginning of the script.</p><p>To do that, we use the functions of the module <a href="https://github.com/ziotom78/CorrNoise.jl">CorrNoise.jl</a>.</p><pre><code class="language-none">#Generate Noise
+
+seed = rand(1:1000)
+rng = CorrNoise.OofRNG(CorrNoise.GaussRNG(Random.MersenneTwister(seed)), -1, 1.15e-5, fknee_hz, fsamp_hz);
+noise_tod = [CorrNoise.randoof(rng) * σ_k for i in 1:(fsamp_hz * total_time)]
+</code></pre><p>and, finally, you can get the final, realistic TOD just by doing:</p><pre><code class="language-none">tod = sky_tod + noise_tod</code></pre><p>Once simulated your data, you can now perform data analysis.</p><p>You can call the destriper and clean the map from 1/f noise.</p><p>(N.B. the destriper needs in input an array containing the lengths of all 1/f baselines. For the sake of semplicity, we consider baselines of equal length).</p><pre><code class="language-none">#Run the destriper
+
+baseline_len = repeat([baseline_length_s*fsamp_hz],Int64(total_time/baseline_length_s))
+
+(destr_map, a) = Sl.destripe(pix_idx, tod, num_of_pixels, baseline_len, comm)</code></pre><p>The output of the destriper are:</p><ul><li><code>destr_map</code> : the destriped map, cleaned from 1/f noise.</li><li><code>a</code> : the baselines array.</li></ul><p>If you wish, you can finally save the destriped map in a .fits file: </p><pre><code class="language-none">#save file 
+
+mapfile = Healpix.Map{Float64,Healpix.RingOrder}(NSIDE)
+mapfile.pixels = destr_map
+Healpix.saveToFITS(mapfile, &quot;!results/destriped_map.fits&quot;, typechar = &quot;D&quot;)</code></pre><footer><hr/><a class="previous" href="scanning.html"><span class="direction">Previous</span><span class="title">Scanning strategy</span></a></footer></article></body></html>
