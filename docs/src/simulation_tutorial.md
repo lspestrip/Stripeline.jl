@@ -5,7 +5,7 @@ end
 ```
 # Simulation tutorial
 
-This aim of this tutorial is to describe how you can use the functions of this repository to perform a complete simulation of the LSPE/STRIP experiment. 
+This aim of this tutorial is to describe how you can use the functions of Stripeline repository to perform a complete simulation of the LSPE/STRIP experiment. 
 
 So far, the simulation includes:
 
@@ -31,6 +31,7 @@ First of all, you should import the following packages:
 
 ```
 import Healpix
+imprt Random
 import CorrNoise
 import Stripeline
 const Sl = Stripeline
@@ -42,7 +43,7 @@ In this simple case we can avoid using MPI, but we need the following line:
 comm = missing
 
 ```
-since some of the functions require the MPI communicator as input parameter. 
+since some of the functions we will use (e.g. the `destripe` function) require the MPI communicator as input parameter. 
 
 
 
@@ -82,7 +83,7 @@ fsamp_hz = 40
 NSIDE = 256
 
 tcmb_k = 3
-tatm_k = 9
+tatm_k = 15
 ttel_k = 3
 tnoise_k = 35
 fknee_hz = 0.01
@@ -102,8 +103,8 @@ tsys_k = tnoise_k + tatm_k + ttel_k + tcmb_k
 Open now the input map, that is to say the sky you want to scan with your instrument. 
 You can find two example input maps (with two different resolutions) here: https://github.com/lspestrip/Stripeline.jl/tree/master/test/testfiles.
 
-Those maps have been produced with PySM and are specific for the STRIP case: they are 43 GHz maps of polarized emission only (cmb, synchrotron and dust).
-If you want to produce your own input map, you can use this script: https://github.com/silviacaprioli/PySMforSTRIP/blob/master/PySMmap_production.py.
+Those maps have been produced with [PySM](https://github.com/bthorne93/PySM_public) and are specific for the STRIP case: they are 43 GHz maps of polarized emission only (cmb, synchrotron and dust).
+If you want to produce your own input map, you can use this python [script](https://github.com/silviacaprioli/PySMforSTRIP/blob/master/PySMmap_production.py). 
 
 ```
 inputmap = Healpix.readMapFromFITS(raw"PySM_inputmap_nside256.fits", 2 , Float64)
@@ -117,7 +118,7 @@ You can now scan the input map according to your scanning strategy, thus produci
 In this case we use nominal scanning strategy for STRIP (Tenerife latitude, 20 degrees of elevation angle, 1 rpm)
 
 ```
-#GENERATE sky tod
+#Generate sky tod
 
 times = 0:τ_s: (total_time-τ_s)
 (dirs, ψ) = Sl.genpointings([0, 0, 1], times; latitude_deg=28.29) do time_s
@@ -132,11 +133,12 @@ sky_tod = inputmap.pixels[pix_idx_inputmap]
 
 Now you should add noise to your sky tod. 
 
-We simulate both white noise and 1/f noise, in accordance with the noise properties of the polarimeters specified at the beginning of the script
+We simulate both white noise and 1/f noise, in accordance with the noise properties of the polarimeters specified at the beginning of the script.
 
-To do that, we use the functions of the module CorrNoise.jl (https://github.com/ziotom78/CorrNoise.jl).
+To do that, we use the functions of the module [CorrNoise.jl](https://github.com/ziotom78/CorrNoise.jl).
 ```
-#GENERATE NOISE
+#Generate Noise
+
 seed = rand(1:1000)
 rng = CorrNoise.OofRNG(CorrNoise.GaussRNG(Random.MersenneTwister(seed)), -1, 1.15e-5, fknee_hz, fsamp_hz);
 noise_tod = [CorrNoise.randoof(rng) * σ_k for i in 1:(fsamp_hz * total_time)]
@@ -151,9 +153,11 @@ Once simulated your data, you can now perform data analysis.
 You can call the destriper and clean the map from 1/f noise.
 
 (N.B. the destriper needs in input an array containing the lengths of all 1/f baselines.
-For the moment, we consider for simplicity baselines of equal length.)
+For the sake of semplicity, we consider baselines of equal length).
 
 ```
+#Run the destriper
+
 baseline_len = repeat([baseline_length_s*fsamp_hz],Int64(total_time/baseline_length_s))
 
 (destr_map, a) = Sl.destripe(pix_idx, tod, num_of_pixels, baseline_len, comm)
@@ -166,7 +170,9 @@ The output of the destriper are:
 
 If you wish, you can finally save the destriped map in a .fits file: 
 ```
+#save file 
+
 mapfile = Healpix.Map{Float64,Healpix.RingOrder}(NSIDE)
-    mapfile.pixels = destr_map
-    Healpix.saveToFITS(mapfile, "!results/destriped_map.fits", typechar = "D")
+mapfile.pixels = destr_map
+Healpix.saveToFITS(mapfile, "!results/destriped_map.fits", typechar = "D")
 ```
