@@ -96,7 +96,7 @@ tsys_k = tnoise_k + tatm_k + ttel_k + tcmb_k
 ```
 
 4. Open now the input map, that is to say the sky you want to scan with your instrument. 
-You can find two example input maps (with two different resolutions) here: https://github.com/lspestrip/Stripeline.jl/tree/master/test/testfiles.
+You can find two example input maps (with two different resolutions) [here](https://github.com/lspestrip/Stripeline.jl/tree/master/test/testfiles).
 
 Those maps have been produced with [PySM](https://github.com/bthorne93/PySM_public) and are specific for the STRIP case: they are 43 GHz maps of polarized emission only (cmb, synchrotron and dust).
 If you want to produce your own input map, you can use this python [script](https://github.com/silviacaprioli/PySMforSTRIP/blob/master/PySMmap_production.py). 
