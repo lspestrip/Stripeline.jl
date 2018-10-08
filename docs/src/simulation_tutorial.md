@@ -177,7 +177,6 @@ mapfile = Healpix.Map{Float64,Healpix.RingOrder}(NSIDE)
 mapfile.pixels = destr_map
 Healpix.saveToFITS(mapfile, "!results/destriped_map.fits", typechar = "D")
 ```
-<<<<<<< HEAD
 
 To run this script you can do:
 ```
@@ -189,13 +188,13 @@ julia simplecase.jl
 ## 2. General Case
 
 In realistic cases, TODs are really huge (millions or billions of samples!).
-This means a lot of memory occupation.
+This means a lot of memory allocation.
 
 STRIP case:
 
 49 polarimeters * 2 years * 365 days * 86400 s * 100 Hz ≈ 300 billion samples
 
-which means about 2 Terabytes of memory occupation!
+which means about 2 Terabytes of memory allocation!
 
 It is much more a single computer can support. It is thus compulsory to split the TOD simulation and analysis between different computing units, by using MPI.
 
@@ -233,7 +232,7 @@ fknee_hz = 0.01
 
 ```
 
-3. We should add the computation of the total number of samples per polarimeter and total number of baselines for polarimeter, which we will need later.
+3. you should add the computation of the total number of samples per polarimeter and total number of baselines for polarimeter, which we will need later.
 
 ```
 samples_per_pol = total_time*fsamp_hz 
@@ -331,7 +330,8 @@ noise = Sl.generate_noise_mpi(chunks, baselines_per_process, baseline_length_s, 
 tod = sky_tod + noise_tod
 ```
 
-8. nothing changes apart from `baseline_len` definition (since now different units can have a different amount of baselines to compute)
+8. nothing changes apart from `baseline_len` definition (since now different units can have a different amount of baselines to compute).
+
 The `destripe` function already takes into account the presence of multiple computing units: each partial TOD is loaded separately and partial maps are build, but then MPI functions are called to make different ranks "talk together" in order to obtain in output a single global destriped map.
 
 ```
@@ -341,7 +341,7 @@ baseline_len = repeat([baseline_length_s*fsamp_hz], baselines_per_process[rank+1
 (destr_map, a) = Sl.destripe(pix_idx, tod, num_of_pixels, baseline_len, comm)
 ```
 
-9. If you want to save the destriped map in a .fits file, you should make just one rank do that- 
+9. If you want to save the destriped map in a .fits file, you should make just one rank do that. 
 
 ```
 #save file 
@@ -353,7 +353,7 @@ if(rank==0)
 end
 ```
 
-10. you should end your script by terminating the calling to MPI environment.
+10. Finally, end your script by terminating the calling to MPI environment.
 
 ```
 MPI.Finalize()
@@ -363,6 +363,3 @@ To run this script you can do (e.g. 3 computing units)
 ```
 mpirun -n 3 julia generalcase.jl
 ```
-
-=======
->>>>>>> bcb5ddeacb482f26f17d9f8b642719999d58f234
