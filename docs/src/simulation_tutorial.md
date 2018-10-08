@@ -133,7 +133,11 @@ We simulate both white noise and 1/f noise, in accordance with the noise propert
 
 To do that, we use the functions of the module [CorrNoise.jl](https://github.com/ziotom78/CorrNoise.jl).
 ```
+<<<<<<< HEAD
 #Generate noise
+=======
+#Generate Noise
+>>>>>>> bcb5ddeacb482f26f17d9f8b642719999d58f234
 
 seed = rand(1:1000)
 rng = CorrNoise.OofRNG(CorrNoise.GaussRNG(Random.MersenneTwister(seed)), -1, 1.15e-5, fknee_hz, fsamp_hz);
@@ -173,6 +177,7 @@ mapfile = Healpix.Map{Float64,Healpix.RingOrder}(NSIDE)
 mapfile.pixels = destr_map
 Healpix.saveToFITS(mapfile, "!results/destriped_map.fits", typechar = "D")
 ```
+<<<<<<< HEAD
 
 To run this script you can do:
 ```
@@ -359,3 +364,5 @@ To run this script you can do (e.g. 3 computing units)
 mpirun -n 3 julia generalcase.jl
 ```
 
+=======
+>>>>>>> bcb5ddeacb482f26f17d9f8b642719999d58f234
