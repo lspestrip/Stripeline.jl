@@ -306,8 +306,8 @@ for i in 1:length(this_rank_chunk)   #loop on detectors
     partial_pix_idx = Healpix.ang2pixRing.(Ref(resol), dirs[:, 1], dirs[:, 2])
 
     #build the sky tod
-    partial_sky_tod = inputmap.pixels[partial_pix_idx_CMB]
-    global sky_tod = append!(sky_tod, partial_skytod_Q)
+    partial_sky_tod = inputmap.pixels[partial_pix_idx_inputmap]
+    global sky_tod = append!(sky_tod, partial_sky_tod)
     global pix_idx = append!(pix_idx, partial_pix_idx)
 end
 
