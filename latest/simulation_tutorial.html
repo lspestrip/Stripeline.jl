@@ -37,11 +37,7 @@ end
 pix_idx_inputmap = Healpix.ang2pixRing.(Ref(inputmap_resol), dirs[:, 1], dirs[:, 2])
 pix_idx = Healpix.ang2pixRing.(Ref(resol), dirs[:, 1], dirs[:, 2])
 
-sky_tod = inputmap.pixels[pix_idx_inputmap]</code></pre><ol><li>Now you should add noise to your sky tod. </li></ol><p>We simulate both white noise and 1/f noise, in accordance with the noise properties of the polarimeters specified at the beginning of the script.</p><p>To do that, we use the functions of the module <a href="https://github.com/ziotom78/CorrNoise.jl">CorrNoise.jl</a>.</p><pre><code class="language-none">&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD
-#Generate noise
-=======
-#Generate Noise
-&gt;&gt;&gt;&gt;&gt;&gt;&gt; bcb5ddeacb482f26f17d9f8b642719999d58f234
+sky_tod = inputmap.pixels[pix_idx_inputmap]</code></pre><ol><li>Now you should add noise to your sky tod. </li></ol><p>We simulate both white noise and 1/f noise, in accordance with the noise properties of the polarimeters specified at the beginning of the script.</p><p>To do that, we use the functions of the module <a href="https://github.com/ziotom78/CorrNoise.jl">CorrNoise.jl</a>.</p><pre><code class="language-none">#Generate noise
 
 seed = rand(1:1000)
 rng = CorrNoise.OofRNG(CorrNoise.GaussRNG(Random.MersenneTwister(seed)), -1, 1.15e-5, fknee_hz, fsamp_hz);
