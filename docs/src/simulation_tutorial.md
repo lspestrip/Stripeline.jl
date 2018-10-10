@@ -166,12 +166,13 @@ The output of the destriper are:
 - `a` : the baselines array.
 
 
-9. If you wish, you can finally save the destriped map in a .fits file: 
+9. If you wish, you can finally convert the destriped map (Array{Float64,1}) into a HEALPix map and save it in a .fits file: 
 ```
 #save file 
 
 mapfile = Healpix.Map{Float64,Healpix.RingOrder}(NSIDE)
 mapfile.pixels = destr_map
+
 Healpix.saveToFITS(mapfile, "destriped_map.fits", typechar = "D")
 ```
 
