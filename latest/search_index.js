@@ -197,7 +197,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Simulation tutorial",
     "title": "Simulation tutorial",
     "category": "section",
-    "text": "This aim of this tutorial is to describe how you can use the functions of Stripeline repository to perform a complete simulation of the LSPE/STRIP experiment. So far, the simulation includes:simulation of the telescope scanning the sky\nsimulation of noise (white and 1/f)\nproduction of a tod \nproduction of a map by using the destriping techniqueTwo examples will be presented: a simple case, in which we produce and analyze a very small TOD (1 day observation)\na more general and realistic case, suitable also for the production of large TODs.In this case it will be necessary to use MPI functions."
+    "text": "This aim of this tutorial is to describe how you can use the functions of Stripeline repository to perform a complete simulation of the LSPE/STRIP experiment. So far, the simulation includes:simulation of the telescope scanning the sky\nsimulation of noise (white and 1/f)\nproduction of a tod \nproduction of a map by using the destriping techniqueTwo examples will be presented: a simple case, in which we produce and analyze a very small TOD (1 day observation). You should refer to this case if you want to use a Jupyter Notebook to perform preliminary studies (since you cannot use MPI in a notebook).\na more general and realistic case, suitable also for the production of large TODs.In this case it will be necessary to use MPI functions."
 },
 
 {
