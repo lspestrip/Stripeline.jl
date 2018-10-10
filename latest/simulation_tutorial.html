@@ -46,10 +46,11 @@ noise_tod = [CorrNoise.randoof(rng) * σ_k for i in 1:(fsamp_hz * total_time)]
 
 baseline_len = repeat([baseline_length_s*fsamp_hz],Int64(total_time/baseline_length_s))
 
-(destr_map, a) = Sl.destripe(pix_idx, tod, num_of_pixels, baseline_len, comm)</code></pre><p>The output of the destriper are:</p><ul><li><code>destr_map</code> : the destriped map, cleaned from 1/f noise.</li><li><code>a</code> : the baselines array.</li></ul><ol><li>If you wish, you can finally save the destriped map in a .fits file: </li></ol><pre><code class="language-none">#save file 
+(destr_map, a) = Sl.destripe(pix_idx, tod, num_of_pixels, baseline_len, comm)</code></pre><p>The output of the destriper are:</p><ul><li><code>destr_map</code> : the destriped map, cleaned from 1/f noise.</li><li><code>a</code> : the baselines array.</li></ul><ol><li>If you wish, you can finally convert the destriped map (Array{Float64,1}) into a HEALPix map and save it in a .fits file: </li></ol><pre><code class="language-none">#save file 
 
 mapfile = Healpix.Map{Float64,Healpix.RingOrder}(NSIDE)
 mapfile.pixels = destr_map
+
 Healpix.saveToFITS(mapfile, &quot;destriped_map.fits&quot;, typechar = &quot;D&quot;)</code></pre><p>To run this script you can do:</p><pre><code class="language-none">julia simplecase.jl</code></pre><h2><a class="nav-anchor" id=".-General-Case-1" href="#.-General-Case-1">2. General Case</a></h2><p>In realistic cases, TODs are really huge (millions or billions of samples!). This means a lot of memory allocation.</p><p>STRIP case:</p><p>49 polarimeters * 2 years * 365 days * 86400 s * 100 Hz ≈ 300 billion samples</p><p>which means about 2 Terabytes of memory allocation!</p><p>It is much more a single computer can support. It is thus compulsory to split the TOD simulation and analysis between different computing units, by using MPI.</p><p>Let&#39;s go through all the points of the simulation and see how things change:</p><ol><li>You have to add the MPI package to your dependencies. </li></ol><pre><code class="language-none">import MPI
 
 import Healpix
