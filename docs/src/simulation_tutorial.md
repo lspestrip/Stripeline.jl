@@ -14,7 +14,8 @@ So far, the simulation includes:
 
 Two examples will be presented: 
 
-1. a simple case, in which we produce and analyze a very small TOD (1 day observation)
+1. a simple case, in which we produce and analyze a very small TOD (1 day observation).
+   You should refer to this case if you want to use a Jupyter Notebook to perform preliminary studies (since you cannot use MPI in a notebook).
 
 2. a more general and realistic case, suitable also for the production of large TODs.
 In this case it will be necessary to use MPI functions.
