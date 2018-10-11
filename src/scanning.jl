@@ -102,9 +102,11 @@ end
 
 
 """
-    genskypointings(t_start, t_stop, dirs; latitude_deg=0.0, longitude_deg=0.0, height_m=0.0)
+    genastropyskypointings(t_start, t_stop, dirs; latitude_deg=0.0, longitude_deg=0.0, 
+                           height_m=0.0)
 
-Project a set of pointings in the sky.  
+Project a set of pointings in the sky exploiting `astropy`. Very slow but mostly 
+accurate.  
 
 The parameter `t_start` and `t_start` must be two strings which tells the exact 
 UTC date and time of the observation in "iso" format. The parameter `dirs` must 
@@ -124,12 +126,12 @@ Example:
 genskypointings("2019-01-01 00:00:00", "2020-01-25 14:52:10.05", dirs)
 `````
 """
-function genskypointings(t_start,
-                         t_stop,
-                         dirs;
-                         latitude_deg=0.0,
-                         longitude_deg=0.0,
-                         height_m=0.0)
+function genastropyskypointings(t_start,
+                                t_stop,
+                                dirs;
+                                latitude_deg=0.0,
+                                longitude_deg=0.0,
+                                height_m=0.0)
 
     t_start_s = astropy_time[:Time](t_start, format="iso", scale="utc")
     t_stop_s = astropy_time[:Time](t_stop, format="iso", scale="utc")
@@ -159,3 +161,72 @@ function genskypointings(t_start,
 
     skydirs
 end
+
+
+"""
+    genskypointings(t_start, t_stop, dirs; latitude_deg=0.0, longitude_deg=0.0, height_m=0.0)
+
+Project a set of pointings in the sky.  
+
+The parameter `t_start` and `t_start` must be two strings which tells the exact 
+UTC date and time of the observation in "iso" format. The parameter `dirs` must 
+be a N×2 array containing the observed directions expressed in colatitude and 
+the longitude. The keywords `latitude_deg`, `longitude_deg` and `height_m` should
+contain the latitude (in degrees, N is positive), the longitude (in degrees, 
+counterclockwise is positive) and the height (in meters)  of the location where 
+the observation is made.
+
+Return a 2-tuple containing the observed directions projected in sky coordinates 
+(a N×2 array containing the Right ascension and the Declination, in radians) at 
+each time step. 
+Directions are expressed in ICRS coordinates.
+
+Example:
+    `````julia
+genskypointings("2019-01-01 00:00:00", "2020-01-25 14:52:10.05", dirs)
+`````
+"""
+function genskypointings(t_start,
+                         t_stop,
+                         dirs;
+                         latitude_deg=0.0,
+                         longitude_deg=0.0,
+                         height_m=0.0)
+
+    t_start_s = astropy_time[:Time](t_start, format="iso", scale="utc")
+    t_stop_s = astropy_time[:Time](t_stop, format="iso", scale="utc")
+    
+    jd_range = range(t_start_s[:jd], stop=t_stop_s[:jd], length=size(dirs)[1])
+    loc = astropy_coordinates[:EarthLocation](lon=longitude_deg,
+                                              lat=latitude_deg,
+                                              height=height_m)
+
+    skydirs = Array{Float64}(undef, size(dirs))
+
+    for (idx, time_jd) = enumerate(jd_range)
+        Alt_rad = π/2 - dirs[idx, 1] 
+        Az_rad = 2π - dirs[idx, 2]
+
+        LST = astropy_time[:Time](time_jd, format="jd", location=loc)[:sidereal_time]("mean")[1]
+        Lat_rad = deg2rad(latitude_deg)
+        Dec = asin(sin(Alt_rad) * sin(Lat_rad) + cos(Alt_rad) * cos(Lat_rad) * cos(Az_rad))
+        HourAngle = acos((sin(Alt_rad) - sin(Dec) * sin(Lat_rad)) / (cos(Dec) * cos(Lat_rad)))
+        # h = atan(-cos(Alt_rad) * cos(Lat_rad) * sin(Az_rad) /
+        #          (sin(Alt_rad) - sin(Lat_rad) * sin(Dec)))
+        
+        if sin(Az_rad) < 0
+            h = rad2deg(HourAngle) / 15
+        else 
+            h = (360 - rad2deg(HourAngle)) / 15
+        end
+
+        Ra = LST - h
+        if Ra < 0 Ra += 24 end
+
+        skydirs[idx, 1] = deg2rad(360 * Ra / 24)
+        skydirs[idx, 2] = Dec
+    end
+
+    skydirs
+end
+
