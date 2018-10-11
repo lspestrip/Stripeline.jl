@@ -4,7 +4,7 @@ using StaticArrays
 using LinearAlgebra
 
 export TENERIFE_LATITUDE_DEG, TENERIFE_LONGITUDE_DEG, TENERIFE_HEIGHT_M
-export timetorotang, genpointings, genskypointings
+export timetorotang, genpointings, genskypointings, genastropyskypointings
 
 TENERIFE_LATITUDE_DEG = 28.3
 TENERIFE_LONGITUDE_DEG = -16.509722
@@ -105,7 +105,7 @@ end
     genastropyskypointings(t_start, t_stop, dirs; latitude_deg=0.0, longitude_deg=0.0, 
                            height_m=0.0)
 
-Project a set of pointings in the sky exploiting `astropy`. Very slow but mostly 
+Project a set of pointings in the sky exploiting `astropy`. Very slow but more 
 accurate.  
 
 The parameter `t_start` and `t_start` must be two strings which tells the exact 
@@ -200,7 +200,7 @@ function genskypointings(t_start,
     loc = astropy_coordinates[:EarthLocation](lon=longitude_deg,
                                               lat=latitude_deg,
                                               height=height_m)
-
+    
     skydirs = Array{Float64}(undef, size(dirs))
 
     for (idx, time_jd) = enumerate(jd_range)
@@ -211,8 +211,6 @@ function genskypointings(t_start,
         Lat_rad = deg2rad(latitude_deg)
         Dec = asin(sin(Alt_rad) * sin(Lat_rad) + cos(Alt_rad) * cos(Lat_rad) * cos(Az_rad))
         HourAngle = acos((sin(Alt_rad) - sin(Dec) * sin(Lat_rad)) / (cos(Dec) * cos(Lat_rad)))
-        # h = atan(-cos(Alt_rad) * cos(Lat_rad) * sin(Az_rad) /
-        #          (sin(Alt_rad) - sin(Lat_rad) * sin(Dec)))
         
         if sin(Az_rad) < 0
             h = rad2deg(HourAngle) / 15

@@ -16,30 +16,29 @@ crab_ra_astropy_rad = 1.4596726619436968
 crab_dec_astropy_rad = 0.3842255081802917 
 crab_position = sqrt(crab_ra_astropy_rad^2 + crab_dec_astropy_rad^2)
 
-astropyskydirs = genastropyskypointings(t_start,
+skydirs = genastropyskypointings(t_start,
                                         t_stop,
                                         dirs;
                                         latitude_deg=TENERIFE_LATITUDE_DEG,
                                         longitude_deg=TENERIFE_LONGITUDE_DEG,
                                         height_m=TENERIFE_HEIGHT_M)
-astropy_crab_position_skydirs = sqrt(astropyskydirs[1, 1]^2 +
-                                     astropyskydirs[1, 2]^2)
-
-skydirs = genskypointings(t_start,
-                          t_stop,
-                          dirs;
-                          latitude_deg=TENERIFE_LATITUDE_DEG,
-                          longitude_deg=TENERIFE_LONGITUDE_DEG,
-                          height_m=TENERIFE_HEIGHT_M)
 crab_position_skydirs = sqrt(skydirs[1, 1]^2 + skydirs[1, 2]^2)
-
-@test astropyskydirs[1, 1] ≈ crab_ra_astropy_rad atol = eps
-@test astropyskydirs[1, 2] ≈ crab_dec_astropy_rad atol = eps
-@test astropycrab_position_skydirs ≈ crab_position atol = eps
 
 @test skydirs[1, 1] ≈ crab_ra_astropy_rad atol = eps
 @test skydirs[1, 2] ≈ crab_dec_astropy_rad atol = eps
 @test crab_position_skydirs ≈ crab_position atol = eps
+
+# skydirs = genskypointings(t_start,
+#                           t_stop,
+#                           dirs;
+#                           latitude_deg=TENERIFE_LATITUDE_DEG,
+#                           longitude_deg=TENERIFE_LONGITUDE_DEG,
+#                           height_m=TENERIFE_HEIGHT_M)
+# crab_position_skydirs = sqrt(skydirs[1, 1]^2 + skydirs[1, 2]^2)
+
+# @test skydirs[1, 1] ≈ crab_ra_astropy_rad atol = eps
+# @test skydirs[1, 2] ≈ crab_dec_astropy_rad atol = eps
+# @test crab_position_skydirs ≈ crab_position atol = eps
 
 
 t_start = "2019-02-01 02:00:00"
@@ -53,12 +52,12 @@ crab_ra_astropy_rad = 1.4596726619436968
 crab_dec_astropy_rad = 0.3842255081802917 
 crab_position = sqrt(crab_ra_astropy_rad^2 + crab_dec_astropy_rad^2)
 
-skydirs = genskypointings(t_start,
-                          t_stop,
-                          dirs;
-                          latitude_deg=TENERIFE_LATITUDE_DEG,
-                          longitude_deg=TENERIFE_LONGITUDE_DEG,
-                          height_m=TENERIFE_HEIGHT_M)
+skydirs = genastropyskypointings(t_start,
+                                 t_stop,
+                                 dirs;
+                                 latitude_deg=TENERIFE_LATITUDE_DEG,
+                                 longitude_deg=TENERIFE_LONGITUDE_DEG,
+                                 height_m=TENERIFE_HEIGHT_M)
 crab_position_skydirs = sqrt.(skydirs[:, 1].^2 + skydirs[:, 2].^2)
 
 @test skydirs[1, 1] ≈ crab_ra_astropy_rad atol = eps
