@@ -102,8 +102,8 @@ end
 
 
 """
-    genastropyskypointings(t_start, t_stop, dirs; latitude_deg=0.0, longitude_deg=0.0, 
-                           height_m=0.0)
+    genastropyskypointings(t_start, t_stop, dirs; latitude_deg=0.0, 
+                           longitude_deg=0.0, height_m=0.0)
 
 Project a set of pointings in the sky exploiting `astropy`. Very slow but more 
 accurate.  
@@ -164,7 +164,8 @@ end
 
 
 """
-    genskypointings(t_start, t_stop, dirs; latitude_deg=0.0, longitude_deg=0.0, height_m=0.0)
+    genskypointings(t_start, t_stop, dirs; latitude_deg=0.0, longitude_deg=0.0, 
+                    height_m=0.0)
 
 Project a set of pointings in the sky.  
 
@@ -207,10 +208,13 @@ function genskypointings(t_start,
         Alt_rad = π/2 - dirs[idx, 1] 
         Az_rad = 2π - dirs[idx, 2]
 
-        LST = astropy_time[:Time](time_jd, format="jd", location=loc)[:sidereal_time]("mean")[1]
+        LST = astropy_time[:Time](time_jd, format="jd",
+                                  location=loc)[:sidereal_time]("mean")[1]
         Lat_rad = deg2rad(latitude_deg)
-        Dec = asin(sin(Alt_rad) * sin(Lat_rad) + cos(Alt_rad) * cos(Lat_rad) * cos(Az_rad))
-        HourAngle = acos((sin(Alt_rad) - sin(Dec) * sin(Lat_rad)) / (cos(Dec) * cos(Lat_rad)))
+        Dec = asin(sin(Alt_rad) * sin(Lat_rad) + cos(Alt_rad) * cos(Lat_rad) *
+                   cos(Az_rad))
+        HourAngle = acos((sin(Alt_rad) - sin(Dec) * sin(Lat_rad)) /
+                         (cos(Dec) * cos(Lat_rad)))
         
         if sin(Az_rad) < 0
             h = rad2deg(HourAngle) / 15
