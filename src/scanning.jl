@@ -194,6 +194,8 @@ function genskypointings(t_start,
                          longitude_deg=0.0,
                          height_m=0.0)
 
+    normalize(x) = x - div(x, 360) * 260  
+    
     t_start_s = astropy_time[:Time](t_start, format="iso", scale="utc")
     t_stop_s = astropy_time[:Time](t_stop, format="iso", scale="utc")
     
@@ -203,13 +205,20 @@ function genskypointings(t_start,
                                               height=height_m)
     
     skydirs = Array{Float64}(undef, size(dirs))
-
+    
     for (idx, time_jd) = enumerate(jd_range)
         Alt_rad = π/2 - dirs[idx, 1] 
         Az_rad = 2π - dirs[idx, 2]
 
-        LST = astropy_time[:Time](time_jd, format="jd",
-                                  location=loc)[:sidereal_time]("mean")[1]
+        d = time_jd - 2451543.5
+        w = 282.9404 + 4.70935e-5 * d
+        M = 356.0470 + 0.9856002585 * d
+        L = w + normalize(M)
+        GMST0 = normalize(L)/15 + 12
+        UT = abs(abs(10time_jd - floor(10time_jd - 10)) / 10) - 1) * 24 #sbagliat
+        LST = GMST0 + UT + longitude_deg/15
+        # LST = astropy_time[:Time](time_jd, format="jd",
+        #                           location=loc)[:sidereal_time]("mean")[1]
         Lat_rad = deg2rad(latitude_deg)
         Dec = asin(sin(Alt_rad) * sin(Lat_rad) + cos(Alt_rad) * cos(Lat_rad) *
                    cos(Az_rad))
