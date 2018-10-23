@@ -24,8 +24,8 @@ skydirs = genastropyskypointings(t_start,
                                  height_m=TENERIFE_HEIGHT_M)
 crab_position_skydirs = sqrt(skydirs[1, 1]^2 + skydirs[1, 2]^2)
 
-@test skydirs[1, 1] ≈ crab_ra_astropy_rad atol = eps
-@test skydirs[1, 2] ≈ crab_dec_astropy_rad atol = eps
+@test skydirs[1, 1] ≈ crab_dec_astropy_rad atol = eps
+@test skydirs[1, 2] ≈ crab_ra_astropy_rad atol = eps
 @test crab_position_skydirs ≈ crab_position atol = eps
 
 # skydirs = genskypointings(t_start,
@@ -60,12 +60,12 @@ skydirs = genastropyskypointings(t_start,
                                  height_m=TENERIFE_HEIGHT_M)
 crab_position_skydirs = sqrt.(skydirs[:, 1].^2 + skydirs[:, 2].^2)
 
-@test skydirs[1, 1] ≈ crab_ra_astropy_rad atol = eps
-@test skydirs[1, 2] ≈ crab_dec_astropy_rad atol = eps
-@test skydirs[2, 1] ≈ crab_ra_astropy_rad atol = eps
-@test skydirs[2, 2] ≈ crab_dec_astropy_rad atol = eps
-@test skydirs[3, 1] ≈ crab_ra_astropy_rad atol = eps
-@test skydirs[3, 2] ≈ crab_dec_astropy_rad atol = eps
+@test skydirs[1, 1] ≈ crab_dec_astropy_rad atol = eps
+@test skydirs[1, 2] ≈ crab_ra_astropy_rad atol = eps
+@test skydirs[2, 1] ≈ crab_dec_astropy_rad atol = eps
+@test skydirs[2, 2] ≈ crab_ra_astropy_rad atol = eps
+@test skydirs[3, 1] ≈ crab_dec_astropy_rad atol = eps
+@test skydirs[3, 2] ≈ crab_ra_astropy_rad atol = eps
 @test crab_position_skydirs[1] ≈ crab_position atol = eps
 @test crab_position_skydirs[2] ≈ crab_position atol = eps
 @test crab_position_skydirs[3] ≈ crab_position atol = eps

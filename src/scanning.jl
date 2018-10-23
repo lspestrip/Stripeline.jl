@@ -153,9 +153,9 @@ function genastropyskypointings(t_start,
             obstime=astropy_time[:Time](time_jd, format="jd"),
             frame="altaz",
             location=loc)
-        
-        skydirs[idx, 1] = deg2rad(skycoord[:transform_to]("icrs")[:ra][1]) 
-        skydirs[idx, 2] = deg2rad(skycoord[:transform_to]("icrs")[:dec][1])
+
+        skydirs[idx, 1] = deg2rad(skycoord[:transform_to]("icrs")[:dec][1])
+        skydirs[idx, 2] = deg2rad(skycoord[:transform_to]("icrs")[:ra][1]) 
 
     end
 
@@ -225,8 +225,8 @@ function genskypointings(t_start,
         Ra = LST - h
         if Ra < 0 Ra += 24 end
 
-        skydirs[idx, 1] = deg2rad(360 * Ra / 24)
-        skydirs[idx, 2] = Dec
+        skydirs[idx, 1] = Dec
+        skydirs[idx, 2] = deg2rad(360 * Ra / 24)
     end
 
     skydirs
