@@ -2,6 +2,7 @@ using Quaternions
 import Healpix
 using StaticArrays
 using LinearAlgebra
+using AstroLib
 
 export TENERIFE_LATITUDE_DEG, TENERIFE_LONGITUDE_DEG, TENERIFE_HEIGHT_M
 export timetorotang, genpointings, genskypointings, genastropyskypointings
@@ -102,89 +103,29 @@ end
 
 
 """
-    genastropyskypointings(t_start, t_stop, dirs; latitude_deg=0.0, 
-                           longitude_deg=0.0, height_m=0.0)
-
-Project a set of pointings in the sky exploiting `astropy`. Very slow but more 
-accurate.  
-
-The parameter `t_start` and `t_start` must be two strings which tells the exact 
-UTC date and time of the observation in "iso" format. The parameter `dirs` must 
-be a N×2 array containing the observed directions expressed in colatitude and 
-the longitude. The keywords `latitude_deg`, `longitude_deg` and `height_m` should
-contain the latitude (in degrees, N is positive), the longitude (in degrees, 
-counterclockwise is positive) and the height (in meters)  of the location where 
-the observation is made.
-
-Return a 2-tuple containing the observed directions projected in sky coordinates 
-(a N×2 array containing the Right ascension and the Declination, in radians) at 
-each time step. 
-Directions are expressed in ICRS coordinates.
-
-Example:
-`````julia
-genskypointings("2019-01-01 00:00:00", "2020-01-25 14:52:10.05", dirs)
-`````
-"""
-function genastropyskypointings(t_start,
-                                t_stop,
-                                dirs;
-                                latitude_deg=0.0,
-                                longitude_deg=0.0,
-                                height_m=0.0)
-
-    t_start_s = astropy_time[:Time](t_start, format="iso", scale="utc")
-    t_stop_s = astropy_time[:Time](t_stop, format="iso", scale="utc")
-    
-    jd_range = range(t_start_s[:jd], stop=t_stop_s[:jd], length=size(dirs)[1])
-    loc = astropy_coordinates[:EarthLocation](lon=longitude_deg,
-                                              lat=latitude_deg,
-                                              height=height_m)
-    
-    skydirs = Array{Float64}(undef, size(dirs))
-
-    for (idx, time_jd) = enumerate(jd_range)
-        Alt_rad = π/2 - dirs[idx, 1] 
-        Az_rad = 2π - dirs[idx, 2]
-
-        skycoord = astropy_coordinates[:SkyCoord](
-            alt=Alt_rad*astropy_units[:rad],
-            az=Az_rad*astropy_units[:rad],
-            obstime=astropy_time[:Time](time_jd, format="jd"),
-            frame="altaz",
-            location=loc)
-
-        skydirs[idx, 1] = deg2rad(skycoord[:transform_to]("icrs")[:dec][1])
-        skydirs[idx, 2] = deg2rad(skycoord[:transform_to]("icrs")[:ra][1]) 
-
-    end
-
-    skydirs
-end
-
-
-"""
     genskypointings(t_start, t_stop, dirs; latitude_deg=0.0, longitude_deg=0.0, 
                     height_m=0.0)
 
 Project a set of pointings in the sky.  
 
-The parameter `t_start` and `t_start` must be two strings which tells the exact 
-UTC date and time of the observation in "iso" format. The parameter `dirs` must 
-be a N×2 array containing the observed directions expressed in colatitude and 
-the longitude. The keywords `latitude_deg`, `longitude_deg` and `height_m` should
-contain the latitude (in degrees, N is positive), the longitude (in degrees, 
-counterclockwise is positive) and the height (in meters)  of the location where 
-the observation is made.
+The parameter `t_start` and `t_start` must be two DateTime which tell the exact 
+UTC date and time of the observation. The parameter `dirs` must  be a N×2 array 
+containing the observed directions expressed in colatitude and the longitude. The
+keywords `latitude_deg`, `longitude_deg` and `height_m` should contain the 
+latitude (in degrees, N is positive), the longitude (in degrees, counterclockwise
+is positive) and the height (in meters)  of the location where the observation is
+made.
 
 Return a 2-tuple containing the observed directions projected in sky coordinates 
 (a N×2 array containing the Right ascension and the Declination, in radians) at 
 each time step. 
-Directions are expressed in ICRS coordinates.
+Directions are expressed in equatorial coordinates.
 
 Example:
     `````julia
-genskypointings("2019-01-01 00:00:00", "2020-01-25 14:52:10.05", dirs)
+genskypointings(DateTime(2019, 01, 01, 0, 0, 0), 
+                DateTime(2022, 04, 13, 21, 10, 10), 
+                dirs)
 `````
 """
 function genskypointings(t_start,
@@ -194,15 +135,9 @@ function genskypointings(t_start,
                          longitude_deg=0.0,
                          height_m=0.0)
 
-    normalize(x) = x - div(x, 360) * 260  
-    
-    t_start_s = astropy_time[:Time](t_start, format="iso", scale="utc")
-    t_stop_s = astropy_time[:Time](t_stop, format="iso", scale="utc")
-    
-    jd_range = range(t_start_s[:jd], stop=t_stop_s[:jd], length=size(dirs)[1])
-    loc = astropy_coordinates[:EarthLocation](lon=longitude_deg,
-                                              lat=latitude_deg,
-                                              height=height_m)
+    jd_start = AstroLib.jdcnv(t_start)
+    jd_stop = AstroLib.jdcnv(t_stop)
+    jd_range = range(jd_start, stop=jd_stop, length=size(dirs)[1])
     
     skydirs = Array{Float64}(undef, size(dirs))
     
@@ -210,32 +145,19 @@ function genskypointings(t_start,
         Alt_rad = π/2 - dirs[idx, 1] 
         Az_rad = 2π - dirs[idx, 2]
 
-        d = time_jd - 2451543.5
-        w = 282.9404 + 4.70935e-5 * d
-        M = 356.0470 + 0.9856002585 * d
-        L = w + normalize(M)
-        GMST0 = normalize(L)/15 + 12
-        UT = abs(abs(10time_jd - floor(10time_jd - 10)) / 10) - 1) * 24 #sbagliat
-        LST = GMST0 + UT + longitude_deg/15
-        # LST = astropy_time[:Time](time_jd, format="jd",
-        #                           location=loc)[:sidereal_time]("mean")[1]
-        Lat_rad = deg2rad(latitude_deg)
-        Dec = asin(sin(Alt_rad) * sin(Lat_rad) + cos(Alt_rad) * cos(Lat_rad) *
-                   cos(Az_rad))
-        HourAngle = acos((sin(Alt_rad) - sin(Dec) * sin(Lat_rad)) /
-                         (cos(Dec) * cos(Lat_rad)))
-        
-        if sin(Az_rad) < 0
-            h = rad2deg(HourAngle) / 15
-        else 
-            h = (360 - rad2deg(HourAngle)) / 15
-        end
+        Ra_deg, Dec_deg, HA_deg = AstroLib.hor2eq(rad2deg(Alt_rad),
+                                                  rad2deg(Az_rad),
+                                                  time_jd,
+                                                  latitude_deg,
+                                                  longitude_deg,
+                                                  height_m,
+                                                  precession=true,
+                                                  nutate=true,
+                                                  aberration=true)
 
-        Ra = LST - h
-        if Ra < 0 Ra += 24 end
+        skydirs[idx, 1] = deg2rad(Dec_deg)
+        skydirs[idx, 2] = deg2rad(Ra_deg)
 
-        skydirs[idx, 1] = Dec
-        skydirs[idx, 2] = deg2rad(360 * Ra / 24)
     end
 
     skydirs
