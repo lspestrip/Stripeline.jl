@@ -18,21 +18,15 @@ function get_hits_map(elevation_angle::Float64,
     times = 0:τ_s:time_duration
 
     dirs = Array{Float64}(undef, length(times), 2)
+    skydirs = Array{Float64}(undef, length(times), 2)
     ψ = Array{Float64}(undef, length(times))
-    (dirs, ψ) = Sl.genpointings(
-        pointings, times; latitude_deg=latitude) do time_s
+    (dirs, skydirs) = Sl.genpointings(
+        pointings, times, t_start, t_stop; latitude_deg=latitude,
+        longitude_deg=longitude, height_m=height) do time_s
             return (0.0, deg2rad(elevation_angle),
                     Sl.timetorotang(time_s, spin_velocity))
         end
     
-    skydirs = Array{Float64}(undef, length(times), 2)
-    skydirs = genskypointings(t_start,
-                              t_stop,
-                              dirs;
-                              latitude_deg=latitude,
-                              longitude_deg=longitude,
-                              height_m=height)
-
     hits_map = Healpix.Map{Float64, Healpix.RingOrder}(NSIDE)
     for i in eachindex(ψ)
         hits_map.pixels[Healpix.ang2pix(hits_map, π/2 - skydirs[i, 1],
@@ -46,7 +40,7 @@ pars_arg = ARGS
 NSIDE = 256
 
 t_start = DateTime(2020, 04, 01, 0, 0, 0)
-t_stop = DateTime(2020, 04, 01, 10, 0, 0)
+t_stop = DateTime(2020, 04, 02, 0, 0, 0)
 time_duration_s = ((t_stop - t_start) / 1000).value 
 
 tenerife_latitude_deg = Sl.TENERIFE_LATITUDE_DEG 
