@@ -5,7 +5,7 @@ using LinearAlgebra
 using AstroLib
 
 export TENERIFE_LATITUDE_DEG, TENERIFE_LONGITUDE_DEG, TENERIFE_HEIGHT_M
-export timetorotang, genpointings, genskypointings, genastropyskypointings
+export timetorotang, genpointings
 
 TENERIFE_LATITUDE_DEG = 28.3
 TENERIFE_LONGITUDE_DEG = -16.509722
