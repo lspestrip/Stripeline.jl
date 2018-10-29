@@ -17,18 +17,23 @@ function get_hits_map(elevation_angle::Float64,
     τ_s = 1 / sampling_rate
     times = 0:τ_s:time_duration
 
-    dirs = Array{Float64}(undef, length(times), 2)
     skydirs = Array{Float64}(undef, length(times), 2)
-    ψ = Array{Float64}(undef, length(times))
-    (dirs, skydirs) = Sl.genpointings(
-        pointings, times, t_start, t_stop; latitude_deg=latitude,
-        longitude_deg=longitude, height_m=height) do time_s
-            return (0.0, deg2rad(elevation_angle),
-                    Sl.timetorotang(time_s, spin_velocity))
-        end
+    skyψ = Array{Float64}(undef, length(times), 1)
+
+    (skydirs, skyψ) = Sl.genpointings(pointings,
+                                      times,
+                                      t_start,
+                                      t_stop;
+                                      latitude_deg=latitude,
+                                      longitude_deg=longitude,
+                                      height_m=height) do time_s
+                                          return (0.0, deg2rad(elevation_angle),
+                                                  Sl.timetorotang(time_s,
+                                                                  spin_velocity))
+                                      end
     
     hits_map = Healpix.Map{Float64, Healpix.RingOrder}(NSIDE)
-    for i in eachindex(ψ)
+    for i in eachindex(skyψ)
         hits_map.pixels[Healpix.ang2pix(hits_map, π/2 - skydirs[i, 1],
                                         skydirs[i, 2])] += 1.0
     end
@@ -49,7 +54,7 @@ tenerife_height_m = Sl.TENERIFE_HEIGHT_M
 
 elevation_angle_deg = parse(Float64, pars_arg[1])
 spin_velocity_rpm = 1.0
-sampling_rate_hz = 1.0
+sampling_rate_hz = 50.0
 
 db = Sl.InstrumentDB()
 for fp in db.focalplane

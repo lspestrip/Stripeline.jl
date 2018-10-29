@@ -206,7 +206,7 @@ function genpointings(wheelanglesfn,
                       height_m=0.0)
     
     skydirs = Array{Float64}(undef, length(timerange_s), 2)
-#    skyψ = Array{Float64}(undef, length(timerange_s))
+    skyψ = Array{Float64}(undef, length(timerange_s))
     
     jd_start = AstroLib.jdcnv(t_start)
     jd_stop = AstroLib.jdcnv(t_stop)
@@ -249,8 +249,8 @@ function genpointings(wheelanglesfn,
         #                        cos(Decpol_rad)]
         
         # skyψ[idx] = polarizationangle(skynorthdir, skypoldir)
-        
+        skyψ[idx] = 0
     end
 
-    skydirs # The polarization angle is still missing
+    (skydirs, skyψ) # The polarization angle is still missing
 end

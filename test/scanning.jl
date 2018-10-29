@@ -29,15 +29,15 @@ vector = Healpix.ang2vec(dirs[1], dirs[2])
 dir = inv(rotmatr) * vector
 
 # Compute skydirs
-skydirs = genpointings(dir, 
-                       0:1:0, 
-                       t_start, 
-                       t_stop, 
-                       latitude_deg=TENERIFE_LATITUDE_DEG,
-                       longitude_deg=TENERIFE_LONGITUDE_DEG,
-                       height_m=TENERIFE_HEIGHT_M) do time_s
-                           return (0, deg2rad(20.0), 0)
-                       end
+(skydirs, skyψ) = genpointings(dir, 
+                               0:1:0, 
+                               t_start, 
+                               t_stop, 
+                               latitude_deg=TENERIFE_LATITUDE_DEG,
+                               longitude_deg=TENERIFE_LONGITUDE_DEG,
+                               height_m=TENERIFE_HEIGHT_M) do time_s
+                                   return (0, deg2rad(20.0), 0)
+                               end
 crab_position_skydirs = sqrt(skydirs[1, 1]^2 + skydirs[1, 2]^2)
 
 @test skydirs[1, 1] ≈ crab_dec_astropy_rad atol = eps
@@ -58,23 +58,24 @@ crab_ra_astropy_rad = 1.4596726619436968
 crab_dec_astropy_rad = 0.3842255081802917 
 crab_position = sqrt(crab_ra_astropy_rad^2 + crab_dec_astropy_rad^2)
 
+# Invert crab coordinates into telescope pointing directions
 skydirs = Array{Float64}(undef, 3, 2)
 for (idx, day) in enumerate(days)
     vector = Healpix.ang2vec(dirs[idx, 1], dirs[idx, 2])
     dir = inv(rotmatr) * vector
 
-    Dec, Ra = genpointings(dir, 
-                           0:1:0, 
-                           day, 
-                           day, 
-                           latitude_deg=TENERIFE_LATITUDE_DEG,
-                           longitude_deg=TENERIFE_LONGITUDE_DEG,
-                           height_m=TENERIFE_HEIGHT_M) do time_s
-                               return (0, deg2rad(20.0), 0)
-                           end
+    (skydirections, skyψ) = genpointings(dir, 
+                                         0:1:0, 
+                                         day, 
+                                         day, 
+                                         latitude_deg=TENERIFE_LATITUDE_DEG,
+                                         longitude_deg=TENERIFE_LONGITUDE_DEG,
+                                         height_m=TENERIFE_HEIGHT_M) do time_s
+                                             return (0, deg2rad(20.0), 0)
+                                         end
 
-    skydirs[idx, 1] = Dec
-    skydirs[idx, 2] = Ra
+    skydirs[idx, 1] = skydirections[1]
+    skydirs[idx, 2] = skydirections[2]
 end
 
 crab_position_skydirs = sqrt.(skydirs[:, 1].^2 + skydirs[:, 2].^2)
