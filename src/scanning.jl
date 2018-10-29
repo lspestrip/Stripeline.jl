@@ -5,7 +5,7 @@ using LinearAlgebra
 using AstroLib
 
 export TENERIFE_LATITUDE_DEG, TENERIFE_LONGITUDE_DEG, TENERIFE_HEIGHT_M
-export timetorotang, genpointings
+export timetorotang, genpointings, polarizationangle
 
 TENERIFE_LATITUDE_DEG = 28.3
 TENERIFE_LONGITUDE_DEG = -16.509722
@@ -24,6 +24,23 @@ function timetorotang(time_s, rpm)
     else
         2 * π * time_s * (rpm / 60)
     end
+end
+
+
+"""
+    polarizationangle(northdir, poldir)
+
+Calculate the polarization angle projected in the sky in IAU conventions.
+The parameter `northdir` must be a versor that points the North and `poldir`
+must be a versor that identify the polarization direction projected in the sky.
+The return value is in radians.
+"""
+function polarizationangle(northdir, poldir)
+    cosψ = clamp(dot(northdir, poldir), -1, 1)
+    crosspr = northdir × poldir
+    sinψ = clamp(sqrt(dot(crosspr, crosspr)), -1, 1)
+    ψ = atan(cosψ, sinψ) #shouldn't be atan(sin, cos)?
+    return ψ
 end
 
 
@@ -70,7 +87,7 @@ function genpointings(wheelanglesfn,
     dirs = Array{Float64}(undef, length(timerange_s), 2)
     ψ = Array{Float64}(undef, length(timerange_s))
 
-    zaxis = [1; 0; 0]
+    zaxis = [1; 0; 0] #should be different for each horn...
     for (idx, time_s) = enumerate(timerange_s)
         (wheel1ang, wheel2ang, wheel3ang) = wheelanglesfn(time_s)
         
@@ -102,11 +119,7 @@ function genpointings(wheelanglesfn,
         dirs[idx, 1] = θ
         dirs[idx, 2] = ϕ
         northdir = @SArray [-cos(θ) * cos(ϕ), -cos(θ) * sin(ϕ), sin(θ)]
-        
-        cosψ = clamp(dot(northdir, poldir), -1, 1)
-        crosspr = northdir × poldir
-        sinψ = clamp(sqrt(dot(crosspr, crosspr)), -1, 1)
-        ψ[idx] = atan(cosψ, sinψ)
+        ψ[idx] = polarizationangle(northdir, poldir)
     end
     
     (dirs, ψ)
@@ -167,14 +180,15 @@ function genpointings(wheelanglesfn,
                       height_m=0.0)
     
     dirs = Array{Float64}(undef, length(timerange_s), 2)
-    ψ = Array{Float64}(undef, length(timerange_s))
+    # ψ = Array{Float64}(undef, length(timerange_s))
     skydirs = Array{Float64}(undef, length(timerange_s), 2)
-    
+    # skyψ = Array{Float64}(undef, length(timerange_s))
+
     jd_start = AstroLib.jdcnv(t_start)
     jd_stop = AstroLib.jdcnv(t_stop)
     jd_range = range(jd_start, stop=jd_stop, length=length(timerange_s))
 
-    zaxis = [1; 0; 0]
+    # zaxis = [1; 0; 0]
     for (idx, time_s) = enumerate(timerange_s)
         (wheel1ang, wheel2ang, wheel3ang) = wheelanglesfn(time_s)
         
@@ -188,15 +202,17 @@ function genpointings(wheelanglesfn,
         rotmatr = rotationmatrix(groundq)
         
         vector = rotmatr * dir
-        poldir = rotmatr * zaxis
+        # poldir = rotmatr * zaxis
 
         (θ, ϕ) = Healpix.vec2ang(vector[1], vector[2], vector[3])
         dirs[idx, 1] = θ
         dirs[idx, 2] = ϕ
+        # northdir = @SArray [-cos(θ) * cos(ϕ), -cos(θ) * sin(ϕ), sin(θ)]
+        # ψ[idx] = polarizationangle(northdir, poldir)
 
         Alt_rad = π/2 - θ 
         Az_rad = 2π - ϕ
-
+        
         Ra_deg, Dec_deg, HA_deg = AstroLib.hor2eq(rad2deg(Alt_rad),
                                                   rad2deg(Az_rad),
                                                   jd_range[idx],
@@ -210,8 +226,32 @@ function genpointings(wheelanglesfn,
         skydirs[idx, 1] = deg2rad(Dec_deg)
         skydirs[idx, 2] = deg2rad(Ra_deg)
 
+        # (θpol, ϕpol) = Healpix.vec2ang(poldir[1], poldir[2], poldir[3])
+        # Altpol_rad = π/2 - θpol 
+        # Azpol_rad = 2π - ϕpol
+
+        # Rapol_deg, Decpol_deg, HApol_deg = AstroLib.hor2eq(rad2deg(Altpol_rad),
+        #                                                    rad2deg(Azpol_rad),
+        #                                                    jd_range[idx],
+        #                                                    latitude_deg,
+        #                                                    longitude_deg,
+        #                                                    height_m,
+        #                                                    precession=true,
+        #                                                    nutate=true,
+        #                                                    aberration=true)
+        
+        # skypoldir = @SArray [cos(deg2rad(Decpol_deg)) * cos(deg2rad(Rapol_deg)),
+        #                      cos(deg2rad(Decpol_deg)) * sin(deg2rad(Rapol_deg)),
+        #                      sin(deg2rad(Decpol_deg))]
+        # skynorthdir = @SArray [-sin(deg2rad(Decpol_deg)) * cos(deg2rad(Rapol_deg)),
+        #                        -sin(deg2rad(Decpol_deg)) * sin(deg2rad(Rapol_deg)),
+        #                        cos(deg2rad(Decpol_deg))]
+
+        # skyψ[idx] = polarizationangle(skynorthdir, skypoldir)
+
     end
     
-    (dirs, skydirs) # Must add the polarization angles
+    # (dirs, ψ, skydirs, skyψ)
+    (dirs, skydirs)
 end
 
