@@ -45,6 +45,34 @@ end
 
 
 """
+    vector2equatorial(dir, jd, latitude_deg, longitude_deg, height_m)
+
+Transform the Healpix coordinates of a vector into equatorial coordinates. 
+The parameter `vector` is 3D vector, `jd` is the julian date. The 
+paramters `latitude_deg`, `longitude_deg` and `height_m` should contain the 
+latitude (in degrees, N is positive), the longitude (in degrees, counterclockwise
+is positive) and the height (in meters) of the location where the observation is 
+made. 
+"""
+function vector2equatorial(vector, jd, latitude_deg, longitude_deg, height_m)
+    (θ, ϕ) = Healpix.vec2ang(vector[1], vector[2], vector[3])
+    Alt_rad = π/2 - θ 
+    Az_rad = 2π - ϕ
+    
+    Ra_deg, Dec_deg, HA_deg = AstroLib.hor2eq(rad2deg(Alt_rad),
+                                              rad2deg(Az_rad),
+                                              jd,
+                                              latitude_deg,
+                                              longitude_deg,
+                                              height_m,
+                                              precession=true,
+                                              nutate=true,
+                                              aberration=true)
+    (deg2rad(Dec_deg), deg2rad(Ra_deg))
+end
+
+
+"""
     genpointings(wheelanglesfn, dir, timerange_s; latitude_deg=0.0, 
                  ground=false)
 
@@ -98,15 +126,15 @@ function genpointings(wheelanglesfn,
         # This is in the ground reference frame
         groundq = qwheel3 * (qwheel2 * qwheel1)
         
-        # Now from the ground reference frame to the Earth reference frame
-        locq = qrotation([1, 0, 0], deg2rad(90 - latitude_deg))
-        earthq = qrotation([0, 0, 1], 2 * π * time_s / 86400)
-
-        quat = earthq * (locq * groundq)
-
         if ground
             rotmatr = rotationmatrix(groundq)
         else
+            # Now from the ground reference frame to the Earth reference frame
+            locq = qrotation([1, 0, 0], deg2rad(90 - latitude_deg))
+            earthq = qrotation([0, 0, 1], 2 * π * time_s / 86400)
+            
+            quat = earthq * (locq * groundq)
+
             rotmatr = rotationmatrix(quat)
         end
         
@@ -128,7 +156,7 @@ end
 
 """
     genpointings(wheelanglesfn, dir, timerange_s, t_start, t_stop; 
-                 latitude_deg=0.0, longitude_deg, height_m)
+                 latitude_deg=0.0, longitude_deg=0.0, height_m=0.0)
 
 Generate a set of pointings for some STRIP detector. The parameter
 `wheelanglesfn` must be a function which takes as input a time in seconds
@@ -148,11 +176,9 @@ latitude (in degrees, N is positive), the longitude (in degrees, counterclockwis
 is positive) and the height (in meters) of the location where the observation is 
 made.
 
-Return a 4-tuple containing the directions (a N×2 array containing the
-colatitude and the longitude) expressed in local coordinates, the polarization 
-angles, the sky directions (a N×2 array containing the Declination and the 
-RightAscension) and the polarization angle given in equatorial coordinates, 
-at each time step.
+Return a 2-tuple containing the sky directions (a N×2 array containing the 
+Declination and the RightAscension) and the polarization angle given in 
+equatorial coordinates at each time step.
 
 Example:
 `````julia
@@ -179,16 +205,14 @@ function genpointings(wheelanglesfn,
                       longitude_deg=0.0,
                       height_m=0.0)
     
-    dirs = Array{Float64}(undef, length(timerange_s), 2)
-    # ψ = Array{Float64}(undef, length(timerange_s))
     skydirs = Array{Float64}(undef, length(timerange_s), 2)
-    # skyψ = Array{Float64}(undef, length(timerange_s))
-
+#    skyψ = Array{Float64}(undef, length(timerange_s))
+    
     jd_start = AstroLib.jdcnv(t_start)
     jd_stop = AstroLib.jdcnv(t_stop)
     jd_range = range(jd_start, stop=jd_stop, length=length(timerange_s))
 
-    # zaxis = [1; 0; 0]
+#    zaxis = [1; 0; 0] #should be different for each horn...
     for (idx, time_s) = enumerate(timerange_s)
         (wheel1ang, wheel2ang, wheel3ang) = wheelanglesfn(time_s)
         
@@ -198,60 +222,35 @@ function genpointings(wheelanglesfn,
         
         # This is in the ground reference frame
         groundq = qwheel3 * (qwheel2 * qwheel1)
-        
         rotmatr = rotationmatrix(groundq)
-        
         vector = rotmatr * dir
+
+        Dec_rad, Ra_rad = vector2equatorial(vector,
+                                            jd_range[idx],
+                                            latitude_deg,
+                                            longitude_deg,
+                                            height_m)
+
+        skydirs[idx, 1] = Dec_rad
+        skydirs[idx, 2] = Ra_rad
+
         # poldir = rotmatr * zaxis
-
-        (θ, ϕ) = Healpix.vec2ang(vector[1], vector[2], vector[3])
-        dirs[idx, 1] = θ
-        dirs[idx, 2] = ϕ
-        # northdir = @SArray [-cos(θ) * cos(ϕ), -cos(θ) * sin(ϕ), sin(θ)]
-        # ψ[idx] = polarizationangle(northdir, poldir)
-
-        Alt_rad = π/2 - θ 
-        Az_rad = 2π - ϕ
+        # Decpol_rad, Rapol_rad = vector2equatorial(poldir,
+        #                                           jd_range[idx],
+        #                                           latitude_deg,
+        #                                           longitude_deg,
+        #                                           height_m)
         
-        Ra_deg, Dec_deg, HA_deg = AstroLib.hor2eq(rad2deg(Alt_rad),
-                                                  rad2deg(Az_rad),
-                                                  jd_range[idx],
-                                                  latitude_deg,
-                                                  longitude_deg,
-                                                  height_m,
-                                                  precession=true,
-                                                  nutate=true,
-                                                  aberration=true)
-
-        skydirs[idx, 1] = deg2rad(Dec_deg)
-        skydirs[idx, 2] = deg2rad(Ra_deg)
-
-        # (θpol, ϕpol) = Healpix.vec2ang(poldir[1], poldir[2], poldir[3])
-        # Altpol_rad = π/2 - θpol 
-        # Azpol_rad = 2π - ϕpol
-
-        # Rapol_deg, Decpol_deg, HApol_deg = AstroLib.hor2eq(rad2deg(Altpol_rad),
-        #                                                    rad2deg(Azpol_rad),
-        #                                                    jd_range[idx],
-        #                                                    latitude_deg,
-        #                                                    longitude_deg,
-        #                                                    height_m,
-        #                                                    precession=true,
-        #                                                    nutate=true,
-        #                                                    aberration=true)
+        # skypoldir = @SArray [cos(Decpol_rad) * cos(Rapol_rad),
+        #                      cos(Decpol_rad) * sin(Rapol_rad),
+        #                      sin(Decpol_rad)]
+        # skynorthdir = @SArray [-sin(Decpol_rad) * cos(Rapol_rad),
+        #                        -sin(Decpol_rad) * sin(Rapol_rad),
+        #                        cos(Decpol_rad)]
         
-        # skypoldir = @SArray [cos(deg2rad(Decpol_deg)) * cos(deg2rad(Rapol_deg)),
-        #                      cos(deg2rad(Decpol_deg)) * sin(deg2rad(Rapol_deg)),
-        #                      sin(deg2rad(Decpol_deg))]
-        # skynorthdir = @SArray [-sin(deg2rad(Decpol_deg)) * cos(deg2rad(Rapol_deg)),
-        #                        -sin(deg2rad(Decpol_deg)) * sin(deg2rad(Rapol_deg)),
-        #                        cos(deg2rad(Decpol_deg))]
-
         # skyψ[idx] = polarizationangle(skynorthdir, skypoldir)
-
+        
     end
-    
-    # (dirs, ψ, skydirs, skyψ)
-    (dirs, skydirs)
-end
 
+    skydirs # The polarization angle is still missing
+end
