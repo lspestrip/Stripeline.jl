@@ -1,5 +1,5 @@
 using Test
-import Stripeline
+using Stripeline
 using Dates
 using Quaternions
 using Healpix
@@ -30,13 +30,13 @@ dir = inv(rotmatr) * vector
 
 # Compute skydirs
 (skydirs, skyψ) = genpointings(dir, 
-                               0:1:0, 
+                               0.:1.:0., 
                                t_start, 
                                t_stop, 
                                latitude_deg=TENERIFE_LATITUDE_DEG,
                                longitude_deg=TENERIFE_LONGITUDE_DEG,
                                height_m=TENERIFE_HEIGHT_M) do time_s
-                                   return (0, deg2rad(20.0), 0)
+                                   return (0., deg2rad(20.0), 0.)
                                end
 crab_position_skydirs = sqrt(skydirs[1, 1]^2 + skydirs[1, 2]^2)
 
@@ -65,13 +65,13 @@ for (idx, day) in enumerate(days)
     dir = inv(rotmatr) * vector
 
     (skydirections, skyψ) = genpointings(dir, 
-                                         0:1:0, 
+                                         0.:1.:0., 
                                          day, 
                                          day, 
                                          latitude_deg=TENERIFE_LATITUDE_DEG,
                                          longitude_deg=TENERIFE_LONGITUDE_DEG,
                                          height_m=TENERIFE_HEIGHT_M) do time_s
-                                             return (0, deg2rad(20.0), 0)
+                                             return (0., deg2rad(20.0), 0.)
                                          end
 
     skydirs[idx, 1] = skydirections[1]

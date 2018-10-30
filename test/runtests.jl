@@ -3,7 +3,7 @@ using Stripeline
 
 # Scanning strategy
 
-(dirs, psi) = genpointings([0, 0, 1], 0:20:60, latitude_deg=0.0) do time_s
+(dirs, psi) = genpointings([0., 0., 1.], 0.:20.:60., latitude_deg=0.0) do time_s
     wheel1ang = 0.0
     wheel2ang = 30.0
     wheel3ang = timetorotang(time_s, 1.0)

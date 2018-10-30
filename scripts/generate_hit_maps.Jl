@@ -45,7 +45,7 @@ pars_arg = ARGS
 NSIDE = 256
 
 t_start = DateTime(2020, 04, 01, 0, 0, 0)
-t_stop = DateTime(2020, 04, 02, 0, 0, 0)
+t_stop = DateTime(2021, 04, 01, 0, 0, 0)
 time_duration_s = ((t_stop - t_start) / 1000).value 
 
 tenerife_latitude_deg = Sl.TENERIFE_LATITUDE_DEG 
