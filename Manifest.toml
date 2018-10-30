@@ -476,6 +476,13 @@ git-tree-sha1 = "5b55c2c974084eab2689ec0d1d5245561b22aeb0"
 uuid = "92933f4c-e287-5a05-a399-4b506db050ca"
 version = "0.6.1"
 
+[[PyCall]]
+deps = ["Compat", "Conda", "MacroTools", "Statistics", "VersionParsing"]
+git-tree-sha1 = "f56428481fd0caf01cc8ecd2a0892fdaf8fddd50"
+uuid = "438e738f-606a-5dbb-bf0a-cddfbfd45ab0"
+version = "1.18.4"
+=======
+
 [[QuartzImageIO]]
 deps = ["ColorTypes", "ColorVectorSpace", "FileIO", "FixedPointNumbers", "ImageCore", "Libdl", "Random", "Test"]
 git-tree-sha1 = "c747a56f223919b157e6cd9dc58d59c560586302"
@@ -510,9 +517,9 @@ version = "0.3.0"
 
 [[RecipesBase]]
 deps = ["Pkg", "Random", "Test"]
-git-tree-sha1 = "0b3cb370ee4dc00f47f1193101600949f3dcf884"
+git-tree-sha1 = "b18c3d875ad6805e3db59c4e81f206f04df71d66"
 uuid = "3cdcf5f2-1ef4-517c-9805-6587b60abb01"
-version = "0.6.0"
+version = "0.5.0"
 
 [[Reexport]]
 deps = ["Pkg"]
