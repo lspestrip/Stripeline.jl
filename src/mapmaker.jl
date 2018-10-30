@@ -19,7 +19,7 @@ It requires in input:
 
 N.B.
 * pix_idx and tod must be array of the same length.
-* If you are not using MPI remember to initialize `comm` to Nullable{}()
+* If you are not using MPI remember to initialize `comm` to `missing`
 
 """
 function tod2map_mpi(pix_idx, tod, num_of_pixels, comm; unseen = NaN)   
@@ -204,11 +204,11 @@ It requires in input:
 -the array containg the dimension of each 1/f baseline
 -the MPI communicator
 
-It returns a tuple containing the destriped map itself and the estimated array of 1/f baselines.
+It returns a tuple containing the destriped map itself (Array{Float64,1}) and the estimated array of 1/f baselines.
 
 N.B.
 * pix_idx and tod must be array of the same length and sum(baseline_dim) must be equal to the length of `tod`.
-* If you are not using MPI remember to initialize `comm` to Nullable{}()    
+* If you are not using MPI remember to initialize `comm` to `missing`.
 """
 function destripe(pix_idx, tod, num_of_pixels, baseline_dim, comm; unseen=NaN)
     @assert sum(baseline_dim) == length(tod)
