@@ -720,6 +720,13 @@ horns:
         module_id: -1
         polarimeter_id: 71
         color: "gray"
+        fwhm_x_deg: 0.0
+        fwhm_y_deg: 0.0
+        ellipticity: 0.0
+        directivity_dbi: 0.0
+        xpd_db: 0.0
+        sub_spillover: 0.0
+        main_spillover: 0.0
         orientation:
         - -5.366387e-02
         - 0.000000e+00
@@ -730,6 +737,13 @@ horns:
         module_id: -1
         polarimeter_id: 81
         color: "gray"
+        fwhm_x_deg: 0.0
+        fwhm_y_deg: 0.0
+        ellipticity: 0.0
+        directivity_dbi: 0.0
+        xpd_db: 0.0
+        sub_spillover: 0.0
+        main_spillover: 0.0
         orientation:
         - -2.688120e-02
         - -4.597980e-02
@@ -740,6 +754,13 @@ horns:
         module_id: -1
         polarimeter_id: 72
         color: "gray"
+        fwhm_x_deg: 0.0
+        fwhm_y_deg: 0.0
+        ellipticity: 0.0
+        directivity_dbi: 0.0
+        xpd_db: 0.0
+        sub_spillover: 0.0
+        main_spillover: 0.0
         orientation:
         - 2.591051e-02
         - -4.546936e-02
@@ -750,6 +771,13 @@ horns:
         module_id: -1
         polarimeter_id: 82
         color: "gray"
+        fwhm_x_deg: 0.0
+        fwhm_y_deg: 0.0
+        ellipticity: 0.0
+        directivity_dbi: 0.0
+        xpd_db: 0.0
+        sub_spillover: 0.0
+        main_spillover: 0.0
         orientation:
         - 5.189792e-02
         - 0.000000e+00
@@ -760,6 +788,13 @@ horns:
         module_id: -1
         polarimeter_id: 76
         color: "gray"
+        fwhm_x_deg: 0.0
+        fwhm_y_deg: 0.0
+        ellipticity: 0.0
+        directivity_dbi: 0.0
+        xpd_db: 0.0
+        sub_spillover: 0.0
+        main_spillover: 0.0
         orientation:
         - 2.591051e-02
         - 4.546936e-02
@@ -770,6 +805,13 @@ horns:
         module_id: -1
         polarimeter_id: 78
         color: "gray"
+        fwhm_x_deg: 0.0
+        fwhm_y_deg: 0.0
+        ellipticity: 0.0
+        directivity_dbi: 0.0
+        xpd_db: 0.0
+        sub_spillover: 0.0
+        main_spillover: 0.0
         orientation:
         - -2.688120e-02
         - 4.597980e-02
