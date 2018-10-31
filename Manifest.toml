@@ -131,7 +131,7 @@ version = "0.5.0"
 deps = ["Random", "Test"]
 git-tree-sha1 = "103c5ec38919fb23e69ca55d80e0346062e7561f"
 repo-rev = "master"
-repo-url = "https://github.com/ziotom78/CorrNoise.jl.git"
+repo-url = "https://github.com/ziotom78/CorrNoise.jl"
 uuid = "d5b2c6c8-c265-11e8-014f-49b4891d5439"
 version = "0.1.0"
 
