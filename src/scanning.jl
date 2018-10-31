@@ -41,7 +41,7 @@ function polarizationangle(northdir, poldir)
     cosψ = clamp(dot(northdir, poldir), -1, 1)
     crosspr = northdir × poldir
     sinψ = clamp(sqrt(dot(crosspr, crosspr)), -1, 1)
-    ψ = atan(cosψ, sinψ) #shouldn't be atan(sin, cos)?
+    ψ = atan(sinψ, cosψ) 
     ψ
 end
 
@@ -200,7 +200,7 @@ end
 """
 function genpointings(wheelanglesfn,
                       dir,
-                      timerange_s
+                      timerange_s,
                       t_start,
                       t_stop;
                       latitude_deg=0.0,
