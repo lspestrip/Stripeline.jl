@@ -20,44 +20,7 @@ Convert a time into a rotation angle, given the number of rotations per minute.
 The time should be expressed in seconds. The return value is in radians.
 `time` can either be a scalar or a vector.
 """
-function timetorotang(time_s::Array{Float64,1}, rpm::Float64)::Array{Float64,1}
-    if rpm == 0
-        0.0
-    else
-        2 * π * time_s * (rpm / 60)
-    end
-end
-
-
-"""
-    timetorotang(time, rpm)
-
-Convert a time into a rotation angle, given the number of rotations per minute.
-The time should be expressed in seconds. The return value is in radians.
-`time` can either be a scalar or a vector.
-"""
-function timetorotang(time_s::StepRangeLen{Float64,
-                                                Base.TwicePrecision{Float64},
-                                           Base.TwicePrecision{Float64}},
-                      rpm::Float64)::StepRangeLen{Float64,
-                                                Base.TwicePrecision{Float64},
-                                           Base.TwicePrecision{Float64}}
-    if rpm == 0
-        0.0
-    else
-        2 * π * time_s * (rpm / 60)
-    end
-end
-
-
-"""
-    timetorotang(time, rpm)
-
-Convert a time into a rotation angle, given the number of rotations per minute.
-The time should be expressed in seconds. The return value is in radians.
-`time` can either be a scalar or a vector.
-"""
-function timetorotang(time_s::Float64, rpm::Float64)::Float64
+function timetorotang(time_s, rpm)
     if rpm == 0
         0.0
     else
@@ -74,8 +37,7 @@ The parameter `northdir` must be a versor that points the North and `poldir`
 must be a versor that identify the polarization direction projected in the sky.
 The return value is in radians.
 """
-function polarizationangle(northdir::SArray{Tuple{3}, Float64,1,3},
-                           poldir::Array{Float64,1})::Float64
+function polarizationangle(northdir, poldir)
     cosψ = clamp(dot(northdir, poldir), -1, 1)
     crosspr = northdir × poldir
     sinψ = clamp(sqrt(dot(crosspr, crosspr)), -1, 1)
@@ -94,11 +56,7 @@ latitude (in degrees, N is positive), the longitude (in degrees, counterclockwis
 is positive) and the height (in meters) of the location where the observation is 
 made. 
 """
-function vector2equatorial(vector::Array{Float64,1},
-                           jd::Float64,
-                           latitude_deg::Float64,
-                           longitude_deg::Float64,
-                           height_m::Int64)::Tuple{Float64, Float64}
+function vector2equatorial(vector, jd, latitude_deg, longitude_deg, height_m)
     (θ, ϕ) = Healpix.vec2ang(vector[1], vector[2], vector[3])
     Alt_rad = π/2 - θ 
     Az_rad = 2π - ϕ
@@ -150,14 +108,11 @@ genpointings([0, 0, 1], 0:0.1:1) do time_s
 end
 `````
 """
-function genpointings(wheelanglesfn::Function,
-                      dir::Array{Float64,1},
-                      timerange_s::StepRangeLen{Float64,
-                                                Base.TwicePrecision{Float64},
-                                                Base.TwicePrecision{Float64}};
-                      latitude_deg::Float64=0.0,
-                      ground::Bool=false)::Tuple{Array{Float64,2},
-                                                 Array{Float64,1}}
+function genpointings(wheelanglesfn,
+                      dir,
+                      timerange_s;
+                      latitude_deg=0.0,
+                      ground=false)
     
     dirs = Array{Float64}(undef, length(timerange_s), 2)
     ψ = Array{Float64}(undef, length(timerange_s))
@@ -243,17 +198,14 @@ genpointings([0, 0, 1],
 end
 `````
 """
-function genpointings(wheelanglesfn::Function,
-                      dir::Array{Float64,1},
-                      timerange_s::StepRangeLen{Float64,
-                                                Base.TwicePrecision{Float64},
-                                                Base.TwicePrecision{Float64}},
-                      t_start::DateTime,
-                      t_stop::DateTime;
-                      latitude_deg::Float64=0.0,
-                      longitude_deg::Float64=0.0,
-                      height_m::Int64=0)::Tuple{Array{Float64,2},
-                                                Array{Float64,1}}
+function genpointings(wheelanglesfn,
+                      dir,
+                      timerange_s
+                      t_start,
+                      t_stop;
+                      latitude_deg=0.0,
+                      longitude_deg=0.0,
+                      height_m=0)
     
     skydirs = Array{Float64}(undef, length(timerange_s), 2)
     skyψ = Array{Float64}(undef, length(timerange_s))
