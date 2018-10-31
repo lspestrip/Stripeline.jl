@@ -1,6 +1,11 @@
-using Stripeline, Healpix, ColorSchemes, Plots, FITSIO, Dates
+using Stripeline, Healpix, ColorSchemes, Plots, FITSIO, Dates, MPI
 const Sl = Stripeline
-const Hp = Healpix
+
+MPI.Init()
+
+comm = MPI.COMM_WORLD
+rank = MPI.Comm_rank(comm)
+size = MPI.Comm_size(comm) 
 
 function get_hits_map(elevation_angle::Float64,
                       spin_velocity::Float64,
@@ -45,7 +50,7 @@ pars_arg = ARGS
 NSIDE = 256
 
 t_start = DateTime(2020, 04, 01, 0, 0, 0)
-t_stop = DateTime(2021, 04, 01, 0, 0, 0)
+t_stop = DateTime(2020, 04, 01, 1, 0, 0)
 time_duration_s = ((t_stop - t_start) / 1000).value 
 
 tenerife_latitude_deg = Sl.TENERIFE_LATITUDE_DEG 
@@ -57,45 +62,81 @@ spin_velocity_rpm = 1.0
 sampling_rate_hz = 50.0
 
 db = Sl.InstrumentDB()
-for fp in db.focalplane
-    hits_map = get_hits_map(elevation_angle_deg,
-                            spin_velocity_rpm,
-                            sampling_rate_hz,
-                            time_duration_s,
-                            t_start,
-                            t_stop,
-                            NSIDE,
-                            tenerife_latitude_deg,
-                            tenerife_longitude_deg,
-                            tenerife_height_m,
-                            fp[2].orientation)
+keys_dbfp = collect(keys(db.focalplane))
 
-    save_to_path = join([pars_arg[2],
-                         fp[2].name,
-                         "_",
-                         Int(elevation_angle_deg),
-                         "°.fits"])
-
-    Healpix.saveToFITS(hits_map, save_to_path, typechar = "D")
-
-    f = FITS(save_to_path, "r+")
-
-    write_key(f[2], "LATITUDE", tenerife_latitude_deg, "Tenerife Latitude [Deg]")
-    write_key(f[2], "LONGITUD", tenerife_longitude_deg,
-              "Tenerife Longitude [Deg]")
-    write_key(f[2], "HEIGHT", tenerife_height_m, "Tenerife Height [m]")
-
-    write_key(f[2], "DURATION", time_duration_s, "[sec]")
-    write_key(f[2], "TSTART", Dates.format(t_start, "yyyy-mm-dd HH:MM:SS"),
-              "Starting Date and time of the observations: yyyy-mm-dd HH:MM:SS") 
-    write_key(f[2], "TSTOP", Dates.format(t_stop, "yyyy-mm-dd HH:MM:SS"),
-              "Ending Date and time of the observations: yyyy-mm-dd HH:MM:SS")
-
-    write_key(f[2], "ANG_EL", elevation_angle_deg, "Elevation angle [Deg]")
-    write_key(f[2], "SPIN_VEL", spin_velocity_rpm, "Spin velocity [rpm]")
-    write_key(f[2], "S_RATE", sampling_rate_hz, "Sampling rate [Hz]")
-
-    write_key(f[2], "DETECTOR", fp[2].name, "Detector name")
-
-    close(f)
+for (j, f) in enumerate(keys_dbfp)
+    if startswith(f, "W")
+        delete!(db.focalplane, f)
+        deleteat!(keys_dbfp, j)
+    end
 end
+
+if size >= 7
+    n = div(length(keys_dbfp), size)
+else
+    n = div(length(keys_dbfp), size) + 1
+end
+
+for r in rank
+    z = r + 1
+    if z > length(keys_dbfp)
+    else
+        if size == length(keys_dbfp)
+            subkeys = keys_dbfp[z]
+        elseif z == size 
+            subkeys = keys_dbfp[n*(z-1)+1:end]
+        else
+            subkeys = keys_dbfp[n*(z-1)+1:n*z]
+        end
+
+        for k in subkeys
+            hits_map = get_hits_map(elevation_angle_deg,
+                                    spin_velocity_rpm,
+                                    sampling_rate_hz,
+                                    time_duration_s,
+                                    t_start,
+                                    t_stop,
+                                    NSIDE,
+                                    tenerife_latitude_deg,
+                                    tenerife_longitude_deg,
+                                    tenerife_height_m,
+                                    db.focalplane[k].orientation)
+            
+            save_to_path = join([pars_arg[2],
+                                 db.focalplane[k].name,
+                                 "_",
+                                 Int(elevation_angle_deg),
+                                 "°.fits"])
+            
+            Healpix.saveToFITS(hits_map, save_to_path, typechar = "D")
+            
+            f = FITS(save_to_path, "r+")
+            
+            write_key(f[2], "LATITUDE", tenerife_latitude_deg,
+                      "Tenerife Latitude [Deg]")
+            write_key(f[2], "LONGITUD", tenerife_longitude_deg,
+                      "Tenerife Longitude [Deg]")
+            write_key(f[2], "HEIGHT", tenerife_height_m, "Tenerife Height [m]")
+            
+            write_key(f[2], "DURATION", time_duration_s, "[sec]")
+            write_key(
+                f[2], "TSTART", Dates.format(t_start, "yyyy-mm-dd HH:MM:SS"),
+                "Starting Date and time of the observation: yyyy-mm-dd HH:MM:SS")
+            write_key(
+                f[2], "TSTOP", Dates.format(t_stop, "yyyy-mm-dd HH:MM:SS"),
+                "Ending Date and time of the observation: yyyy-mm-dd HH:MM:SS")
+            
+            write_key(f[2], "ANG_EL", elevation_angle_deg,
+                      "Elevation angle [Deg]")
+            write_key(f[2], "SPIN_VEL", spin_velocity_rpm, "Spin velocity [rpm]")
+            write_key(f[2], "S_RATE", sampling_rate_hz, "Sampling rate [Hz]")
+            
+            write_key(f[2], "DETECTOR", db.focalplane[k].name, "Detector name")
+            
+            close(f)
+        end
+    end
+end
+    
+MPI.Finalize()
+    

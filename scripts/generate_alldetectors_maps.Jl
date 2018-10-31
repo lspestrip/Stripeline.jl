@@ -13,6 +13,15 @@ hits_map = Healpix.Map{Float64, Healpix.RingOrder}(h["NSIDE"])
 hits_map.pixels = zeros(length(hits_map.pixels))
 
 db = Sl.InstrumentDB()
+keys_dbfp = collect(keys(db.focalplane))
+
+for (j, f) in enumerate(keys_dbfp)
+    if startswith(f, "W")
+        delete!(db.focalplane, f)
+        deleteat!(keys_dbfp, j)
+    end
+end
+
 for fp in db.focalplane
 
     load_path = join([pars_arg[2],
