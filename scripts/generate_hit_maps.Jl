@@ -50,7 +50,7 @@ pars_arg = ARGS
 NSIDE = 256
 
 t_start = DateTime(2020, 04, 01, 0, 0, 0)
-t_stop = DateTime(2020, 04, 01, 1, 0, 0)
+t_stop = DateTime(2022, 04, 01, 0, 0, 0)
 time_duration_s = ((t_stop - t_start) / 1000).value 
 
 tenerife_latitude_deg = Sl.TENERIFE_LATITUDE_DEG 
@@ -71,24 +71,17 @@ for (j, f) in enumerate(keys_dbfp)
     end
 end
 
-if size >= 7
-    n = div(length(keys_dbfp), size)
+if size > length(keys_dbfp)
+    N = split_into_n(length(keys_dbfp), length(keys_dbfp))
 else
-    n = div(length(keys_dbfp), size) + 1
+    N = split_into_n(length(keys_dbfp), size)
 end
 
 for r in rank
     z = r + 1
     if z > length(keys_dbfp)
     else
-        if size == length(keys_dbfp)
-            subkeys = keys_dbfp[z]
-        elseif z == size 
-            subkeys = keys_dbfp[n*(z-1)+1:end]
-        else
-            subkeys = keys_dbfp[n*(z-1)+1:n*z]
-        end
-
+        subkeys = keys_dbfp[sum(N[1:z])-N[z]+1:sum(N[1:z])]
         for k in subkeys
             hits_map = get_hits_map(elevation_angle_deg,
                                     spin_velocity_rpm,
