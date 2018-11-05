@@ -72,9 +72,9 @@ for (j, f) in enumerate(keys_dbfp)
 end
 
 if size > length(keys_dbfp)
-    N = split_into_n(length(keys_dbfp), length(keys_dbfp))
+    N = Sl.split_into_n(length(keys_dbfp), length(keys_dbfp))
 else
-    N = split_into_n(length(keys_dbfp), size)
+    N = Sl.split_into_n(length(keys_dbfp), size)
 end
 
 for r in rank
