@@ -118,8 +118,8 @@ In this case we use nominal scanning strategy for STRIP (Tenerife latitude, 20 d
 #Generate sky tod
 
 times = 0:τ_s: (total_time-τ_s)
-(dirs, ψ) = Sl.genpointings([0, 0, 1], times; latitude_deg=28.29) do time_s
-    return (0.0, deg2rad(20.0), Sl.timetorotang(time_s, 1))
+(dirs, ψ) = Sl.genpointings([0., 0., 1.], times; latitude_deg=28.29) do time_s
+    return (0.0, deg2rad(20.0), Sl.timetorotang(time_s, 1.))
 end
 
 pix_idx_inputmap = Healpix.ang2pixRing.(Ref(inputmap_resol), dirs[:, 1], dirs[:, 2])
@@ -300,8 +300,8 @@ for i in 1:length(this_rank_chunk)   #loop on detectors
     times = first_time[i]:τ_s:last_time[i]
 
  
-    (dirs, ψ) = Sl.genpointings([0, 0, 1], times; latitude_deg=28.29) do time_s
-        return (0.0, deg2rad(20.0), Sl.timetorotang(time_s, 1))
+    (dirs, ψ) = Sl.genpointings([0., 0., 1.], times; latitude_deg=28.29) do time_s
+        return (0.0, deg2rad(20.0), Sl.timetorotang(time_s, 1.))
     end
 
     partial_pix_idx_inputmap = Healpix.ang2pixRing.(Ref(inputmap_resol), dirs[:, 1], dirs[:, 2])
