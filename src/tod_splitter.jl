@@ -279,11 +279,12 @@ function generate_noise_mpi(chunks, baselines_per_process, baseline_length_s, fs
                 cur_detector = chunks[i][j].pol_number
 
                 if cur_detector != previous_detector  #if new detector generate new noise
-                    rng = CorrNoise.OofRNG(CorrNoise.GaussRNG(MersenneTwister(seed)), -1, 1.15e-5, fknee_hz[j], fsamp_hz)
+                    seed = rand(1:1000)
+                    rng = CorrNoise.OofRNG(CorrNoise.GaussRNG(MersenneTwister(seed)), -1, 1.15e-5, fknee_hz[cur_detector], fsamp_hz)
                 end
-                
+
                 cur_num_noise_samples = chunks[i][j].num_of_elements*baseline_length_s*fsamp_hz
-                cur_noise = Float64[CorrNoise.randoof(rng) * σ_k[j] for i in 1:(cur_num_noise_samples)]
+                cur_noise = Float64[CorrNoise.randoof(rng) * σ_k[cur_detector] for i in 1:(cur_num_noise_samples)]
                 previous_detector =  cur_detector
 
                 if (i > 1)  #send to other ranks, not rank 0
