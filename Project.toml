@@ -1,7 +1,7 @@
 name = "Stripeline"
 uuid = "45029ab0-c194-11e8-0c82-65ed36a31fad"
 authors = ["Silvia Caprioli <silvia.caprioli@unimi.it>"]
-version = "0.1.0"
+version = "0.2.0"
 
 [deps]
 AstroLib = "c7932e45-9af1-51e7-9da9-f004cd3a462b"

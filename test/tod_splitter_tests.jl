@@ -8,8 +8,8 @@ num_of_MPI_proc = 3
 total_time = 50
 baseline_length_s = 10
 fsamp_hz = 10
-fknee_hz = 0.01
-σ_k = 0.1
+fknee_hz = [0.01, 0.01]
+σ_k = [0.1, 100]
 rank = 1
 
 baselines_per_process = [6, 7, 7]
@@ -27,4 +27,5 @@ comm = missing
 
 noise = generate_noise_mpi(chunks2, baselines_per_process2, baseline_length_s, fsamp_hz, σ_k, fknee_hz, rank2, comm)
 @test length(noise) == fsamp_hz*baseline_length_s*baselines_per_process2
-@test std(noise) ≈ σ_k  rtol=0.01
+@test std(noise[1:100000]) ≈ σ_k[1]  rtol=0.01
+@test std(noise[end-100000: end]) ≈ σ_k[2]  rtol=0.01

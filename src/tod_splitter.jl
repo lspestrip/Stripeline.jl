@@ -245,15 +245,15 @@ end
     - the data chunks (which can be obtained by using the function `split_tod_mpi`)
     - the length (in seconds) of each 1/f noise baseline
     - the array containing the number of 1/f baselines to simulate for each process.
-            It can be obtained by using the function `plit_into_n` in the following way:
+            It can be obtained by using the function `split_into_n` in the following way:
 
             split_into_n(num_of_polarimeters*baselines_per_pol, num_of_MPI_proc)
                 
             where baselines_per_pol = Int64(total_time/baseline_length_s) is the number of baselines of each polarimeter
 
     - the sampling frequency (in Hz)
-    - The RMS of the temperature (in K), σ_k = tsys_k / sqrt(β_hz * τ_s)
-    - The knee frequency (in Hz)
+    - an array containing the RMS of the temperature (in K) for each polarimeter, σ_k[i]= tsys_k[i] / sqrt(β_hz[i] * τ_s)
+    - an array containing the knee frequency (in Hz) for each polarimeter
     - the MPI communicator
 
     It returns the noise TOD for the current rank. 
@@ -270,7 +270,7 @@ function generate_noise_mpi(chunks, baselines_per_process, baseline_length_s, fs
         previous_detector = chunks[1][1].pol_number
         noise = Float64[]  #noise rank 0
         seed = rand(1:1000)
-        rng = CorrNoise.OofRNG(CorrNoise.GaussRNG(MersenneTwister(seed)), -1, 1.15e-5, fknee_hz, fsamp_hz)
+        rng = CorrNoise.OofRNG(CorrNoise.GaussRNG(MersenneTwister(seed)), -1, 1.15e-5, fknee_hz[1], fsamp_hz)
     
         for i in 1:length(chunks)   #loop on ranks
             num_noise_samples = baselines_per_process[i]*baseline_length_s*fsamp_hz
@@ -278,12 +278,12 @@ function generate_noise_mpi(chunks, baselines_per_process, baseline_length_s, fs
             for j in 1:length(chunks[i]) #loop on detectors per rank
                 cur_detector = chunks[i][j].pol_number
 
-                #if cur_detector != previous_detector  #if new detector generate new noise
-                    #rng = CorrNoise.OofRNG(CorrNoise.GaussRNG(MersenneTwister(1234)), -1, 1.15e-5, fknee_hz, fsamp_hz)
-                #end
-
+                if cur_detector != previous_detector  #if new detector generate new noise
+                    rng = CorrNoise.OofRNG(CorrNoise.GaussRNG(MersenneTwister(seed)), -1, 1.15e-5, fknee_hz[j], fsamp_hz)
+                end
+                
                 cur_num_noise_samples = chunks[i][j].num_of_elements*baseline_length_s*fsamp_hz
-                cur_noise = Float64[CorrNoise.randoof(rng) * σ_k for i in 1:(cur_num_noise_samples)]
+                cur_noise = Float64[CorrNoise.randoof(rng) * σ_k[j] for i in 1:(cur_num_noise_samples)]
                 previous_detector =  cur_detector
 
                 if (i > 1)  #send to other ranks, not rank 0
@@ -304,4 +304,3 @@ function generate_noise_mpi(chunks, baselines_per_process, baseline_length_s, fs
 
     return noise
 end
-
