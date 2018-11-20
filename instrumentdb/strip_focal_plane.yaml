@@ -406,7 +406,7 @@ horns:
     R1:
         id: 22
         module_id: 1
-        polarimeter_id: 10
+        polarimeter_id: 5
         color: "red"
         fwhm_x_deg: 0.351
         fwhm_y_deg: 0.344
