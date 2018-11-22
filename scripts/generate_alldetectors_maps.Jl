@@ -6,7 +6,8 @@ pars_arg = ARGS
 
 elevation_angle_deg = parse(Float64, pars_arg[1])
 
-g = FITS(join([pars_arg[2], "I0_", Int(elevation_angle_deg), "°.fits"]), "r")
+files = readdir(pars_arg[2])
+g = FITS(join([pars_arg[2], files[1]]), "r")
 h = read_header(g[2])
 
 hits_map = Healpix.Map{Float64, Healpix.RingOrder}(h["NSIDE"])
@@ -22,18 +23,10 @@ for (j, f) in enumerate(keys_dbfp)
     end
 end
 
-for fp in db.focalplane
-
-    load_path = join([pars_arg[2],
-                      fp[2].name,
-                      "_",
-                      Int(elevation_angle_deg),
-                      "°.fits"])
-
+for file in files
+    load_path = join([pars_arg[2], file])
     single_detector_map = Healpix.readMapFromFITS(load_path, 1, Float64)
-    
     hits_map.pixels += single_detector_map.pixels
-
 end
 
 save_to_path = join([pars_arg[2],

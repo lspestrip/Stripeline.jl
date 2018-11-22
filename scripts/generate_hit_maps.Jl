@@ -49,8 +49,15 @@ pars_arg = ARGS
 
 NSIDE = 256
 
-t_start = DateTime(2020, 04, 01, 0, 0, 0)
-t_stop = DateTime(2022, 04, 01, 0, 0, 0)
+day_start = parse(Int, pars_arg[3])
+month_start = parse(Int, pars_arg[4])
+year_start = parse(Int, pars_arg[5])
+day_stop = parse(Int, pars_arg[6])
+month_stop = parse(Int, pars_arg[7])
+year_stop = parse(Int, pars_arg[8])
+
+t_start = DateTime(year_start, month_start, day_start, 0, 0, 0)
+t_stop = DateTime(year_stop, month_stop, day_stop, 0, 0, 0)
 time_duration_s = ((t_stop - t_start) / 1000).value 
 
 tenerife_latitude_deg = Sl.TENERIFE_LATITUDE_DEG 
@@ -59,7 +66,7 @@ tenerife_height_m = Sl.TENERIFE_HEIGHT_M
 
 elevation_angle_deg = parse(Float64, pars_arg[1])
 spin_velocity_rpm = 1.0
-sampling_rate_hz = 50.0
+sampling_rate_hz = 1.0
 
 db = Sl.InstrumentDB()
 keys_dbfp = collect(keys(db.focalplane))
@@ -99,7 +106,11 @@ for r in rank
                                  db.focalplane[k].name,
                                  "_",
                                  Int(elevation_angle_deg),
-                                 "°.fits"])
+                                 "°_",
+                                 Dates.format(t_start, "yyyy-mm-dd"),
+                                 "_",
+                                 Dates.format(t_stop, "yyyy-mm-dd"), 
+                                 ".fits"])
             
             Healpix.saveToFITS(hits_map, save_to_path, typechar = "D")
             
