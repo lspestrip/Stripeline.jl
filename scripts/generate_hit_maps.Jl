@@ -17,14 +17,16 @@ function get_hits_map(elevation_angle::Float64,
                       latitude::Float64,
                       longitude::Float64,
                       height::Int,
-                      pointings::Array{Float64,1})
+                      pointings::Array{Float64,1};
+                      mod::Float64=0.0)
 
     τ_s = 1 / sampling_rate
     times = 0:τ_s:time_duration
 
     skydirs = Array{Float64}(undef, length(times), 2)
     skyψ = Array{Float64}(undef, length(times), 1)
-
+    
+    el_angle_mod(t) = elevation_angle + mod/2*sin(2π/(60/spin_velocity)*t)
     (skydirs, skyψ) = Sl.genpointings(pointings,
                                       times,
                                       t_start,
@@ -32,7 +34,8 @@ function get_hits_map(elevation_angle::Float64,
                                       latitude_deg=latitude,
                                       longitude_deg=longitude,
                                       height_m=height) do time_s
-                                          return (0.0, deg2rad(elevation_angle),
+                                          return (0.0,
+                                                  deg2rad(el_angle_mod(time_s)),
                                                   Sl.timetorotang(time_s,
                                                                   spin_velocity))
                                       end
@@ -65,8 +68,9 @@ tenerife_longitude_deg = Sl.TENERIFE_LONGITUDE_DEG
 tenerife_height_m = Sl.TENERIFE_HEIGHT_M 
 
 elevation_angle_deg = parse(Float64, pars_arg[1])
+mod = 1.0 
 spin_velocity_rpm = 1.0
-sampling_rate_hz = 1.0
+sampling_rate_hz = 50.0
 
 db = Sl.InstrumentDB()
 keys_dbfp = collect(keys(db.focalplane))
@@ -100,7 +104,8 @@ for r in rank
                                     tenerife_latitude_deg,
                                     tenerife_longitude_deg,
                                     tenerife_height_m,
-                                    db.focalplane[k].orientation)
+                                    db.focalplane[k].orientation;
+                                    mod=mod)
             
             save_to_path = join([pars_arg[2],
                                  db.focalplane[k].name,
