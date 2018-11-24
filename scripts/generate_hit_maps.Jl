@@ -68,7 +68,7 @@ tenerife_longitude_deg = Sl.TENERIFE_LONGITUDE_DEG
 tenerife_height_m = Sl.TENERIFE_HEIGHT_M 
 
 elevation_angle_deg = parse(Float64, pars_arg[1])
-mod = 1.0 
+mod = 3.0 
 spin_velocity_rpm = 1.0
 sampling_rate_hz = 50.0
 

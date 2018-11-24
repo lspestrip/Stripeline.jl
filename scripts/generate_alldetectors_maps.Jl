@@ -28,9 +28,7 @@ end
 for file in files
     load_path = join([pars_arg[2], file])
     single_detector_map = Healpix.readMapFromFITS(load_path, 1, Float64)
-    for f in 1:49
-        hits_map.pixels += single_detector_map.pixels
-    end
+    hits_map.pixels += single_detector_map.pixels
 end
 
 save_to_path = join([pars_arg[2],
