@@ -30,19 +30,41 @@ end
 
 
 """
-    polarizationangle(northdir, poldir)
+    telescopetoground(northdir, time_s)
 
-Calculate the polarization angle projected in the sky in IAU conventions.
-The parameter `northdir` must be a versor that points the North and `poldir`
-must be a versor that identify the polarization direction projected in the sky.
-The return value is in radians.
+Generate the quaternion to get to the ground reference system. The parameter
+`wheelanglesfn` must be a function which takes as input a time, `time_s`, in 
+seconds and returns a 3-tuple containing the angles (in radians) of the three
+motors:
+1. The boresight motor
+2. The altitude motor
+3. The ground motor
 """
-function polarizationangle(northdir, poldir)
-    cosψ = clamp(dot(northdir, poldir), -1, 1)
-    crosspr = northdir × poldir
-    sinψ = clamp(sqrt(dot(crosspr, crosspr)), -1, 1)
-    ψ = atan(sinψ, cosψ) 
-    ψ
+function telescopetoground(wheelanglesfn, time_s)
+    (wheel1ang, wheel2ang, wheel3ang) = wheelanglesfn(time_s)
+    
+    qwheel1 = qrotation([0, 0, 1], wheel1ang)
+    qwheel2 = qrotation([1, 0, 0], wheel2ang)
+    qwheel3 = qrotation([0, 0, 1], wheel3ang)
+    
+    qwheel3 * (qwheel2 * qwheel1)
+end
+
+
+"""
+    groundtoearth(groundq, time_s, latitude_deg)
+
+Generate the quaternion to go from the ground to the earth reference system. 
+The parameter `groundq` must be a quaternion that provide rotation from the 
+telescope to the ground. The parameter `time_s` must be a time in seconds and 
+`latitude_deg` should contain the latitude (in degrees, N is positive) of the 
+location where the observation is made.
+"""
+function groundtoearth(groundq, time_s, latitude_deg)
+    locq = qrotation([1, 0, 0], deg2rad(90 - latitude_deg))
+    earthq = qrotation([0, 0, 1], 2 * π * time_s / 86400)
+    
+    earthq * (locq * groundq)
 end
 
 
@@ -71,6 +93,23 @@ function vector2equatorial(vector, jd, latitude_deg, longitude_deg, height_m)
                                               nutate=true,
                                               aberration=true)
     (deg2rad(Dec_deg), deg2rad(Ra_deg))
+end
+
+
+"""
+    polarizationangle(northdir, poldir)
+
+Calculate the polarization angle projected in the sky in IAU conventions.
+The parameter `northdir` must be a versor that points the North and `poldir`
+must be a versor that identify the polarization direction projected in the sky.
+The return value is in radians.
+"""
+function polarizationangle(northdir, poldir)
+    cosψ = clamp(dot(northdir, poldir), -1, 1)
+    crosspr = northdir × poldir
+    sinψ = clamp(sqrt(dot(crosspr, crosspr)), -1, 1)
+    ψ = atan(sinψ, cosψ) 
+    ψ
 end
 
 
@@ -119,23 +158,15 @@ function genpointings(wheelanglesfn,
 
     zaxis = [1; 0; 0] #should be different for each horn...
     for (idx, time_s) = enumerate(timerange_s)
-        (wheel1ang, wheel2ang, wheel3ang) = wheelanglesfn(time_s)
-        
-        qwheel1 = qrotation([0, 0, 1], wheel1ang)
-        qwheel2 = qrotation([1, 0, 0], wheel2ang)
-        qwheel3 = qrotation([0, 0, 1], wheel3ang)
         
         # This is in the ground reference frame
-        groundq = qwheel3 * (qwheel2 * qwheel1)
+        groundq = telescopetoground(wheelanglesfn, time_s)
         
         if ground
             rotmatr = rotationmatrix(groundq)
         else
             # Now from the ground reference frame to the Earth reference frame
-            locq = qrotation([1, 0, 0], deg2rad(90 - latitude_deg))
-            earthq = qrotation([0, 0, 1], 2 * π * time_s / 86400)
-            
-            quat = earthq * (locq * groundq)
+            quat = groundtoearth(groundq, time_s, latitude_deg)
 
             rotmatr = rotationmatrix(quat)
         end
@@ -216,14 +247,10 @@ function genpointings(wheelanglesfn,
 
 #    zaxis = [1; 0; 0] #should be different for each horn...
     for (idx, time_s) = enumerate(timerange_s)
-        (wheel1ang, wheel2ang, wheel3ang) = wheelanglesfn(time_s)
-        
-        qwheel1 = qrotation([0, 0, 1], wheel1ang)
-        qwheel2 = qrotation([1, 0, 0], wheel2ang)
-        qwheel3 = qrotation([0, 0, 1], wheel3ang)
-        
+
         # This is in the ground reference frame
-        groundq = qwheel3 * (qwheel2 * qwheel1)
+        groundq = telescopetoground(wheelanglesfn, time_s)
+        
         rotmatr = rotationmatrix(groundq)
         vector = rotmatr * dir
 
