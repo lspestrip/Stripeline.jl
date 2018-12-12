@@ -20,12 +20,3 @@ chunks =  [[datachunk(1, 1, 5, 5), datachunk(2, 1, 1, 1)], [datachunk(2, 2, 5, 4
 
 @test get_chunk_properties(chunks, baseline_length_s, fsamp_hz, rank) ==  ([2,3], [10.0, 0.0], [49.901, 29.901], [4, 3], [400, 300])
 
-chunks2 = [[datachunk(1, 1, 1000, 1000), datachunk(2, 1, 1000, 1000)]]
-baselines_per_process2 = 2000
-rank2=0
-comm = missing
-
-noise = generate_noise_mpi(chunks2, baselines_per_process2, baseline_length_s, fsamp_hz, σ_k, fknee_hz, rank2, comm)
-@test length(noise) == fsamp_hz*baseline_length_s*baselines_per_process2
-@test std(noise[1:100000]) ≈ σ_k[1]  rtol=0.01
-@test std(noise[end-100000: end]) ≈ σ_k[2]  rtol=0.01
