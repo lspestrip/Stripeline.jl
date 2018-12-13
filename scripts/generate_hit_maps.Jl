@@ -18,32 +18,55 @@ function get_hits_map(elevation_angle::Float64,
                       longitude::Float64,
                       height::Int,
                       pointings::Array{Float64,1};
-                      mod::Float64=0.0)
+                      mod::Float64=0.0,
+                      chunks_len::Int=86400)
 
     τ_s = 1 / sampling_rate
     times = 0:τ_s:time_duration
-
+    
     skydirs = Array{Float64}(undef, length(times), 2)
     skyψ = Array{Float64}(undef, length(times), 1)
+    hits_map = Healpix.Map{Float64, Healpix.RingOrder}(NSIDE)
     
-    el_angle_mod(t) = elevation_angle + mod/2*sin(2π/(60/spin_velocity)*t)
-    (skydirs, skyψ) = Sl.genpointings(pointings,
-                                      times,
-                                      t_start,
-                                      t_stop;
-                                      latitude_deg=latitude,
-                                      longitude_deg=longitude,
-                                      height_m=height) do time_s
-                                          return (0.0,
+    el_angle_mod(t) = elevation_angle + mod/2 * sin(2π*spin_velocity/60) * t)
+
+    nchunks = round(Int, times.len / chunks_len)
+
+    actual_times = times[1:chunks_len]
+    actual_t_start = t_start
+    actual_t_stop = actual_t_start + Dates.Second(chunks_len-1)
+    
+    for n = 1:nchunks
+        
+        if n == nchunks
+            actual_times = times[(n-1)*chunks_len+1:end]
+            actual_t_stop = t_stop
+        end
+        
+        (skydirs, skyψ) = Sl.genpointings(pointings,
+                                          actual_times,
+                                          actual_t_start,
+                                          actual_t_stop;
+                                          latitude_deg=latitude,
+                                          longitude_deg=longitude,
+                                          height_m=height) do time_s
+                                              return (
+                                                  0.0,
                                                   deg2rad(el_angle_mod(time_s)),
                                                   Sl.timetorotang(time_s,
                                                                   spin_velocity))
                                       end
-    
-    hits_map = Healpix.Map{Float64, Healpix.RingOrder}(NSIDE)
-    for i in eachindex(skyψ)
-        hits_map.pixels[Healpix.ang2pix(hits_map, π/2 - skydirs[i, 1],
-                                        skydirs[i, 2])] += 1.0
+        
+        for i in eachindex(skyψ)
+            hits_map.pixels[Healpix.ang2pix(hits_map, π/2 - skydirs[i, 1],
+                                            skydirs[i, 2])] += 1.0
+        end
+
+        if n != nchunks
+            actual_t_start = actual_t_stop + Dates.Second(1)
+            actual_t_stop = actual_t_start + Dates.Second(chunks_len-1)
+            actual_times = times[n*chunks_len+1:(n+1)*chunks_len]
+        end
     end
     hits_map
 end
@@ -69,7 +92,7 @@ tenerife_height_m = Sl.TENERIFE_HEIGHT_M
 
 elevation_angle_deg = parse(Float64, pars_arg[1])
 spin_velocity_rpm = 1.0
-sampling_rate_hz = 1.0
+sampling_rate_hz = 50.0
 
 db = Sl.InstrumentDB()
 keys_dbfp = collect(keys(db.focalplane))
