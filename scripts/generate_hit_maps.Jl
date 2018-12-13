@@ -28,7 +28,7 @@ function get_hits_map(elevation_angle::Float64,
     skyψ = Array{Float64}(undef, length(times), 1)
     hits_map = Healpix.Map{Float64, Healpix.RingOrder}(NSIDE)
     
-    el_angle_mod(t) = elevation_angle + mod/2 * sin(2π*spin_velocity/60) * t)
+    el_angle_mod(t) = elevation_angle + mod/2 * sin(2π*spin_velocity*t/60)
 
     nchunks = round(Int, times.len / chunks_len)
 
