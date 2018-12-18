@@ -15,5 +15,5 @@ comm = missing
 
 noise =  generate_noise_mpi(chunks, baselines_per_process, baseline_length_s, total_time, fsamp_hz, σ_k, fknee_hz, rank, comm, 1234)
 @test length(noise) == fsamp_hz*baseline_length_s*baselines_per_process
-@test std(noise[1:100000]) ≈ σ_k[1]  rtol=0.1
-@test std(noise[end-100000: end]) ≈ σ_k[2]  rtol=0.1
+@test std(noise[1:100000]) ≈ σ_k[1]  rtol=0.01
+@test std(noise[end-100000: end]) ≈ σ_k[2]  rtol=0.01
