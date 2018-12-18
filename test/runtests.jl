@@ -29,6 +29,10 @@ include("map_maker_tests.jl")
 
 include("tod_splitter_tests.jl")
 
+# Noise Generation
+
+include("noisegeneration_tests.jl")
+
 # Scanning 
 
 include("scanning.jl")
