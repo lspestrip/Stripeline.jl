@@ -2,11 +2,13 @@ using Stripeline, Healpix, ColorSchemes, Plots, FITSIO
 const Sl = Stripeline
 const Hp = Healpix
 
+searchdir(path, key) = filter(x->occursin(key, x), readdir(path))
+
 pars_arg = ARGS
 
 elevation_angle_deg = parse(Float64, pars_arg[1])
 
-files = readdir(pars_arg[2])
+files = searchdir(pars_arg[2], join([pars_arg[1], "°"]))
 g = FITS(join([pars_arg[2], files[1]]), "r")
 z = FITS(join([pars_arg[2], files[end]]), "r")
 h = read_header(g[2])
@@ -33,8 +35,12 @@ end
 
 save_to_path = join([pars_arg[2],
                      pars_arg[3],
-                     Int(elevation_angle_deg),
-                     "°.fits"])
+                     pars_arg[1],
+                     "°_",
+                     h["TSTART"][1:10],
+                     "_",
+                     h["TSTOP"][1:10],
+                     ".fits"])
 
 Healpix.saveToFITS(hits_map, save_to_path, typechar = "D")
 

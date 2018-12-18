@@ -131,7 +131,7 @@ for r in rank
             save_to_path = join([pars_arg[2],
                                  db.focalplane[k].name,
                                  "_",
-                                 Int(elevation_angle_deg),
+                                 pars_arg[1],
                                  "°_",
                                  Dates.format(t_start, "yyyy-mm-dd"),
                                  "_",
