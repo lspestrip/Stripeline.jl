@@ -6,5 +6,6 @@ include("timesplit.jl")
 include("mapmaker.jl")
 include("tod_splitter.jl")
 include("DBforsimulation.jl")
+include("noisegeneration.jl")
 
 end
