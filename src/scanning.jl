@@ -6,7 +6,8 @@ using AstroLib
 using Dates
 
 export TENERIFE_LATITUDE_DEG, TENERIFE_LONGITUDE_DEG, TENERIFE_HEIGHT_M
-export timetorotang, genpointings, polarizationangle
+export timetorotang, telescopetoground, groundtoearth
+export genpointings, polarizationangle
 
 const TENERIFE_LATITUDE_DEG = 28.3
 const TENERIFE_LONGITUDE_DEG = -16.509722
@@ -30,15 +31,27 @@ end
 
 
 """
-    telescopetoground(northdir, time_s)
+    telescopetoground(wheelanglesfn, time_s)
 
-Generate the quaternion to get to the ground reference system. The parameter
-`wheelanglesfn` must be a function which takes as input a time, `time_s`, in 
-seconds and returns a 3-tuple containing the angles (in radians) of the three
-motors:
+Return a quaternion of type `Quaternion{Float64}` representing the
+coordinate transform from the focal plane to the ground of the
+telescope. The parameter `wheelanglesfn` must be a function which
+takes as input a time, `time_s`, in seconds, and it must return a
+3-tuple containing the angles of the following motors:
+
 1. The boresight motor
 2. The altitude motor
 3. The ground motor
+
+Example:
+`````julia
+telescopetoground(3600.0) do
+    # Boresight motor keeps a constant angle equal to 0°
+    # Altitude motor remains at 20° from the Zenith
+    # Ground motor spins at 1 RPM
+    (0.0, deg2rad(20.0), timetorotang(time_s, 1))
+end
+`````
 """
 function telescopetoground(wheelanglesfn, time_s)
     (wheel1ang, wheel2ang, wheel3ang) = wheelanglesfn(time_s)
@@ -52,17 +65,22 @@ end
 
 
 """
-    groundtoearth(groundq, time_s, latitude_deg)
+    groundtoearth(groundq, time_s, latitude_deg; day_duration_s=86400.0)
 
-Generate the quaternion to go from the ground to the earth reference system. 
-The parameter `groundq` must be a quaternion that provide rotation from the 
-telescope to the ground. The parameter `time_s` must be a time in seconds and 
-`latitude_deg` should contain the latitude (in degrees, N is positive) of the 
-location where the observation is made.
+Return a quaternion of type `Quaternion{Float64}` representing the
+coordinate transformation from the ground of the telescope to the
+Equatorial coordinate system. The parameter `groundq` must be a
+quaternion describing the coordinate transformation from the focal
+plane of the telescope to the ground. The parameter `time_s` must be a
+time in seconds, and `latitude_deg` is the latitude (in degrees, N is
+positive) of the location where the observation is made.
+
+The keyword `day_duration_s` specifies the length of a day in seconds.
+
 """
-function groundtoearth(groundq, time_s, latitude_deg)
+function groundtoearth(groundq, time_s, latitude_deg; day_duration_s=86400.0)
     locq = qrotation([1, 0, 0], deg2rad(90 - latitude_deg))
-    earthq = qrotation([0, 0, 1], 2 * π * time_s / 86400)
+    earthq = qrotation([0, 0, 1], 2 * π * time_s / day_duration_s)
     
     earthq * (locq * groundq)
 end
@@ -215,13 +233,15 @@ equatorial coordinates at each time step.
 
 Example:
 `````julia
+using Dates
+
 genpointings([0, 0, 1], 
              0:0.1:1, 
              DateTime(2019, 01, 01, 0, 0, 0), 
              DateTime(2022, 04, 13, 21, 10, 10), 
-             latitude_deg=10.0
-             longitude_deg=20.0
-             height_m = 1000) do time_s
+             latitude_deg=10.0,
+             longitude_deg=20.0,
+             height_m=1000) do time_s
     # Boresight motor keeps a constant angle equal to 0°
     # Altitude motor remains at 20° from the Zenith
     # Ground motor spins at 1 RPM

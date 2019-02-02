@@ -7,6 +7,8 @@ end
 # Simulating the scanning strategy
 
 ```@docs
+telescopetoground
+groundtoearth
 genskypointings
 genpointings
 timetorotang
