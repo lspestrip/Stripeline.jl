@@ -3,6 +3,7 @@ using Stripeline
 using Dates
 using Quaternions
 using Healpix
+const Sl = Stripeline
 
 eps = 3e-4 # Corresponds to pointing precision of 1.08 arcseconds
 
@@ -87,3 +88,38 @@ crab_position_skydirs = sqrt.(skydirs[:, 1].^2 + skydirs[:, 2].^2)
 @test crab_position_skydirs[2] ≈ crab_position atol = eps
 @test crab_position_skydirs[3] ≈ crab_position atol = eps
 
+
+# Test flag `ground`
+db = Sl.InstrumentDB()
+
+time_duration = 86400
+sampling_rate = 50.0
+spin_velocity = 1
+
+τ_s = 1 / sampling_rate
+times = 0:τ_s:time_duration
+
+(dirs, ψ) = genpointings(db.focalplane["I0"].orientation, 
+                         times; 
+                         latitude_deg=TENERIFE_LATITUDE_DEG) do time_s
+                             return (0.,
+                                     deg2rad(20.0),
+                                     Sl.timetorotang(time_s, spin_velocity))
+                         end
+
+@test size(dirs) == (convert(Int64, time_duration * sampling_rate + 1), 2)
+@test size(ψ) == (convert(Int64, time_duration * sampling_rate + 1), )
+
+(dirs, ψ) = genpointings(db.focalplane["I0"].orientation, 
+                         times;
+                         ground=true,
+                         latitude_deg=TENERIFE_LATITUDE_DEG) do time_s
+                             return (0.,
+                                     deg2rad(20.0),
+                                     Sl.timetorotang(time_s, spin_velocity))
+                         end
+
+@test size(dirs) == (convert(Int64, time_duration * sampling_rate + 1), 4)
+@test dirs[1:end-1, 3] ≈ dirs[2:end, 3]
+@test size(ψ) == (convert(Int64, time_duration * sampling_rate + 1), 2)
+@test rad2deg(dirs[1, 3]) ≈ 20.0 atol = 1e-8

@@ -114,6 +114,15 @@ end
 
 
 """
+    get_northdir(θ, ϕ)
+
+Compute the North of a vector. The North for a vector v is just -dv/dθ, as θ is 
+the colatitude and moves along the meridian
+"""
+get_northdir(θ, ϕ) = @SArray [-cos(θ) * cos(ϕ), -cos(θ) * sin(ϕ), sin(θ)]
+
+
+"""
     genpointings(wheelanglesfn, dir, timerange_s; latitude_deg=0.0, 
                  ground=false)
 
@@ -130,12 +139,15 @@ direction of the beam (boresight is [0, 0, 1]). The parameter `timerange_s`
 is either a range or a vector which specifies at which times (in second)
 the pointings should be computed. The keyword `latitude_deg` should contain
 the latitude (in degrees, N is positive) of the location where the observation
-is made. The keyword `ground` must be a boolean: if true the angles will be 
-referred to the ground coordinate system otherwise they will be expressed in 
-equatorial coordinates; default is false.
+is made. The keyword `ground` must be a boolean: if true the function will return
+a 4-tuple containing coordinates referred to the ground coordinate system (column
+ 3 and 4) and the equatorial coordinates (column 1 and 2). Otherwise, if false 
+the function will return a 2-tuple coordinates only expressed in equatorial 
+coordinates; default is false.
 
-Return a 2-tuple containing the directions (a N×2 array containing the
-colatitude and the longitude) and the polarization angles at each time step.
+Return a 2-tuple (4-tuple) containing the directions (a N×2 (Nx4) array 
+containing the colatitude and the longitude) and the polarization angles at each 
+time step.
 
 Example:
 `````julia
@@ -152,9 +164,14 @@ function genpointings(wheelanglesfn,
                       timerange_s;
                       latitude_deg=0.0,
                       ground=false)
-    
-    dirs = Array{Float64}(undef, length(timerange_s), 2)
-    ψ = Array{Float64}(undef, length(timerange_s))
+
+    if ground
+        dirs = Array{Float64}(undef, length(timerange_s), 4)
+        ψ = Array{Float64}(undef, length(timerange_s), 2)
+    else
+        dirs = Array{Float64}(undef, length(timerange_s), 2)
+        ψ = Array{Float64}(undef, length(timerange_s))
+    end
 
     zaxis = [1; 0; 0] #should be different for each horn...
     for (idx, time_s) = enumerate(timerange_s)
@@ -163,24 +180,54 @@ function genpointings(wheelanglesfn,
         groundq = telescopetoground(wheelanglesfn, time_s)
         
         if ground
-            rotmatr = rotationmatrix(groundq)
+            rotmatr_ground = rotationmatrix(groundq)
+            quat = groundtoearth(groundq, time_s, latitude_deg)
+            rotmatr_earth = rotationmatrix(quat)
+
+            vector_ground = rotmatr_ground * dir
+            poldir_ground = rotmatr_ground * zaxis
+            
+            vector_earth = rotmatr_earth * dir
+            poldir_earth = rotmatr_earth * zaxis
+
+            # The North for a vector v is just -dv/dθ, as θ is the
+            # colatitude and moves along the meridian
+            (θ_earth, ϕ_earth) = Healpix.vec2ang(vector_earth[1],
+                                                 vector_earth[2],
+                                                 vector_earth[3])
+            (θ_ground, ϕ_ground) = Healpix.vec2ang(vector_ground[1],
+                                                   vector_ground[2],
+                                                   vector_ground[3])
+            dirs[idx, 1] = θ_earth
+            dirs[idx, 2] = ϕ_earth
+
+            dirs[idx, 3] = θ_ground
+            dirs[idx, 4] = ϕ_ground
+
+            northdir_earth = get_northdir(θ_earth, ϕ_earth)
+            northdir_ground = get_northdir(θ_ground, ϕ_ground)
+
+            ψ[idx, 1] = polarizationangle(northdir_earth, poldir_earth)
+            ψ[idx, 2] = polarizationangle(northdir_ground, poldir_ground)
+
+
         else
             # Now from the ground reference frame to the Earth reference frame
             quat = groundtoearth(groundq, time_s, latitude_deg)
-
             rotmatr = rotationmatrix(quat)
-        end
-        
-        vector = rotmatr * dir
-        poldir = rotmatr * zaxis
 
-        # The North for a vector v is just -dv/dθ, as θ is the
-        # colatitude and moves along the meridian
-        (θ, ϕ) = Healpix.vec2ang(vector[1], vector[2], vector[3])
-        dirs[idx, 1] = θ
-        dirs[idx, 2] = ϕ
-        northdir = @SArray [-cos(θ) * cos(ϕ), -cos(θ) * sin(ϕ), sin(θ)]
-        ψ[idx] = polarizationangle(northdir, poldir)
+            vector = rotmatr * dir
+            poldir = rotmatr * zaxis
+
+            # The North for a vector v is just -dv/dθ, as θ is the
+            # colatitude and moves along the meridian
+            (θ, ϕ) = Healpix.vec2ang(vector[1], vector[2], vector[3])
+            dirs[idx, 1] = θ
+            dirs[idx, 2] = ϕ
+            northdir = get_northdir(θ, ϕ)
+            ψ[idx] = polarizationangle(northdir, poldir)
+            
+        end
     end
     
     (dirs, ψ)
