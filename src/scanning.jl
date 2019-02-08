@@ -280,21 +280,12 @@ equatorial coordinates at each time step.
 
 Example:
 `````julia
-using Dates
-
 genpointings([0, 0, 1], 
              0:0.1:1, 
              DateTime(2019, 01, 01, 0, 0, 0), 
-<<<<<<< HEAD
-             latitude_deg=10.0
-             longitude_deg=20.0
-             height_m = 1000) do time_s
-=======
-             DateTime(2022, 04, 13, 21, 10, 10), 
              latitude_deg=10.0,
              longitude_deg=20.0,
-             height_m=1000) do time_s
->>>>>>> 86e254bed1e87098df78925369db63b0f102db2c
+             height_m = 1000) do time_s
     # Boresight motor keeps a constant angle equal to 0°
     # Altitude motor remains at 20° from the Zenith
     # Ground motor spins at 1 RPM
