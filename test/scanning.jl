@@ -7,7 +7,6 @@ using Healpix
 eps = 3e-4 # Corresponds to pointing precision of 1.08 arcseconds
 
 t_start = DateTime(2018, 01, 01, 0, 0, 0)
-t_stop = DateTime(2018, 01, 01, 0, 0, 0)
 
 crab_az_stellarium_rad = 3.168070267969909
 crab_alt_stellarium_rad = 1.4612458881566615
@@ -32,7 +31,6 @@ dir = inv(rotmatr) * vector
 (skydirs, skyψ) = genpointings(dir, 
                                0.:1.:0., 
                                t_start, 
-                               t_stop, 
                                latitude_deg=TENERIFE_LATITUDE_DEG,
                                longitude_deg=TENERIFE_LONGITUDE_DEG,
                                height_m=TENERIFE_HEIGHT_M) do time_s
@@ -66,7 +64,6 @@ for (idx, day) in enumerate(days)
 
     (skydirections, skyψ) = genpointings(dir, 
                                          0.:1.:0., 
-                                         day, 
                                          day, 
                                          latitude_deg=TENERIFE_LATITUDE_DEG,
                                          longitude_deg=TENERIFE_LONGITUDE_DEG,

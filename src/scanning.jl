@@ -202,11 +202,11 @@ motors:
 The parameter `dir` must be a normalized vector which tells the pointing
 direction of the beam (boresight is [0, 0, 1]). The parameter `timerange_s`
 is either a range or a vector which specifies at which times (in second)
-the pointings should be computed. The parameter `t_start` and `t_start` must be 
-two DateTime which tell the exact UTC date and time of the observation. The 
-keywords `latitude_deg`, `longitude_deg` and `height_m` should contain the 
-latitude (in degrees, N is positive), the longitude (in degrees, counterclockwise
-is positive) and the height (in meters) of the location where the observation is 
+the pointings should be computed. The parameter `t_start` must be a DateTime 
+which tells the exact UTC date and time of the observation. The keywords 
+`latitude_deg`, `longitude_deg` and `height_m` should contain the latitude 
+(in degrees, N is positive), the longitude (in degrees, counterclockwise is 
+positive) and the height (in meters) of the location where the observation is  
 made.
 
 Return a 2-tuple containing the sky directions (a N×2 array containing the 
@@ -218,7 +218,6 @@ Example:
 genpointings([0, 0, 1], 
              0:0.1:1, 
              DateTime(2019, 01, 01, 0, 0, 0), 
-             DateTime(2022, 04, 13, 21, 10, 10), 
              latitude_deg=10.0
              longitude_deg=20.0
              height_m = 1000) do time_s
@@ -232,20 +231,15 @@ end
 function genpointings(wheelanglesfn,
                       dir,
                       timerange_s,
-                      t_start,
-                      t_stop;
+                      t_start;
                       latitude_deg=0.0,
                       longitude_deg=0.0,
                       height_m=0)
     
     skydirs = Array{Float64}(undef, length(timerange_s), 2)
     skyψ = Array{Float64}(undef, length(timerange_s))
-    
-    jd_start = AstroLib.jdcnv(t_start)
-    jd_stop = AstroLib.jdcnv(t_stop)
-    jd_range = range(jd_start, stop=jd_stop, length=length(timerange_s))
 
-#    zaxis = [1; 0; 0] #should be different for each horn...
+    #    zaxis = [1; 0; 0] #should be different for each horn...
     for (idx, time_s) = enumerate(timerange_s)
 
         # This is in the ground reference frame
@@ -254,8 +248,9 @@ function genpointings(wheelanglesfn,
         rotmatr = rotationmatrix(groundq)
         vector = rotmatr * dir
 
+        jd = AstroLib.jdcnv(t_start + Dates.Nanosecond(round(Int64, time_s*1e9)))
         Dec_rad, Ra_rad = vector2equatorial(vector,
-                                            jd_range[idx],
+                                            jd,
                                             latitude_deg,
                                             longitude_deg,
                                             height_m)
