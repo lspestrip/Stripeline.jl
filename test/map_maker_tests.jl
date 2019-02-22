@@ -36,3 +36,16 @@ oofnoise = [1., 1., 1., -2., -2., -2., 1., 1., 1., 1.]
 (pixels, baselines) = destripe(pix_idx, tod + oofnoise, num_of_pixels, baseline_len, comm)
 @test pixels ≈ true_map
 @test baselines ≈ true_baselines
+
+
+#check divergences
+pix_idx = repeat([1, 1, 2, 1, 2, 3, 3, 1, 3, 2],1000)
+baseline_len = repeat([3,3,4],1000)
+ooftod = repeat([1., 1., 1., -2., -2., -2., 1., 1., 1., 1.],1000)
+skytod = repeat([3.86],10000)
+true_map = [3.86, 3.86, 3.86]
+true_baselines = repeat([1,-2, 1],1000)
+
+(pixels, baselines) = destripe(pix_idx, skytod+ooftod, num_of_pixels, baseline_len, comm)
+@test pixels ≈ true_map
+@test baselines ≈ true_baselines
