@@ -28,9 +28,9 @@ function tod2map_mpi(pix_idx, tod, num_of_pixels, comm; unseen = NaN)
     T = eltype(tod)
     N = eltype(pix_idx)
     
-    partial_map = Array{T}(undef, num_of_pixels)
+    partial_map = zeros(T, num_of_pixels)
     partial_hits = zeros(N, num_of_pixels)
-    binned_map = Array{T}(undef, num_of_pixels)
+    binned_map = zeros(T, num_of_pixels)
     hits = zeros(N, num_of_pixels )
 
     for i in eachindex(pix_idx)
@@ -147,7 +147,7 @@ function applya(baselines, pix_idx, tod, baseline_dim, num_of_pixels, comm; unse
         startidx += baseline_dim[i]
     end
    # baselines_sum.+= sum(baselines)
-    baselines_sum
+   baselines_sum
 end
 
 
@@ -201,7 +201,7 @@ function conj_grad(baselines_sum, pix_idx, tod, baseline_len, num_of_pixels, com
 
         rdotr = mpi_dot_prod(r, r, comm)
         pdotAp = mpi_dot_prod(p, Ap, comm)
-        
+
         alpha = rdotr / pdotAp
         baselines .+= alpha * p        
         @. r_next = r - alpha * Ap
@@ -209,7 +209,7 @@ function conj_grad(baselines_sum, pix_idx, tod, baseline_len, num_of_pixels, com
         rdotr_next = mpi_dot_prod(r_next, r_next, comm)
         
         convergence_parameter = sqrt(rdotr_next)
-        
+
         if convergence_parameter < threshold  break end
         if k  > max_iter   break end
         
