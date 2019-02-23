@@ -208,7 +208,7 @@ function conj_grad(baselines_sum, pix_idx, tod, baseline_len, num_of_pixels, com
         
         rdotr_next = mpi_dot_prod(r_next, r_next, comm)
         
-        convergence_parameter = sqrt(rdotr_next)
+        convergence_parameter = maximum(abs.(r))
 
         if convergence_parameter < threshold  break end
         if k  > max_iter   break end
