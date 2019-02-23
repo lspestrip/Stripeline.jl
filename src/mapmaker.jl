@@ -58,7 +58,7 @@ function tod2map_mpi(pix_idx, tod, num_of_pixels, comm; unseen = NaN)
 end
 
 
-function baseline2map_mpi(pix_idx, baselines, baseline_dim, num_of_pixels, comm; unseen=NaN)
+function baseline2map_mpi(pix_idx, baselines, baseline_lengths, num_of_pixels, comm; unseen=NaN)
     
     T = eltype(baselines)
     N = eltype(pix_idx)
@@ -70,14 +70,14 @@ function baseline2map_mpi(pix_idx, baselines, baseline_dim, num_of_pixels, comm;
 
     startidx = 1
     
-    for i in eachindex(baseline_dim)
-        endidx = baseline_dim[i] + startidx - 1        
+    for i in eachindex(baseline_lengths)
+        endidx = baseline_lengths[i] + startidx - 1        
         
         for j in startidx:endidx
             partial_map[pix_idx[j]] += baselines[i]
             partial_hits[pix_idx[j]] += 1
         end
-        startidx += baseline_dim[i]
+        startidx += baseline_lengths[i]
     end 
     
     if(!ismissing(comm))
@@ -101,16 +101,16 @@ function baseline2map_mpi(pix_idx, baselines, baseline_dim, num_of_pixels, comm;
 end
 
 
-function applyz_and_sum(pix_idx, tod, baseline_dim, num_of_pixels, comm; unseen=NaN)
+function applyz_and_sum(pix_idx, tod, baseline_lengths, num_of_pixels, comm; unseen=NaN)
     @assert length(tod) == length(pix_idx)
         
-    baselines_sum = zeros(eltype(tod), length(baseline_dim))
+    baselines_sum = zeros(eltype(tod), length(baseline_lengths))
 
     binned_map = tod2map_mpi(pix_idx, tod, num_of_pixels, comm, unseen=unseen)
 
     startidx = 1
-    for i in eachindex(baseline_dim)
-        endidx = baseline_dim[i] + startidx - 1
+    for i in eachindex(baseline_lengths)
+        endidx = baseline_lengths[i] + startidx - 1
 
         # The inner for is equivalent to
         #
@@ -121,30 +121,30 @@ function applyz_and_sum(pix_idx, tod, baseline_dim, num_of_pixels, comm; unseen=
             baselines_sum[i] += tod[j] - binned_map[pix_idx[j]]
         end
 
-        startidx += baseline_dim[i]
+        startidx += baseline_lengths[i]
     end
     
     baselines_sum
 end
 
 
-function applya(baselines, pix_idx, tod, baseline_dim, num_of_pixels, comm; unseen=NaN)
+function applya(baselines, pix_idx, tod, baseline_lengths, num_of_pixels, comm; unseen=NaN)
     @assert length(tod) == length(pix_idx)
-    @assert length(baselines) == length(baseline_dim)
+    @assert length(baselines) == length(baseline_lengths)
 
-    baselines_sum = zeros(eltype(baselines), length(baseline_dim))
-    binned_map = baseline2map_mpi(pix_idx, baselines, baseline_dim, num_of_pixels, comm; unseen=NaN)
+    baselines_sum = zeros(eltype(baselines), length(baseline_lengths))
+    binned_map = baseline2map_mpi(pix_idx, baselines, baseline_lengths, num_of_pixels, comm; unseen=NaN)
     
     startidx = 1
 
-    for i in eachindex(baseline_dim)
-        endidx = baseline_dim[i] + startidx - 1
+    for i in eachindex(baseline_lengths)
+        endidx = baseline_lengths[i] + startidx - 1
         
         for j in startidx:endidx
             baselines_sum[i] += baselines[i] - binned_map[pix_idx[j]]
         end
 
-        startidx += baseline_dim[i]
+        startidx += baseline_lengths[i]
     end
 
     #needed to assure that sum(baselines)==0
@@ -155,11 +155,12 @@ function applya(baselines, pix_idx, tod, baseline_dim, num_of_pixels, comm; unse
         total_sum = sum(baselines)
     end
 
-    baselines_sum.+= total_sum 
+    baselines_sum .+= total_sum 
 end
 
 
 function mpi_dot_prod(x, y, comm)
+
     @assert eltype(x) == eltype(y)
 
     local_sum::eltype(x) = dot(x, y)
@@ -176,16 +177,16 @@ end
 
 
 
-function conj_grad(baselines_sum, pix_idx, tod, baseline_len, num_of_pixels, comm; threshold = 1e-9, max_iter=10000)
+function conj_grad(baselines_sum, pix_idx, tod, baseline_lengths, num_of_pixels, comm; threshold = 1e-9, max_iter=10000)
     
     T = eltype(tod)
     N = eltype(pix_idx)
     
-    baselines = Array{T}(undef, length(baseline_len))
-    r = Array{T}(undef, length(baseline_len))
-    r_next = Array{T}(undef, length(baseline_len))
-    p = Array{T}(undef, length(baseline_len))
-    Ap = Array{T}(undef, length(baseline_len))
+    baselines = Array{T}(undef, length(baseline_lengths))
+    r = Array{T}(undef, length(baseline_lengths))
+    r_next = Array{T}(undef, length(baseline_lengths))
+    p = Array{T}(undef, length(baseline_lengths))
+    Ap = Array{T}(undef, length(baseline_lengths))
     
      
     baselines .= 0    #starting baselines 
@@ -194,7 +195,7 @@ function conj_grad(baselines_sum, pix_idx, tod, baseline_len, num_of_pixels, com
     rdotr = zero(T)
     rdotr_next = zero(T)
     
-    r = baselines_sum - applya(baselines, pix_idx, tod, baseline_len, num_of_pixels, comm)  #residual
+    r = baselines_sum - applya(baselines, pix_idx, tod, baseline_lengths, num_of_pixels, comm)  #residual
 
     p .= r  
 
@@ -205,7 +206,7 @@ function conj_grad(baselines_sum, pix_idx, tod, baseline_len, num_of_pixels, com
 
     while true        
 
-        Ap =  applya(p, pix_idx, tod, baseline_len, num_of_pixels, comm)
+        Ap =  applya(p, pix_idx, tod, baseline_lengths, num_of_pixels, comm)
 
         rdotr = mpi_dot_prod(r, r, comm)
         pdotAp = mpi_dot_prod(p, Ap, comm)
@@ -235,14 +236,14 @@ end
 
 
 
-function destriped_map(baselines, pix_idx, tod, baseline_dim, num_of_pixels, comm; unseen=NaN)
+function destriped_map(baselines, pix_idx, tod, baseline_lengthsgths, num_of_pixels, comm; unseen=NaN)
     @assert length(tod) == length(pix_idx)
-    tod2map_mpi(pix_idx, tod, num_of_pixels, comm) - baseline2map_mpi(pix_idx, baselines, baseline_dim, num_of_pixels, comm)
+    tod2map_mpi(pix_idx, tod, num_of_pixels, comm) - baseline2map_mpi(pix_idx, baselines, baseline_lengthsgths, num_of_pixels, comm)
 end
 
 
 """
-    destripe(pix_idx, tod, num_of_pixels, baseline_dim, comm; threshold = 1e-9, max_iter = 10000) -> (pixels, baselines)
+    destripe(pix_idx, tod, num_of_pixels, baseline_lengths, comm; threshold = 1e-9, max_iter = 10000) -> (pixels, baselines)
 
 This MPI based function creates a map from a TOD and removes both 1/f and white noise, using the destriping technique. 
 
@@ -250,7 +251,7 @@ It requires in input:
 -the array of pointed pixels
 -the TOD
 -the desired number of pixels of the output map
--the array containg the dimension of each 1/f baseline
+-the array containg the length of each 1/f baseline
 -the MPI communicator
 
 and, as optional arguments:
@@ -265,17 +266,17 @@ Default = 10000
 It returns a tuple containing the destriped map itself (Array{Float64,1}) and the estimated array of 1/f baselines.
 
 N.B.
-* pix_idx and tod must be array of the same length and sum(baseline_dim) must be equal to the length of `tod`.
+* pix_idx and tod must be array of the same length and sum(baseline_lengthsgths) must be equal to the length of `tod`.
 * If you are not using MPI remember to initialize `comm` to `missing`.
 """
-function destripe(pix_idx, tod, num_of_pixels, baseline_dim, comm; threshold = 1e-9, max_iter = 10000, unseen=NaN)
-    @assert sum(baseline_dim) == length(tod)
+function destripe(pix_idx, tod, num_of_pixels, baseline_lengthsgths, comm; threshold = 1e-9, max_iter = 10000, unseen=NaN)
+    @assert sum(baseline_lengthsgths) == length(tod)
 
-    baselines_sum = applyz_and_sum(pix_idx, tod, baseline_dim, num_of_pixels, comm, unseen=unseen)
-    baselines = conj_grad(baselines_sum, pix_idx, tod, baseline_dim, num_of_pixels, comm; threshold = threshold, max_iter = max_iter)
+    baselines_sum = applyz_and_sum(pix_idx, tod, baseline_lengthsgths, num_of_pixels, comm, unseen=unseen)
+    baselines = conj_grad(baselines_sum, pix_idx, tod, baseline_lengthsgths, num_of_pixels, comm; threshold = threshold, max_iter = max_iter)
 
     # once we have an estimate of the baselines, we can build the destriped map
-    pixels = destriped_map(baselines, pix_idx, tod, baseline_dim, num_of_pixels, comm, unseen=unseen)
+    destr_map = destriped_map(baselines, pix_idx, tod, baseline_lengthsgths, num_of_pixels, comm, unseen=unseen)
 
     #check that sum(baselines) = 0
     if(!ismissing(comm))   
@@ -285,5 +286,5 @@ function destripe(pix_idx, tod, num_of_pixels, baseline_dim, comm; threshold = 1
     end
     println("The sum of baselines is: $total_sum")
 
-    (pixels, baselines)
+    (destr_map, baselines)
 end
