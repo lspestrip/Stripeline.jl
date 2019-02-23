@@ -146,8 +146,16 @@ function applya(baselines, pix_idx, tod, baseline_dim, num_of_pixels, comm; unse
 
         startidx += baseline_dim[i]
     end
-   # baselines_sum.+= sum(baselines)
-   baselines_sum
+
+    #needed to assure that sum(baselines)==0
+
+    if(!ismissing(comm))   
+        total_sum = MPI.allreduce([sum(baselines)], MPI.SUM, comm)[1]
+    else
+        total_sum = sum(baselines)
+    end
+
+    baselines_sum.+= total_sum 
 end
 
 
@@ -268,6 +276,14 @@ function destripe(pix_idx, tod, num_of_pixels, baseline_dim, comm; threshold = 1
 
     # once we have an estimate of the baselines, we can build the destriped map
     pixels = destriped_map(baselines, pix_idx, tod, baseline_dim, num_of_pixels, comm, unseen=unseen)
+
+    #check that sum(baselines) = 0
+    if(!ismissing(comm))   
+        total_sum = MPI.allreduce([sum(baselines)], MPI.SUM, comm)[1]
+    else
+        total_sum = sum(baselines)
+    end
+    println("The sum of baselines is: $total_sum")
 
     (pixels, baselines)
 end
