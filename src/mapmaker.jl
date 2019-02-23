@@ -236,9 +236,9 @@ end
 
 
 
-function destriped_map(baselines, pix_idx, tod, baseline_lengthsgths, num_of_pixels, comm; unseen=NaN)
+function destriped_map(baselines, pix_idx, tod, baseline_lengths, num_of_pixels, comm; unseen=NaN)
     @assert length(tod) == length(pix_idx)
-    tod2map_mpi(pix_idx, tod, num_of_pixels, comm) - baseline2map_mpi(pix_idx, baselines, baseline_lengthsgths, num_of_pixels, comm)
+    tod2map_mpi(pix_idx, tod, num_of_pixels, comm) - baseline2map_mpi(pix_idx, baselines, baseline_lengths, num_of_pixels, comm)
 end
 
 
@@ -266,17 +266,17 @@ Default = 10000
 It returns a tuple containing the destriped map itself (Array{Float64,1}) and the estimated array of 1/f baselines.
 
 N.B.
-* pix_idx and tod must be array of the same length and sum(baseline_lengthsgths) must be equal to the length of `tod`.
+* pix_idx and tod must be array of the same length and sum(baseline_lengths) must be equal to the length of `tod`.
 * If you are not using MPI remember to initialize `comm` to `missing`.
 """
-function destripe(pix_idx, tod, num_of_pixels, baseline_lengthsgths, comm; threshold = 1e-9, max_iter = 10000, unseen=NaN)
-    @assert sum(baseline_lengthsgths) == length(tod)
+function destripe(pix_idx, tod, num_of_pixels, baseline_lengths, comm; threshold = 1e-9, max_iter = 10000, unseen=NaN)
+    @assert sum(baseline_lengths) == length(tod)
 
-    baselines_sum = applyz_and_sum(pix_idx, tod, baseline_lengthsgths, num_of_pixels, comm, unseen=unseen)
-    baselines = conj_grad(baselines_sum, pix_idx, tod, baseline_lengthsgths, num_of_pixels, comm; threshold = threshold, max_iter = max_iter)
+    baselines_sum = applyz_and_sum(pix_idx, tod, baseline_lengths, num_of_pixels, comm, unseen=unseen)
+    baselines = conj_grad(baselines_sum, pix_idx, tod, baseline_lengths, num_of_pixels, comm; threshold = threshold, max_iter = max_iter)
 
     # once we have an estimate of the baselines, we can build the destriped map
-    destr_map = destriped_map(baselines, pix_idx, tod, baseline_lengthsgths, num_of_pixels, comm, unseen=unseen)
+    destr_map = destriped_map(baselines, pix_idx, tod, baseline_lengths, num_of_pixels, comm, unseen=unseen)
 
     #check that sum(baselines) = 0
     if(!ismissing(comm))   
