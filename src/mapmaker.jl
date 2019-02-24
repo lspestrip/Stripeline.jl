@@ -179,7 +179,7 @@ end
 
 
 
-function conj_grad(baselines_sum, pix_idx, tod, baseline_lengths, num_of_pixels, comm; threshold = 1e-9, max_iter=10000)
+function conj_grad(baselines_sum, pix_idx, tod, baseline_lengths, num_of_pixels, rank, comm; threshold = 1e-9, max_iter=10000)
     
     T = eltype(tod)
     N = eltype(pix_idx)
@@ -196,13 +196,18 @@ function conj_grad(baselines_sum, pix_idx, tod, baseline_lengths, num_of_pixels,
     convergence_parameter = zero(T)
     rdotr = zero(T)
     rdotr_next = zero(T)
+
+    best_convergence_paramenter = zero(T)
+    best_baselines = zeros(T, length(baseline_lengths))
+    best_k = zero(N)
     
     r = baselines_sum - applya(baselines, pix_idx, tod, baseline_lengths, num_of_pixels, comm)  #residual
-
     p .= r  
+    rdotr = mpi_dot_prod(r, r, comm)
+    best_convergence_parameter = sqrt(rdotr)
 
-    if(mpi_dot_prod(r, r, comm) == 0)
-        return baselines
+    if(rdotr == 0)
+        return best_baselines
     end
 
 
@@ -220,6 +225,12 @@ function conj_grad(baselines_sum, pix_idx, tod, baseline_lengths, num_of_pixels,
         rdotr_next = mpi_dot_prod(r_next, r_next, comm)
         
         convergence_parameter = sqrt(rdotr_next)
+                
+        if (convergence_parameter < best_convergence_parameter)
+            best_convergence_parameter = convergence_parameter
+            best_baselines .= baselines
+            best_k = k
+        end
 
         if convergence_parameter < threshold  break end
         if k  > max_iter   break end
@@ -231,9 +242,12 @@ function conj_grad(baselines_sum, pix_idx, tod, baseline_lengths, num_of_pixels,
         k += 1
     end
 
-    println("iteration number $k, residual = $convergence_parameter")
+    if rank==0
+        println("Last iteration number $k, Last residual = $convergence_parameter")
+        println("BEST iteration number $best_k, BEST residual = $best_convergence_parameter")
+    end
 
-    return baselines
+    return best_baselines
 end
 
 
@@ -245,7 +259,7 @@ end
 
 
 """
-    destripe(pix_idx, tod, num_of_pixels, baseline_lengths, comm; threshold = 1e-9, max_iter = 10000) -> (pixels, baselines)
+    destripe(pix_idx, tod, num_of_pixels, baseline_lengths, rank, comm; threshold = 1e-9, max_iter = 10000) -> (pixels, baselines)
 
 This MPI based function creates a map from a TOD and removes both 1/f and white noise, using the destriping technique. 
 
@@ -254,6 +268,7 @@ It requires in input:
 -the TOD
 -the desired number of pixels of the output map
 -the array containg the length of each 1/f baseline
+-the MPI rank number
 -the MPI communicator
 
 and, as optional arguments:
@@ -267,15 +282,20 @@ Default = 10000
 
 It returns a tuple containing the destriped map itself (Array{Float64,1}) and the estimated array of 1/f baselines.
 
+Since it is not granted that the sequence of convergence parameters of the conjugate gradient is
+monotonically decreasing, the code keeps the lowest value of them and the corresponding array of baselines.
+If the loop ends because the maximum number of iterations has been reached, this is the configuration that will be returned to
+the caller.
+
 N.B.
 * pix_idx and tod must be array of the same length and sum(baseline_lengths) must be equal to the length of `tod`.
 * If you are not using MPI remember to initialize `comm` to `missing`.
 """
-function destripe(pix_idx, tod, num_of_pixels, baseline_lengths, comm; threshold = 1e-9, max_iter = 10000, unseen=NaN)
+function destripe(pix_idx, tod, num_of_pixels, baseline_lengths, rank, comm; threshold = 1e-9, max_iter = 10000, unseen=NaN)
     @assert sum(baseline_lengths) == length(tod)
 
     baselines_sum = applyz_and_sum(pix_idx, tod, baseline_lengths, num_of_pixels, comm, unseen=unseen)
-    baselines = conj_grad(baselines_sum, pix_idx, tod, baseline_lengths, num_of_pixels, comm; threshold = threshold, max_iter = max_iter)
+    baselines = conj_grad(baselines_sum, pix_idx, tod, baseline_lengths, num_of_pixels, rank, comm; threshold = threshold, max_iter = max_iter)
 
     # once we have an estimate of the baselines, we can build the destriped map
     destr_map = destriped_map(baselines, pix_idx, tod, baseline_lengths, num_of_pixels, comm, unseen=unseen)
@@ -286,7 +306,10 @@ function destripe(pix_idx, tod, num_of_pixels, baseline_lengths, comm; threshold
     else
         total_sum = sum(baselines)
     end
-    println("The sum of baselines is: $total_sum")
+
+    if rank==0
+        println("The sum of baselines is: $total_sum")
+    end
 
     (destr_map, baselines)
 end
