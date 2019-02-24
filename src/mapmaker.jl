@@ -133,6 +133,8 @@ function applya(baselines, pix_idx, tod, baseline_lengths, num_of_pixels, comm; 
     @assert length(baselines) == length(baseline_lengths)
 
     baselines_sum = zeros(eltype(baselines), length(baseline_lengths))
+    total_sum = zero(eltype(baselines))
+
     binned_map = baseline2map_mpi(pix_idx, baselines, baseline_lengths, num_of_pixels, comm; unseen=NaN)
     
     startidx = 1
@@ -162,7 +164,7 @@ end
 function mpi_dot_prod(x, y, comm)
 
     @assert eltype(x) == eltype(y)
-
+    result = zero(eltype(x))
     local_sum::eltype(x) = dot(x, y)
 
     if(!ismissing(comm))
@@ -212,12 +214,12 @@ function conj_grad(baselines_sum, pix_idx, tod, baseline_lengths, num_of_pixels,
         pdotAp = mpi_dot_prod(p, Ap, comm)
 
         alpha = rdotr / pdotAp
-        baselines .+= alpha * p        
+        @. baselines += alpha * p  
         @. r_next = r - alpha * Ap
         
         rdotr_next = mpi_dot_prod(r_next, r_next, comm)
         
-        convergence_parameter = maximum(abs.(r))
+        convergence_parameter = sqrt(rdotr_next)
 
         if convergence_parameter < threshold  break end
         if k  > max_iter   break end
