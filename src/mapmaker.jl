@@ -1,4 +1,6 @@
-export tod2map_mpi, destripe
+export tod2map_mpi, baseline2map_mpi, destripe
+
+using LinearAlgebra
 
 try
     import MPI
@@ -23,8 +25,13 @@ N.B.
 
 """
 function tod2map_mpi(pix_idx, tod, num_of_pixels, comm; unseen = NaN)   
-    partial_map = zeros(Float64,num_of_pixels)
-    partial_hits = zeros(Int, num_of_pixels)
+    T = eltype(tod)
+    N = eltype(pix_idx)
+    
+    partial_map = zeros(T, num_of_pixels)
+    partial_hits = zeros(N, num_of_pixels)
+    binned_map = zeros(T, num_of_pixels)
+    hits = zeros(N, num_of_pixels )
 
     for i in eachindex(pix_idx)
         partial_map[pix_idx[i]] += tod[i]
@@ -32,15 +39,15 @@ function tod2map_mpi(pix_idx, tod, num_of_pixels, comm; unseen = NaN)
     end
 
     if(!ismissing(comm))
-        binned_map::Array{Float64, 1}= MPI.allreduce(partial_map, MPI.SUM, comm)
-        hits::Array{Int, 1} = MPI.allreduce(partial_hits, MPI.SUM, comm)
+        binned_map = MPI.allreduce(partial_map, MPI.SUM, comm)
+        hits = MPI.allreduce(partial_hits, MPI.SUM, comm)
     else
-        binned_map = partial_map
-        hits = partial_hits
+        binned_map .= partial_map
+        hits .= partial_hits
     end
 
     @inbounds for i in eachindex(binned_map)
-        if (hits[i] != 0)
+        if (hits[i] > 0)
             binned_map[i] = binned_map[i] / hits[i]
         else
             binned_map[i] = unseen
@@ -51,34 +58,40 @@ function tod2map_mpi(pix_idx, tod, num_of_pixels, comm; unseen = NaN)
 end
 
 
-function baseline2map_mpi(pix_idx, baselines, baseline_dim, num_of_pixels, comm; unseen=NaN)
+function baseline2map_mpi(pix_idx, baselines, baseline_lengths, num_of_pixels, comm; unseen=NaN)
+    
+    T = eltype(baselines)
+    N = eltype(pix_idx)
+    
+    partial_map = zeros(T, num_of_pixels)
+    partial_hits = zeros(N, num_of_pixels)
+    noise_map = zeros(T, num_of_pixels)
+    hits = zeros(N, num_of_pixels)
 
-    partial_map = zeros(Float64, num_of_pixels)
-    partial_hits = zeros(Int, num_of_pixels)
     startidx = 1
     
-    for i in eachindex(baseline_dim)
-        endidx = baseline_dim[i] + startidx - 1        
+    for i in eachindex(baseline_lengths)
+        endidx = baseline_lengths[i] + startidx - 1        
         
         for j in startidx:endidx
-            partial_map[pix_idx[j]] = partial_map[pix_idx[j]] +  baselines[i]
-            partial_hits[pix_idx[j]] = partial_hits[pix_idx[j]] + 1
+            partial_map[pix_idx[j]] += baselines[i]
+            partial_hits[pix_idx[j]] += 1
         end
-        startidx += baseline_dim[i]
+        startidx += baseline_lengths[i]
     end 
     
     if(!ismissing(comm))
-        noise_map::Array{Float64, 1}= MPI.allreduce(partial_map, MPI.SUM, comm)
-        hits::Array{Int, 1} = MPI.allreduce(partial_hits, MPI.SUM, comm)
+        noise_map = MPI.allreduce(partial_map, MPI.SUM, comm)
+        hits = MPI.allreduce(partial_hits, MPI.SUM, comm)
     else 
         
-        noise_map = partial_map
-        hits = partial_hits
+        noise_map .= partial_map
+        hits .= partial_hits
     end
 
     for i in eachindex(noise_map)
-        if (hits[i] != 0)
-            noise_map[i] = noise_map[i] / hits[i]
+        if (hits[i] > 0)
+            noise_map[i] /= hits[i]
         else
             noise_map[i] = unseen
         end
@@ -88,16 +101,16 @@ function baseline2map_mpi(pix_idx, baselines, baseline_dim, num_of_pixels, comm;
 end
 
 
-function applyz_and_sum(pix_idx, tod, baseline_dim, num_of_pixels, comm; unseen=NaN)
+function applyz_and_sum(pix_idx, tod, baseline_lengths, num_of_pixels, comm; unseen=NaN)
     @assert length(tod) == length(pix_idx)
+        
+    baselines_sum = zeros(eltype(tod), length(baseline_lengths))
 
     binned_map = tod2map_mpi(pix_idx, tod, num_of_pixels, comm, unseen=unseen)
 
     startidx = 1
-    baselines_sum = zeros(Float64, length(baseline_dim))
-
-    for i in eachindex(baseline_dim)
-        endidx = baseline_dim[i] + startidx - 1
+    for i in eachindex(baseline_lengths)
+        endidx = baseline_lengths[i] + startidx - 1
 
         # The inner for is equivalent to
         #
@@ -108,92 +121,145 @@ function applyz_and_sum(pix_idx, tod, baseline_dim, num_of_pixels, comm; unseen=
             baselines_sum[i] += tod[j] - binned_map[pix_idx[j]]
         end
 
-        startidx += baseline_dim[i]
+        startidx += baseline_lengths[i]
     end
     
     baselines_sum
 end
 
 
-function applya(baselines, pix_idx, tod, baseline_dim, num_of_pixels, comm; unseen=NaN)
+function applya(baselines, pix_idx, tod, baseline_lengths, num_of_pixels, comm; unseen=NaN)
     @assert length(tod) == length(pix_idx)
+    @assert length(baselines) == length(baseline_lengths)
 
-    binned_map = baseline2map_mpi(pix_idx, baselines, baseline_dim, num_of_pixels, comm; unseen=NaN)
+    baselines_sum = zeros(eltype(baselines), length(baseline_lengths))
+    total_sum = zero(eltype(baselines))
+
+    binned_map = baseline2map_mpi(pix_idx, baselines, baseline_lengths, num_of_pixels, comm; unseen=NaN)
+    
     startidx = 1
-    baselines_sum = zeros(Float64, length(baseline_dim))
 
-    for i in eachindex(baseline_dim)
-        endidx = baseline_dim[i] + startidx - 1
+    for i in eachindex(baseline_lengths)
+        endidx = baseline_lengths[i] + startidx - 1
         
         for j in startidx:endidx
             baselines_sum[i] += baselines[i] - binned_map[pix_idx[j]]
         end
 
-        startidx += baseline_dim[i]
+        startidx += baseline_lengths[i]
     end
-    
-    baselines_sum
+
+    #needed to assure that sum(baselines)==0
+
+    if(!ismissing(comm))   
+        total_sum = MPI.allreduce([sum(baselines)], MPI.SUM, comm)[1]
+    else
+        total_sum = sum(baselines)
+    end
+
+    baselines_sum .+= total_sum 
 end
 
 
 function mpi_dot_prod(x, y, comm)
-    local_sum = dot(x, y)
+
+    @assert eltype(x) == eltype(y)
+    result = zero(eltype(x))
+    local_sum::eltype(x) = dot(x, y)
 
     if(!ismissing(comm))
-        total::Float64 = MPI.allreduce([local_sum], MPI.SUM, comm)[1]
+        result = MPI.allreduce([local_sum], MPI.SUM, comm)[1]
     else
-        total = local_sum
+        result = local_sum
     end
 
-    return total
+    return result
 end
 
 
-function conj_grad(baselines_sum, start_baselines, pix_idx, tod, baseline_dim, num_of_pixels, comm; threshold = 1e-9, max_iter=10000) 
-    k = 0
-    x = start_baselines
-    r = baselines_sum .- applya(start_baselines, pix_idx, tod, baseline_dim, num_of_pixels, comm)  #residual
-    p = r
-    old_r_dot  = mpi_dot_prod(r, r, comm)
+
+
+function conj_grad(baselines_sum, pix_idx, tod, baseline_lengths, num_of_pixels, rank, comm; threshold = 1e-9, max_iter=10000)
     
-    if old_r_dot == 0
-        return x
+    T = eltype(tod)
+    N = eltype(pix_idx)
+    
+    baselines = Array{T}(undef, length(baseline_lengths))
+    r = Array{T}(undef, length(baseline_lengths))
+    r_next = Array{T}(undef, length(baseline_lengths))
+    p = Array{T}(undef, length(baseline_lengths))
+    Ap = Array{T}(undef, length(baseline_lengths))
+    
+     
+    baselines .= 0    #starting baselines 
+    k = zero(N)       #number of iterations
+    convergence_parameter = zero(T)
+    rdotr = zero(T)
+    rdotr_next = zero(T)
+
+    best_convergence_parameter = zero(T)
+    best_baselines = zeros(T, length(baseline_lengths))
+    best_k = zero(N)
+    
+    r = baselines_sum - applya(baselines, pix_idx, tod, baseline_lengths, num_of_pixels, comm)  #residual
+    p .= r  
+    rdotr = mpi_dot_prod(r, r, comm)
+    best_convergence_parameter = sqrt(rdotr)
+
+    if(rdotr == 0)
+        return best_baselines
     end
 
-    while true
-        k+=1  #iteration number
 
-        if k >= max_iter 
-            break
+    while true        
+
+        Ap =  applya(p, pix_idx, tod, baseline_lengths, num_of_pixels, comm)
+
+        rdotr = mpi_dot_prod(r, r, comm)
+        pdotAp = mpi_dot_prod(p, Ap, comm)
+
+        alpha = rdotr / pdotAp
+        @. baselines += alpha * p  
+        @. r_next = r - alpha * Ap
+        
+        rdotr_next = mpi_dot_prod(r_next, r_next, comm)
+        
+        convergence_parameter = sqrt(rdotr_next)
+                
+        if (convergence_parameter < best_convergence_parameter)
+            best_convergence_parameter = convergence_parameter
+            best_baselines .= baselines
+            best_k = k
         end
 
-        Ap =  applya(p, pix_idx, tod, baseline_dim, num_of_pixels, comm)
-        alpha = old_r_dot/mpi_dot_prod(p, Ap, comm) 
-        x .+= alpha .* p
-        r .-= alpha .* Ap
-        new_r_dot = mpi_dot_prod(r, r, comm)
-
-        if sqrt(new_r_dot) < threshold
-            break
-        end
-
-        beta = new_r_dot/old_r_dot
-        p = r .+ beta .* p
-        old_r_dot = new_r_dot
+        if convergence_parameter < threshold  break end
+        if k  > max_iter   break end
+        
+        beta = rdotr_next/rdotr
+        
+        @. p = r_next + beta * p
+        r .= r_next
+        k += 1
     end
-    return x
+
+    if rank==0
+        println("Last iteration number $k, Last residual = $convergence_parameter")
+        println("BEST iteration number $best_k, BEST residual = $best_convergence_parameter")
+    end
+
+    return best_baselines
 end
 
 
 
-function destriped_map(baselines, pix_idx, tod, baseline_dim, num_of_pixels, comm; unseen=NaN)
+function destriped_map(baselines, pix_idx, tod, baseline_lengths, num_of_pixels, comm; unseen=NaN)
     @assert length(tod) == length(pix_idx)
-    tod2map_mpi(pix_idx, tod, num_of_pixels, comm) - baseline2map_mpi(pix_idx, baselines, baseline_dim, num_of_pixels, comm)
+    tod2map_mpi(pix_idx, tod, num_of_pixels, comm) - baseline2map_mpi(pix_idx, baselines, baseline_lengths, num_of_pixels, comm)
 end
 
 
 """
-    destripe(pix_idx, tod, num_of_pixels::Integer, baseline_dim) -> (pixels, baselines)
+    destripe(pix_idx, tod, num_of_pixels, baseline_lengths, rank, comm; threshold = 1e-9, max_iter = 10000) -> (pixels, baselines)
 
 This MPI based function creates a map from a TOD and removes both 1/f and white noise, using the destriping technique. 
 
@@ -201,28 +267,49 @@ It requires in input:
 -the array of pointed pixels
 -the TOD
 -the desired number of pixels of the output map
--the array containg the dimension of each 1/f baseline
+-the array containg the length of each 1/f baseline
+-the MPI rank number
 -the MPI communicator
+
+and, as optional arguments:
+-the conjugate gradient threshold: when the residual error of the iteration goes
+below this value, the iteration stops. The smaller the value,
+the more accurate the solution. 
+Default = 1e-09
+-the maximum number of iterations: if the CG algorithm does not converge after
+this number of steps, quit the iteration.
+Default = 10000
 
 It returns a tuple containing the destriped map itself (Array{Float64,1}) and the estimated array of 1/f baselines.
 
+Since it is not granted that the sequence of convergence parameters of the conjugate gradient is
+monotonically decreasing, the code keeps the lowest value of them and the corresponding array of baselines.
+If the loop ends because the maximum number of iterations has been reached, this is the configuration that will be returned to
+the caller.
+
 N.B.
-* pix_idx and tod must be array of the same length and sum(baseline_dim) must be equal to the length of `tod`.
+* pix_idx and tod must be array of the same length and sum(baseline_lengths) must be equal to the length of `tod`.
 * If you are not using MPI remember to initialize `comm` to `missing`.
 """
-function destripe(pix_idx, tod, num_of_pixels, baseline_dim, comm; unseen=NaN)
-    @assert sum(baseline_dim) == length(tod)
+function destripe(pix_idx, tod, num_of_pixels, baseline_lengths, rank, comm; threshold = 1e-9, max_iter = 10000, unseen=NaN)
+    @assert sum(baseline_lengths) == length(tod)
 
-    start_baselines = zeros(Float64, length(baseline_dim))
-    baselines_sum = applyz_and_sum(pix_idx, tod, baseline_dim, num_of_pixels, comm, unseen=unseen)
-    baselines = conj_grad(baselines_sum, start_baselines, pix_idx, tod, baseline_dim, num_of_pixels, comm)
+    baselines_sum = applyz_and_sum(pix_idx, tod, baseline_lengths, num_of_pixels, comm, unseen=unseen)
+    baselines = conj_grad(baselines_sum, pix_idx, tod, baseline_lengths, num_of_pixels, rank, comm; threshold = threshold, max_iter = max_iter)
 
     # once we have an estimate of the baselines, we can build the destriped map
-    pixels = destriped_map(baselines, pix_idx, tod, baseline_dim, num_of_pixels, comm, unseen=unseen)
+    destr_map = destriped_map(baselines, pix_idx, tod, baseline_lengths, num_of_pixels, comm, unseen=unseen)
 
-    (pixels, baselines)
+    #check that sum(baselines) = 0
+    if(!ismissing(comm))   
+        total_sum = MPI.allreduce([sum(baselines)], MPI.SUM, comm)[1]
+    else
+        total_sum = sum(baselines)
+    end
+
+    if rank==0
+        println("The sum of baselines is: $total_sum")
+    end
+
+    (destr_map, baselines)
 end
-
-
-
-

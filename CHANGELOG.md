@@ -1,3 +1,6 @@
+#Version 0.3.2
+- Fix bugs in mapmaker.jl
+
 # Version 0.3.1
 - Fix bug in generate_alldetectors_map.Jl
 
