@@ -197,7 +197,7 @@ function conj_grad(baselines_sum, pix_idx, tod, baseline_lengths, num_of_pixels,
     rdotr = zero(T)
     rdotr_next = zero(T)
 
-    best_convergence_paramenter = zero(T)
+    best_convergence_parameter = zero(T)
     best_baselines = zeros(T, length(baseline_lengths))
     best_k = zero(N)
     
