@@ -182,7 +182,8 @@ plane of the telescope to the ground. The parameter `time_s` must be a
 time in seconds, and `latitude_deg` is the latitude (in degrees, N is
 positive) of the location where the observation is made.
 
-The keyword `day_duration_s` specifies the length of a day in seconds.
+The keyword `day_duration_s` specifies the length of a sidereal day in
+seconds.
 """
 function groundtoearth(groundq, time_s, latitude_deg; day_duration_s=86400.0)
     locq = qrotation_y(deg2rad(90 - latitude_deg))
@@ -254,7 +255,7 @@ Transform the boresight direction `dir` and the polarization direction
 representing the colatitude, longitude, and polarization angle
 (calculated northward).
 
-This function is used internally by `genpointings`.
+This function is used internally by [`genpointings`](@ref).
 """
 function quat_to_angles(boreaxis, polaxis, quat)
     rotmatr = Quaternions.rotationmatrix(quat)
@@ -291,18 +292,15 @@ function genpointings(wheelanglesfn,
         quat = groundtoearth(groundq, time_s, latitude_deg)
 
         θ, ϕ, curψ = quat_to_angles(dir, polaxis, quat)
-
         (dirs[idx, 1], dirs[idx, 2]) = (θ, ϕ)
-        northdir = get_northdir(θ, ϕ)
 
         if ground
             # Re-run the transformation algorithm using the ground quaternion
             θ_ground, ϕ_ground, ψ_ground = quat_to_angles(dir, polaxis, groundq)
 
-            (dirs[idx, 1], dirs[idx, 2], dirs[idx, 3], dirs[idx, 4]) = (θ, ϕ, θ_ground, ϕ_ground)
+            (dirs[idx, 3], dirs[idx, 4]) = (θ_ground, ϕ_ground)
             (ψ[idx, 1], ψ[idx, 2]) = (curψ, ψ_ground)
         else
-            (dirs[idx, 1], dirs[idx, 2]) = (θ, ϕ)
             ψ[idx] = curψ
         end
     end
@@ -323,44 +321,27 @@ function genpointings(wheelanglesfn,
     skydirs = Array{Float64}(undef, length(timerange_s), 2)
     skyψ = Array{Float64}(undef, length(timerange_s))
 
-    #    zaxis = [1; 0; 0] #should be different for each horn...
     for (idx, time_s) = enumerate(timerange_s)
-
-        # This is in the ground reference frame
         groundq = telescopetoground(wheelanglesfn, time_s)
-
         rotmatr = Quaternions.rotationmatrix(groundq)
         vector = rotmatr * dir
 
-        jd = AstroLib.jdcnv(t_start + Dates.Nanosecond(round(Int64, time_s*1e9)))
+        jd = AstroLib.jdcnv(t_start + Dates.Nanosecond(round(Int64, time_s * 1e9)))
         Dec_rad, Ra_rad = vector2equatorial(vector,
                                             jd,
                                             latitude_deg,
                                             longitude_deg,
                                             height_m)
 
+        poldir = rotmatr * polaxis
+        northdir = get_northdir(π/2 - Dec_rad, Ra_rad)
+        
         skydirs[idx, 1] = Dec_rad
         skydirs[idx, 2] = Ra_rad
-
-        # poldir = rotmatr * zaxis
-        # Decpol_rad, Rapol_rad = vector2equatorial(poldir,
-        #                                           jd_range[idx],
-        #                                           latitude_deg,
-        #                                           longitude_deg,
-        #                                           height_m)
-
-        # skypoldir = StaticArrays.@SArray [cos(Decpol_rad) * cos(Rapol_rad),
-        #                                   cos(Decpol_rad) * sin(Rapol_rad),
-        #                                   sin(Decpol_rad)]
-        # skynorthdir = StaticArrays.@SArray [-sin(Decpol_rad) * cos(Rapol_rad),
-        #                                     -sin(Decpol_rad) * sin(Rapol_rad),
-        #                                     cos(Decpol_rad)]
-
-        # skyψ[idx] = polarizationangle(skynorthdir, skypoldir)
-        skyψ[idx] = 0.
+        skyψ[idx] = polarizationangle(northdir, poldir)
     end
 
-    (skydirs, skyψ) # The polarization angle is still missing
+    (skydirs, skyψ)
 end
 
 
@@ -368,7 +349,7 @@ end
     genpointings(wheelanglesfn, dir, timerange_s; 
                  polaxis=Float64[1.0, 0.0, 0.0],
                  latitude_deg=0.0, ground=false)
-    genpointings(wheelanglesfn, dir, timerange_s, t_start, t_stop;
+    genpointings(wheelanglesfn, dir, timerange_s, t_start;
                  polaxis=Float64[1.0, 0.0, 0.0],
                  latitude_deg=0.0, longitude_deg=0.0, height_m=0.0)
 
@@ -436,7 +417,8 @@ notation.
 `````julia
 import Dates
 
-dirs, psi = genpointings(time_s -> (0, deg2rad(20), timetorotang(time_s, 1)),
+dirs, psi = genpointings(time_s -> (0, deg2rad(20),
+                                    timetorotang(time_s, 1)),
                          [0, 0, 1],
                          0:0.1:1,
                          Dates.DateTime(2019, 01, 01, 0, 0, 0),
