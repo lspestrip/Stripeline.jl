@@ -28,7 +28,7 @@
 # The code in this file tries to follow the conventions laid in
 # document LSPE-STRIP-SP-017 ("STRIP Telescope Coordinate Systems
 # Specification") as much as possible. As the reader might not be
-# aquainted with it, here is a short summary of the relevant
+# acquainted with it, here is a short summary of the relevant
 # terminology:
 #
 # +-----+-----------------------------+------------------------------------------+
