@@ -121,3 +121,25 @@ expected_nsamples = convert(Int, time_duration * sampling_rate + 1)
 
 # We strieve for an accuracy of a few arcseconds
 @test rad2deg(dirs[1, 3]) ≈ 20.0 atol=1e-3
+
+################################################################################
+
+# Check that the sign of the wheel angles is correct
+
+let defaultdb = InstrumentDB()
+    wheelfn(time_s) = (0, deg2rad(20), Stripeline.timetorotang(time_s, 1))
+
+    # We do not start from t = 0s because we want the longitude to be positive
+    timerange = 7200:1:(7200 + 60)
+    G0_vec = defaultdb.focalplane["G0"].orientation
+    V0_vec = defaultdb.focalplane["V0"].orientation
+    
+    dirG0, psiG0 = Stripeline.genpointings(wheelfn, G0_vec, timerange)
+    dirV0, psiV0 = Stripeline.genpointings(wheelfn, V0_vec, timerange)
+
+    # We expect G0 to draw larger circles in the sky
+    @test minimum(dirG0[:, 1]) < minimum(dirV0[:, 1])
+    @test minimum(dirG0[:, 1]) < minimum(dirV0[:, 1])
+    @test maximum(dirG0[:, 1]) > maximum(dirV0[:, 1])
+    @test maximum(dirG0[:, 2]) > maximum(dirV0[:, 2])
+end
