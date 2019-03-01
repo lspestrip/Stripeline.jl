@@ -1,17 +1,43 @@
-using Quaternions
+import Quaternions
 import Healpix
-using StaticArrays
-using LinearAlgebra
-using AstroLib
-using Dates
+import StaticArrays
+import LinearAlgebra: ×, dot
+import AstroLib
+import Dates
 
 export TENERIFE_LATITUDE_DEG, TENERIFE_LONGITUDE_DEG, TENERIFE_HEIGHT_M
+export qrotation_x, qrotation_y, qrotation_z
 export timetorotang, telescopetoground, groundtoearth
 export genpointings, polarizationangle
 
 const TENERIFE_LATITUDE_DEG = 28.3
 const TENERIFE_LONGITUDE_DEG = -16.509722
 const TENERIFE_HEIGHT_M = 2390
+
+# These functions are faster than Quaternions.qrotation2
+
+function qrotation_x(theta)
+    Quaternions.Quaternion(cos(theta / 2), sin(theta / 2), 0.0, 0.0, true)
+end
+
+function qrotation_y(theta)
+    Quaternions.Quaternion(cos(theta / 2), 0.0, sin(theta / 2), 0.0, true)
+end
+
+function qrotation_z(theta)
+    Quaternions.Quaternion(cos(theta / 2), 0.0, 0.0, sin(theta / 2), true)
+end
+
+"""
+    qrotation_x(theta)
+    qrotation_y(theta)
+    qrotation_z(theta)
+
+Return a `Quaternions.Quaternion` object representing a rotation
+around the ``e_x``, ``e_y``, or ``e_z`` axis by an angle `theta` (in
+radians).
+"""
+qrotation_x, qrotation_y, qrotation_z
 
 
 """
@@ -30,20 +56,27 @@ function timetorotang(time_s, rpm)
 end
 
 
-"""
+@doc raw"""
     telescopetoground(wheelanglesfn, time_s)
 
 Return a quaternion of type `Quaternion{Float64}` representing the
 coordinate transform from the focal plane to the ground of the
 telescope. The parameter `wheelanglesfn` must be a function which
 takes as input a time, `time_s`, in seconds, and it must return a
-3-tuple containing the angles of the following motors:
+3-tuple containing the angles of the following motors, measured in
+**radians**:
 
-1. The boresight motor
-2. The altitude motor
-3. The ground motor
+1. The boresight motor (rotation around the ``z`` axis,
+   counterclockwise)
 
-Example:
+2. The altitude motor (rotation around the ``y`` axis,
+   counterclockwise)
+
+3. The ground motor (rotation around the ``z`` axis, **clockwise**:
+   N→E→S→W)
+
+# Example
+
 `````julia
 telescopetoground(3600.0) do
     # Boresight motor keeps a constant angle equal to 0°
@@ -56,9 +89,9 @@ end
 function telescopetoground(wheelanglesfn, time_s)
     (wheel1ang, wheel2ang, wheel3ang) = wheelanglesfn(time_s)
     
-    qwheel1 = qrotation([0, 0, 1], wheel1ang)
-    qwheel2 = qrotation([1, 0, 0], wheel2ang)
-    qwheel3 = qrotation([0, 0, 1], wheel3ang)
+    qwheel1 = qrotation_z(wheel1ang)
+    qwheel2 = qrotation_y(wheel2ang)
+    qwheel3 = qrotation_z(-wheel3ang)
     
     qwheel3 * (qwheel2 * qwheel1)
 end
@@ -76,11 +109,10 @@ time in seconds, and `latitude_deg` is the latitude (in degrees, N is
 positive) of the location where the observation is made.
 
 The keyword `day_duration_s` specifies the length of a day in seconds.
-
 """
 function groundtoearth(groundq, time_s, latitude_deg; day_duration_s=86400.0)
-    locq = qrotation([1, 0, 0], deg2rad(90 - latitude_deg))
-    earthq = qrotation([0, 0, 1], 2 * π * time_s / day_duration_s)
+    locq = qrotation_y(deg2rad(90 - latitude_deg))
+    earthq = qrotation_z(2π * time_s / day_duration_s)
     
     earthq * (locq * groundq)
 end
@@ -97,30 +129,30 @@ is positive) and the height (in meters) of the location where the observation is
 made. 
 """
 function vector2equatorial(vector, jd, latitude_deg, longitude_deg, height_m)
-    (θ, ϕ) = Healpix.vec2ang(vector[1], vector[2], vector[3])
-    Alt_rad = π/2 - θ 
-    Az_rad = 2π - ϕ
+    (θ, ϕ) = Healpix.vec2ang(vector...)
+    alt_rad = π/2 - θ 
+    az_rad = 2π - ϕ
     
-    Ra_deg, Dec_deg, HA_deg = AstroLib.hor2eq(rad2deg(Alt_rad),
-                                              rad2deg(Az_rad),
-                                              jd,
-                                              latitude_deg,
-                                              longitude_deg,
-                                              height_m,
-                                              precession=true,
-                                              nutate=true,
-                                              aberration=true)
-    (deg2rad(Dec_deg), deg2rad(Ra_deg))
+    ra_deg, dec_deg, _ = AstroLib.hor2eq(rad2deg(alt_rad),
+                                         rad2deg(az_rad),
+                                         jd,
+                                         latitude_deg,
+                                         longitude_deg,
+                                         height_m,
+                                         precession=true,
+                                         nutate=true,
+                                         aberration=true)
+    (deg2rad(dec_deg), deg2rad(ra_deg))
 end
 
 
 """
     polarizationangle(northdir, poldir)
 
-Calculate the polarization angle projected in the sky in IAU conventions.
-The parameter `northdir` must be a versor that points the North and `poldir`
-must be a versor that identify the polarization direction projected in the sky.
-The return value is in radians.
+Calculate the polarization angle projected in the sky in IAU
+conventions.  The parameter `northdir` must be a versor that points
+the North and `poldir` must be a versor that identify the polarization
+direction projected in the sky.  The return value is in radians.
 """
 function polarizationangle(northdir, poldir)
     cosψ = clamp(dot(northdir, poldir), -1, 1)
@@ -134,49 +166,34 @@ end
 """
     get_northdir(θ, ϕ)
 
-Compute the North of a vector. The North for a vector v is just -dv/dθ, as θ is 
-the colatitude and moves along the meridian
+Compute the North of a vector. The North for a vector v is -dv/dθ, as
+θ is the colatitude and moves along the meridian.
 """
-get_northdir(θ, ϕ) = @SArray [-cos(θ) * cos(ϕ), -cos(θ) * sin(ϕ), sin(θ)]
+get_northdir(θ, ϕ) = StaticArrays.@SArray [-cos(θ) * cos(ϕ), -cos(θ) * sin(ϕ), sin(θ)]
 
 
 """
-    genpointings(wheelanglesfn, dir, timerange_s; latitude_deg=0.0, 
-                 ground=false)
+    quat_to_angles(boreaxis, polaxis, quat)
 
-Generate a set of pointings for some STRIP detector. The parameter
-`wheelanglesfn` must be a function which takes as input a time in seconds
-and returns a 3-tuple containing the angles (in radians) of the three
-motors:
-1. The boresight motor
-2. The altitude motor
-3. The ground motor
+Transform the boresight direction `dir` and the polarization direction
+`poldir` according to quaternion `quat`. Return the 3-tuple (θ, ϕ, ψ)
+representing the colatitude, longitude, and polarization angle
+(calculated northward).
 
-The parameter `dir` must be a normalized vector which tells the pointing
-direction of the beam (boresight is [0, 0, 1]). The parameter `timerange_s`
-is either a range or a vector which specifies at which times (in second)
-the pointings should be computed. The keyword `latitude_deg` should contain
-the latitude (in degrees, N is positive) of the location where the observation
-is made. The keyword `ground` must be a boolean: if true the function will return
-a 4-tuple containing coordinates referred to the ground coordinate system (column
- 3 and 4) and the equatorial coordinates (column 1 and 2). Otherwise, if false 
-the function will return a 2-tuple coordinates only expressed in equatorial 
-coordinates; default is false.
+This function is used internally by `genpointings`.
+"""
+function quat_to_angles(boreaxis, polaxis, quat)
+    rotmatr = Quaternions.rotationmatrix(quat)
+    boresight = rotmatr * boreaxis
+    poldir = rotmatr * polaxis
+            
+    (θ, ϕ) = Healpix.vec2ang(boresight...)
 
-Return a 2-tuple (4-tuple) containing the directions (a N×2 (Nx4) array 
-containing the colatitude and the longitude) and the polarization angles at each 
-time step.
-
-Example:
-`````julia
-genpointings([0, 0, 1], 0:0.1:1) do time_s
-    # Boresight motor keeps a constant angle equal to 0°
-    # Altitude motor remains at 20° from the Zenith
-    # Ground motor spins at 1 RPM
-    return (0.0, deg2rad(20.0), timetorotang(time_s, 1))
+    northdir = get_northdir(θ, ϕ)
+    (θ, ϕ, polarizationangle(northdir, poldir))
 end
-`````
-"""
+
+
 function genpointings(wheelanglesfn,
                       dir,
                       timerange_s;
@@ -194,57 +211,25 @@ function genpointings(wheelanglesfn,
     zaxis = [1; 0; 0] #should be different for each horn...
     for (idx, time_s) = enumerate(timerange_s)
         
-        # This is in the ground reference frame
+        # This converts the RDP into the MCS (ground reference frame)
         groundq = telescopetoground(wheelanglesfn, time_s)
+        # This converts the MCS into the celestial reference frame
+        quat = groundtoearth(groundq, time_s, latitude_deg)
+
+        θ, ϕ, curψ = quat_to_angles(dir, zaxis, quat)
+
+        (dirs[idx, 1], dirs[idx, 2]) = (θ, ϕ) 
+        northdir = get_northdir(θ, ϕ)
         
         if ground
-            rotmatr_ground = rotationmatrix(groundq)
-            quat = groundtoearth(groundq, time_s, latitude_deg)
-            rotmatr_earth = rotationmatrix(quat)
+            # Re-run the transformation algorithm using the ground quaternion
+            θ_ground, ϕ_ground, ψ_ground = quat_to_angles(dir, zaxis, groundq)
 
-            vector_ground = rotmatr_ground * dir
-            poldir_ground = rotmatr_ground * zaxis
-            
-            vector_earth = rotmatr_earth * dir
-            poldir_earth = rotmatr_earth * zaxis
-
-            # The North for a vector v is just -dv/dθ, as θ is the
-            # colatitude and moves along the meridian
-            (θ_earth, ϕ_earth) = Healpix.vec2ang(vector_earth[1],
-                                                 vector_earth[2],
-                                                 vector_earth[3])
-            (θ_ground, ϕ_ground) = Healpix.vec2ang(vector_ground[1],
-                                                   vector_ground[2],
-                                                   vector_ground[3])
-            dirs[idx, 1] = θ_earth
-            dirs[idx, 2] = ϕ_earth
-
-            dirs[idx, 3] = θ_ground
-            dirs[idx, 4] = ϕ_ground
-
-            northdir_earth = get_northdir(θ_earth, ϕ_earth)
-            northdir_ground = get_northdir(θ_ground, ϕ_ground)
-
-            ψ[idx, 1] = polarizationangle(northdir_earth, poldir_earth)
-            ψ[idx, 2] = polarizationangle(northdir_ground, poldir_ground)
-
-
+            (dirs[idx, 1], dirs[idx, 2], dirs[idx, 3], dirs[idx, 4]) = (θ, ϕ, θ_ground, ϕ_ground)
+            (ψ[idx, 1], ψ[idx, 2]) = (curψ, ψ_ground)
         else
-            # Now from the ground reference frame to the Earth reference frame
-            quat = groundtoearth(groundq, time_s, latitude_deg)
-            rotmatr = rotationmatrix(quat)
-
-            vector = rotmatr * dir
-            poldir = rotmatr * zaxis
-
-            # The North for a vector v is just -dv/dθ, as θ is the
-            # colatitude and moves along the meridian
-            (θ, ϕ) = Healpix.vec2ang(vector[1], vector[2], vector[3])
-            dirs[idx, 1] = θ
-            dirs[idx, 2] = ϕ
-            northdir = get_northdir(θ, ϕ)
-            ψ[idx] = polarizationangle(northdir, poldir)
-            
+            (dirs[idx, 1], dirs[idx, 2]) = (θ, ϕ)
+            ψ[idx] = curψ
         end
     end
     
@@ -252,47 +237,6 @@ function genpointings(wheelanglesfn,
 end
 
 
-"""
-    genpointings(wheelanglesfn, dir, timerange_s, t_start, t_stop; 
-                 latitude_deg=0.0, longitude_deg=0.0, height_m=0.0)
-
-Generate a set of pointings for some STRIP detector. The parameter
-`wheelanglesfn` must be a function which takes as input a time in seconds
-and returns a 3-tuple containing the angles (in radians) of the three
-motors:
-1. The boresight motor
-2. The altitude motor
-3. The ground motor
-
-The parameter `dir` must be a normalized vector which tells the pointing
-direction of the beam (boresight is [0, 0, 1]). The parameter `timerange_s`
-is either a range or a vector which specifies at which times (in second)
-the pointings should be computed. The parameter `t_start` must be a DateTime 
-which tells the exact UTC date and time of the observation. The keywords 
-`latitude_deg`, `longitude_deg` and `height_m` should contain the latitude 
-(in degrees, N is positive), the longitude (in degrees, counterclockwise is 
-positive) and the height (in meters) of the location where the observation is  
-made.
-
-Return a 2-tuple containing the sky directions (a N×2 array containing the 
-Declination and the RightAscension) and the polarization angle given in 
-equatorial coordinates at each time step.
-
-Example:
-`````julia
-genpointings([0, 0, 1], 
-             0:0.1:1, 
-             DateTime(2019, 01, 01, 0, 0, 0), 
-             latitude_deg=10.0,
-             longitude_deg=20.0,
-             height_m = 1000) do time_s
-    # Boresight motor keeps a constant angle equal to 0°
-    # Altitude motor remains at 20° from the Zenith
-    # Ground motor spins at 1 RPM
-    return (0.0, deg2rad(20.0), timetorotang(time_s, 1))
-end
-`````
-"""
 function genpointings(wheelanglesfn,
                       dir,
                       timerange_s,
@@ -310,7 +254,7 @@ function genpointings(wheelanglesfn,
         # This is in the ground reference frame
         groundq = telescopetoground(wheelanglesfn, time_s)
         
-        rotmatr = rotationmatrix(groundq)
+        rotmatr = Quaternions.rotationmatrix(groundq)
         vector = rotmatr * dir
 
         jd = AstroLib.jdcnv(t_start + Dates.Nanosecond(round(Int64, time_s*1e9)))
@@ -330,12 +274,12 @@ function genpointings(wheelanglesfn,
         #                                           longitude_deg,
         #                                           height_m)
         
-        # skypoldir = @SArray [cos(Decpol_rad) * cos(Rapol_rad),
-        #                      cos(Decpol_rad) * sin(Rapol_rad),
-        #                      sin(Decpol_rad)]
-        # skynorthdir = @SArray [-sin(Decpol_rad) * cos(Rapol_rad),
-        #                        -sin(Decpol_rad) * sin(Rapol_rad),
-        #                        cos(Decpol_rad)]
+        # skypoldir = StaticArrays.@SArray [cos(Decpol_rad) * cos(Rapol_rad),
+        #                                   cos(Decpol_rad) * sin(Rapol_rad),
+        #                                   sin(Decpol_rad)]
+        # skynorthdir = StaticArrays.@SArray [-sin(Decpol_rad) * cos(Rapol_rad),
+        #                                     -sin(Decpol_rad) * sin(Rapol_rad),
+        #                                     cos(Decpol_rad)]
         
         # skyψ[idx] = polarizationangle(skynorthdir, skypoldir)
         skyψ[idx] = 0.
@@ -343,3 +287,84 @@ function genpointings(wheelanglesfn,
 
     (skydirs, skyψ) # The polarization angle is still missing
 end
+
+
+@doc raw"""
+    genpointings(wheelanglesfn, dir, timerange_s; latitude_deg=0.0, 
+                 ground=false)
+    genpointings(wheelanglesfn, dir, timerange_s, t_start, t_stop; 
+                 latitude_deg=0.0, longitude_deg=0.0, height_m=0.0)
+
+Generate a set of pointings for a STRIP detector. The parameter
+`wheelanglesfn` must be a function which takes as input a time in
+seconds and returns a 3-tuple containing the angles (in radians) of
+the three motors:
+
+1. The boresight motor (rotation around the ``z`` axis,
+   counterclockwise)
+
+2. The altitude motor (rotation around the ``y`` axis,
+   counterclockwise)
+
+3. The ground motor (rotation around the ``z`` axis, **clockwise**:
+   N→E→S→W)
+
+The meaning of the parameters is the following:
+
+- `dir` specifies the pointing direction of the mean (the boresight is
+  [0, 0, 1]). It must be normalized.
+
+- `timerange_s` is an enumerable type that specifies at which times
+  (in seconds) pointings must be computed.
+
+- `latitude_deg` is the latitude of the location where the observation
+is made (in degrees, North is positive).
+
+- `ground` is a Boolean: if `true`, the function will return a 4-tuple
+  containing the colatitude and longitude measured in Equatorial
+  coordinates (columns 1 and 2) and in ground coordinates (columns 3
+  and 4). If false, only the Equatorial coordinates are computed.
+
+
+# Return values
+
+In the first form, the function returns a 2-tuple containing the sky
+directions (a N×2 array containing declination and right ascension, in
+Equatorial coordinates) and the polarization angle for each time step.
+
+In the second form, the function returns a 2-tuple (4-tuple)
+containing the directions (a N×2 or Nx4 array containing the
+colatitude and the longitude) and the polarization angles at each time
+step.
+
+
+# Examples
+
+Here is an example of the first kind:
+
+`````julia
+dir, psi = genpointings([0, 0, 1], 0:0.1:1) do time_s
+    # Boresight motor keeps a constant angle equal to 0°
+    # Altitude motor remains at 20° from the Zenith
+    # Ground motor spins at 1 RPM
+    return (0.0, deg2rad(20.0), timetorotang(time_s, 1))
+end
+`````
+
+And here is an example of the second kind. Note that, unlike the
+previous example, we use a lambda function instead of the `do...end`
+notation.
+
+`````julia
+import Dates
+
+dirs, psi = genpointings(time_s -> (0, deg2rad(20), timetorotang(time_s, 1)),
+                         [0, 0, 1], 
+                         0:0.1:1, 
+                         Dates.DateTime(2019, 01, 01, 0, 0, 0), 
+                         latitude_deg=10.0,
+                         longitude_deg=20.0,
+                         height_m = 1000) do time_s
+`````
+"""
+genpointings
