@@ -25,4 +25,4 @@ destriper is already implemented.
 ## How to contribute
 
 See the file
-(https://github.com/lspestrip/Stripeline.jl/blob/devel/CONTRIBUTING.md)[CONTRIBUTING.md].
+[https://github.com/lspestrip/Stripeline.jl/blob/devel/CONTRIBUTING.md](CONTRIBUTING.md).
