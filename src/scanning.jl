@@ -164,10 +164,7 @@ function telescopetoground(wheelanglesfn, time_s)
     (wheel1ang, wheel2ang, wheel3ang) = wheelanglesfn(time_s)
 
     qwheel1 = qrotation_z(wheel1ang)
-
-    # The minus sign here is required to make the cryostat go down for
-    # positive angles
-    qwheel2 = qrotation_y(-wheel2ang)
+    qwheel2 = qrotation_y(wheel2ang)
 
     # The minus sign here takes into account the fact that the azimuth
     # motor requires positive angles to turn North into East
