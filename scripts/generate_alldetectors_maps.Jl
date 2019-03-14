@@ -61,5 +61,8 @@ write_key(f[2], "S_RATE", h["S_RATE"], "Sampling rate [Hz]")
 
 write_key(f[2], "DETECTOR", "all detectors", "Sum of all detectors")
 
+write_key(f[2], "EFFECTS", h["EFFECTS"], "List of secondary effects applied to 
+          the observation")
+
 close(f)
 

@@ -12,12 +12,12 @@ function get_hits_map(elevation_angle::Float64,
                       sampling_rate::Float64,
                       time_duration::Int,
                       t_start::DateTime,
-                      t_stop::DateTime,
                       NSIDE::Int,
                       latitude::Float64,
                       longitude::Float64,
                       height::Int,
-                      pointings::Array{Float64,1};
+                      pointings::Array{Float64,1},
+                      effects::Dict;
                       tilt_angle::Float64=0.0,
                       chunks_len::Int=86400)
 
@@ -45,11 +45,14 @@ function get_hits_map(elevation_angle::Float64,
         
         (skydirs, skyψ) = Sl.genpointings(pointings,
                                           actual_times,
-                                          actual_t_start,
-                                          actual_t_stop;
+                                          actual_t_start;
                                           latitude_deg=latitude,
                                           longitude_deg=longitude,
-                                          height_m=height) do time_s
+                                          height_m=height,
+                                          precession=effects["precess"],
+                                          nutation=effects["nutate"],
+                                          aberration=effects["aberrate"],
+                                          refract=effects["refract"]) do time_s
                                               return (
                                                   0.0,
                                                   deg2rad(el_angle_mod(time_s)),
@@ -58,6 +61,10 @@ function get_hits_map(elevation_angle::Float64,
                                       end
         
         for i in eachindex(skyψ)
+            if Healpix.ang2pix(hits_map, π/2 - skydirs[i, 1],
+                               skydirs[i, 2]) == 78900
+                print(skydirs[i-10:1+10, :])
+                
             hits_map.pixels[Healpix.ang2pix(hits_map, π/2 - skydirs[i, 1],
                                             skydirs[i, 2])] += 1.0
         end
@@ -75,6 +82,11 @@ pars_arg = ARGS
 
 NSIDE = 256
 
+effects = Dict("precess" => false,
+               "nutate" => false,
+               "aberrate" => false,
+               "refract" => false)
+    
 day_start = parse(Int, pars_arg[3])
 month_start = parse(Int, pars_arg[4])
 year_start = parse(Int, pars_arg[5])
@@ -121,12 +133,12 @@ for r in rank
                                     sampling_rate_hz,
                                     time_duration_s,
                                     t_start,
-                                    t_stop,
                                     NSIDE,
                                     tenerife_latitude_deg,
                                     tenerife_longitude_deg,
                                     tenerife_height_m,
-                                    db.focalplane[k].orientation)
+                                    db.focalplane[k].orientation,
+                                    effects)
             
             save_to_path = join([pars_arg[2],
                                  db.focalplane[k].name,
@@ -162,6 +174,8 @@ for r in rank
             write_key(f[2], "S_RATE", sampling_rate_hz, "Sampling rate [Hz]")
             
             write_key(f[2], "DETECTOR", db.focalplane[k].name, "Detector name")
+            write_key(f[2], "EFFECTS", effects, "List of secondary effects 
+                      applied to the observation")
             
             close(f)
         end
