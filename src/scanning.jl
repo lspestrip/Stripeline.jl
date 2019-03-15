@@ -281,7 +281,8 @@ function genpointings(wheelanglesfn,
                       timerange_s;
                       polaxis=Float64[1.0, 0.0, 0.0],
                       latitude_deg=0.0,
-                      ground=false)
+                      ground=false,
+                      day_duration_s=86400.0)
 
     if ground
         dirs = Array{Float64}(undef, length(timerange_s), 4)
@@ -296,7 +297,7 @@ function genpointings(wheelanglesfn,
         # This converts the RDP into the MCS (ground reference frame)
         groundq = telescopetoground(wheelanglesfn, time_s)
         # This converts the MCS into the celestial reference frame
-        quat = groundtoearth(groundq, time_s, latitude_deg)
+        quat = groundtoearth(groundq, time_s, latitude_deg; day_duration_s=day_duration_s)
 
         θ, ϕ, curψ = quat_to_angles(dir, polaxis, quat)
         (dirs[idx, 1], dirs[idx, 2]) = (θ, ϕ)

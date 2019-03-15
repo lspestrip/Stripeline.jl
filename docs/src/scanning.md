@@ -9,7 +9,6 @@ end
 ```@docs
 telescopetoground
 groundtoearth
-genskypointings
 genpointings
 timetorotang
 ```
