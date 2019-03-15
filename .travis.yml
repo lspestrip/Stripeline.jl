@@ -23,7 +23,7 @@ jobs:
       os: linux
       script:
         - julia --project=docs/ -e 'using Pkg;
-                                    Pkg.add("https://github.com/ziotom78/Healpix.jl");
+                                    Pkg.add("https://github.com/ziotom78/CorrNoise.jl");
                                     Pkg.add("https://github.com/ziotom78/Healpix.jl");'
         - julia --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd()));
                                                Pkg.instantiate()'
