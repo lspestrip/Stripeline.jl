@@ -327,7 +327,7 @@ instrument.
 julia> db = InstrumentDB();
 
 julia> print("Number of horns in the database: $(length(keys(db.focalplane)))")
-Number of horns in the database: 49
+Number of horns in the database: 55
 
 julia> print("Number of polarimeters in the database: $(length(keys(db.detectors)))")
 Number of polarimeters in the database: 66

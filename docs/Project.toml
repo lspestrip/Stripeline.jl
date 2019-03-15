@@ -1,0 +1,5 @@
+[deps]
+AstroLib = "c7932e45-9af1-51e7-9da9-f004cd3a462b"
+CorrNoise = "d5b2c6c8-c265-11e8-014f-49b4891d5439"
+Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+YAML = "ddb6d928-2868-570f-bddf-ab3f9cf99eb6"

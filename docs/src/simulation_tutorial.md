@@ -1,6 +1,8 @@
 # Simulation tutorial
 
-This aim of this tutorial is to describe how you can use the functions of Stripeline repository to perform a complete simulation of the LSPE/STRIP experiment. 
+This aim of this tutorial is to describe how you can use the functions
+of Stripeline repository to perform a complete simulation of the
+LSPE/STRIP experiment.
 
 So far, the simulation includes:
 
@@ -14,11 +16,14 @@ So far, the simulation includes:
 
 Two examples will be presented: 
 
-1. a simple case, in which we produce and analyze a very small TOD (1 day observation).
-   You should refer to this case if you want to use a Jupyter Notebook to perform preliminary studies (since you cannot use MPI in a notebook).
+1. a simple case, in which we produce and analyze a very small TOD (1
+   day observation).  You should refer to this case if you want to use
+   a Jupyter Notebook to perform preliminary studies (since you cannot
+   use MPI in a notebook).
 
-2. a more general and realistic case, suitable also for the production of large TODs.
-In this case it will be necessary to use MPI functions.
+2. a more general and realistic case, suitable also for the production
+   of large TODs.  In this case it will be necessary to use MPI
+   functions.
 
 
 ## 1. Simple Case: small TOD
@@ -32,15 +37,18 @@ import CorrNoise
 import Stripeline
 const Sl = Stripeline
 using FITSIO
-
 ```
-In this simple case we can avoid using MPI, but we need the following line: 
+
+In this simple case we can avoid using MPI, but we need the following
+line:
+
 ```
 comm = missing
 
 ```
-since some of the functions we will use (e.g. the `destripe` function) require the MPI communicator as input parameter. 
 
+This is because some of the functions we will use (e.g., the
+`destripe` function) require the MPI communicator as input parameter.
 
 
 2. Then, you can start by setting the simulation parameters:
@@ -67,7 +75,8 @@ since some of the functions we will use (e.g. the `destripe` function) require t
 
 - the bandwidth of the polarimeters (Hz)
 
-N.B. In the current version of the simulation we consider all polarimeters identical in properties.
+N.B. In the current version of the simulation we consider all
+polarimeters identical in properties.
 
 ```
 #Simulation parameters
@@ -87,7 +96,9 @@ fknee_hz = 0.01
 
 ```
 
-3. At this point, you can compute some parameters we will need later: the total observation time (in s), the integration time, the total system temperature and the receiver sensitivity. 
+3. At this point, you can compute some parameters we will need later:
+   the total observation time (in s), the integration time, the total
+   system temperature and the receiver sensitivity.
 
 ```
 total_time = days_of_observation * 24 * 3600
@@ -96,11 +107,17 @@ tsys_k = tnoise_k + tatm_k + ttel_k + tcmb_k
 σ_k = (tsys_k / sqrt(β_hz * τ_s))
 ```
 
-4. Open now the input map, that is to say the sky you want to scan with your instrument. 
-You can find two example input maps (with two different resolutions) [here](https://github.com/lspestrip/Stripeline.jl/tree/master/test/testfiles).
+4. Open now the input map, that is to say the sky you want to scan
+   with your instrument.  You can find two example input maps (with
+   two different resolutions)
+   [here](https://github.com/lspestrip/Stripeline.jl/tree/master/test/testfiles).
 
-Those maps have been produced with [PySM](https://github.com/bthorne93/PySM_public) and are specific for the STRIP case: they are 43 GHz maps of polarized emission only (cmb, synchrotron and dust).
-If you want to produce your own input map, you can use this python [script](https://github.com/silviacaprioli/PySMforSTRIP/blob/master/PySMmap_production.py). 
+Those maps have been produced with
+[PySM](https://github.com/bthorne93/PySM_public) and are specific for
+the STRIP case: they are 43 GHz maps of polarized emission only (cmb,
+synchrotron and dust).  If you want to produce your own input map, you
+can use this python
+[script](https://github.com/silviacaprioli/PySMforSTRIP/blob/master/PySMmap_production.py).
 
 ```
 inputmap = Healpix.readMapFromFITS(raw"PySM_inputmap_nside256.fits", 2 , Float64)
@@ -110,9 +127,10 @@ resol = Healpix.Resolution(NSIDE) #desired resolution for output map
 num_of_pixels = resol.numOfPixels
 ```
 
-5. You can now scan the input map according to your scanning strategy, thus producing the pure signal "sky TOD".
-
-In this case we use nominal scanning strategy for STRIP (Tenerife latitude, 20 degrees of elevation angle, 1 rpm)
+5. You can now scan the input map according to your scanning strategy,
+   thus producing the pure signal "sky TOD".  In this case, we use the
+   nominal scanning strategy for STRIP (Tenerife latitude, 20° of
+   elevation angle, 1 RPM)
 
 ```
 #Generate sky tod
@@ -128,11 +146,12 @@ pix_idx = Healpix.ang2pixRing.(Ref(resol), dirs[:, 1], dirs[:, 2])
 sky_tod = inputmap.pixels[pix_idx_inputmap]
 ```
 
-6. Now you should add noise to your sky tod. 
-
-We simulate both white noise and 1/f noise, in accordance with the noise properties of the polarimeters specified at the beginning of the script.
-
-To do that, we use the functions of the module [CorrNoise.jl](https://github.com/ziotom78/CorrNoise.jl).
+6. Now you should add noise to your sky tod. We simulate both white
+   noise and 1/f noise, in accordance with the noise properties of the
+   polarimeters specified at the beginning of the script.  To do that,
+   we use the functions of the module
+   [CorrNoise.jl](https://github.com/ziotom78/CorrNoise.jl).
+   
 ```
 #Generate noise
 
@@ -141,17 +160,20 @@ rng = CorrNoise.OofRNG(CorrNoise.GaussRNG(Random.MersenneTwister(seed)), -1, 1.1
 noise_tod = [CorrNoise.randoof(rng) * σ_k for i in 1:(fsamp_hz * total_time)]
 
 ```
-7. finally, you can get the final, realistic TOD just by doing:
+
+7. Finally, you can get the final, realistic TOD just by doing:
+
 ```
 tod = sky_tod + noise_tod
 ```
 
-8. Once simulated your data, you can now perform data analysis.
+8. Once you have completed the simulation, you can do data analysis!
+   For instance, you can call the destriper and clean the map from 1/f
+   noise.
 
-You can call the destriper and clean the map from 1/f noise.
-
-(N.B. the destriper needs in input an array containing the lengths of all 1/f baselines.
-For the sake of semplicity, we consider baselines of equal length).
+(N.B. the destriper needs in input an array containing the lengths of
+all 1/f baselines.  For the sake of semplicity, we consider baselines
+of equal length).
 
 ```
 #Run the destriper
@@ -160,13 +182,16 @@ baseline_len = repeat([baseline_length_s*fsamp_hz],Int64(total_time/baseline_len
 
 (destr_map, a) = Sl.destripe(pix_idx, tod, num_of_pixels, baseline_len, comm)
 ```
+
 The output of the destriper are:
 
 - `destr_map` : the destriped map, cleaned from 1/f noise.
 - `a` : the baselines array.
 
 
-9. If you wish, you can finally convert the destriped map (Array{Float64,1}) into a HEALPix map and save it in a .fits file: 
+9. If you wish, you can finally convert the destriped map
+   (Array{Float64,1}) into a HEALPix map and save it in a FITS file:
+
 ```
 #save file 
 
@@ -176,7 +201,8 @@ mapfile.pixels = destr_map
 Healpix.saveToFITS(mapfile, "destriped_map.fits", typechar = "D")
 ```
 
-To run this script you can do:
+To run this script you can use the following command:
+
 ```
 julia simplecase.jl
 ```
@@ -185,20 +211,21 @@ julia simplecase.jl
 
 ## 2. General Case
 
-In realistic cases, TODs are really huge (millions or billions of samples!).
-This means a lot of memory allocation.
+In realistic cases, TODs are really huge (millions or billions of
+samples!).  This means a lot of memory allocation. In the case of
+Strip, 49 polarimeters observing the sky for 2 years with a sampling
+frequency of 100 Hz produce 300 billions of samples, which means about
+2 Terabytes of memory allocation!
 
-STRIP case:
+It is much more than a single computer can support. It is thus
+compulsory to split the TOD simulation and analysis between different
+computing units, by using MPI.
 
-49 polarimeters * 2 years * 365 days * 86400 s * 100 Hz ≈ 300 billion samples
-
-which means about 2 Terabytes of memory allocation!
-
-It is much more a single computer can support. It is thus compulsory to split the TOD simulation and analysis between different computing units, by using MPI.
-
-Let's go through all the points of the simulation and see how things change:
+Let's go through all the points of the simulation and see how things
+change:
 
 1. You have to add the MPI package to your dependencies. 
+
 ```
 import MPI
 
@@ -211,7 +238,8 @@ using FITSIO
 
 ```
 
-2. nothing changes.
+2. Nothing changes with respect to the case above.
+
 ```
 #Simulation parameters
 
@@ -230,7 +258,9 @@ fknee_hz = 0.01
 
 ```
 
-3. you should add the computation of the total number of samples per polarimeter and total number of baselines for polarimeter, which we will need later.
+3. You should add the computation of the total number of samples per
+   polarimeter and total number of baselines for polarimeter, which we
+   will need later.
 
 ```
 total_time = days_of_observation * 24 * 3600
@@ -242,7 +272,8 @@ samples_per_pol = total_time*fsamp_hz
 baselines_per_pol = Int64(total_time/baseline_length_s)
 ```
 
-4. nothing changes.
+4. Nothing changes.
+
 ```
 inputmap = Healpix.readMapFromFITS(raw"PySM_inputmap_nside256.fits", 2 , Float64)
 inputmap_resol = inputmap.resolution
@@ -251,9 +282,9 @@ resol = Healpix.Resolution(NSIDE) #desired resolution for output map
 num_of_pixels = resol.numOfPixels
 ```
 
-
-Before scanning the input map we have to conveniently split the TOD production among the available computing units.
-First of all, we need to initialize MPI:
+Before scanning the input map we have to conveniently split the TOD
+production among the available computing units.  First of all, we need
+to initialize MPI:
 
 ```
 MPI.Init()
@@ -266,10 +297,13 @@ commsize = MPI.Comm_size(comm)
 
 Then, we can proceed with the TOD splitting.
 
-The splitting is done in a way that each rank gets a whole number of 1/f baselines to simulate and that the TOD chunks are of as similar length as possible.
+The splitting is done in a way that each rank gets a whole number of
+1/f baselines to simulate and that the TOD chunks are of as similar
+length as possible.
 
-We also need to tell to each unit which detector to simulate and from which to which time.
-By using the `get_chunk_properties` function, we can obtain these information for the current rank. 
+We also need to tell to each unit which detector to simulate and from
+which to which time.  By using the `get_chunk_properties` function, we
+can obtain these information for the current rank.
 
 ```
 #Split tod production 
@@ -281,8 +315,13 @@ this_rank_chunk = chunks[rank+1]
 (detector_number, first_time, last_time, num_of_baselines, num_of_samples) = Sl.get_chunk_properties(chunks, baseline_length_s, fsamp_hz, rank)
 
 ```
-5. Concerning the production of the sky TOD, of course each computing unit will produce its own partial TOD using the information obtained before.
- A loop on detectors has been added, since in the general case the simulation involves more than one detector, and moreover, each rank may have to simulate partial tods for different detectors.
+
+5. Concerning the production of the sky TOD, of course each computing
+   unit will produce its own partial TOD using the information
+   obtained before.  A loop on detectors has been added, since in the
+   general case the simulation involves more than one detector, and
+   moreover, each rank may have to simulate partial tods for different
+   detectors.
  
 
 ```
@@ -315,7 +354,8 @@ end
 
 ```
 
-6. To generate noise, you e can use the `generate_noise_mpi` function, which directly returns the partial noise TOD for the current rank. 
+6. To generate noise, you e can use the `generate_noise_mpi` function,
+   which directly returns the partial noise TOD for the current rank.
 
 ```
 #Generate noise
@@ -328,9 +368,15 @@ noise_tod = Sl.generate_noise_mpi(chunks, baselines_per_process, baseline_length
 tod = sky_tod + noise_tod
 ```
 
-8. nothing changes apart from `baseline_len` definition (since now different units can have a different amount of baselines to compute).
+8. nothing changes apart from `baseline_len` definition (since now
+   different units can have a different amount of baselines to
+   compute).
 
-The `destripe` function already takes into account the presence of multiple computing units: each partial TOD is loaded separately and partial maps are build, but then MPI functions are called to make different ranks "talk together" in order to obtain in output a single global destriped map.
+The `destripe` function already takes into account the presence of
+multiple computing units: each partial TOD is loaded separately and
+partial maps are build, but then MPI functions are called to make
+different ranks "talk together" in order to obtain in output a single
+global destriped map.
 
 ```
 #Run the destriper
@@ -339,7 +385,8 @@ baseline_len = repeat([baseline_length_s*fsamp_hz], baselines_per_process[rank+1
 (destr_map, a) = Sl.destripe(pix_idx, tod, num_of_pixels, baseline_len, comm)
 ```
 
-9. If you want to save the destriped map in a .fits file, you should make just one rank do that. 
+9. If you want to save the destriped map in a .fits file, you should
+   make just one rank do that.
 
 ```
 #save file 
@@ -351,13 +398,16 @@ if(rank==0)
 end
 ```
 
-10. Finally, end your script by terminating the calling to MPI environment.
+10. Finally, end your script by terminating the calling to MPI
+    environment.
 
 ```
 MPI.Finalize()
 ```
 
-To run this script you can do (e.g. 3 computing units)
+To run this script, you can use the following code (using 3 MPI
+processes):
+
 ```
 mpirun -n 3 julia generalcase.jl
 ```
