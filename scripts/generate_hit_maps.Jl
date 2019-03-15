@@ -1,4 +1,4 @@
-using Stripeline, Healpix, ColorSchemes, Plots, FITSIO, Dates, MPI
+using Stripeline, Healpix, ColorSchemes, Plots, FITSIO, Dates, MPI, JSON
 const Sl = Stripeline
 
 MPI.Init()
@@ -61,14 +61,11 @@ function get_hits_map(elevation_angle::Float64,
                                       end
         
         for i in eachindex(skyψ)
-            if Healpix.ang2pix(hits_map, π/2 - skydirs[i, 1],
-                               skydirs[i, 2]) == 78900
-                print(skydirs[i-10:1+10, :])
-                
+            
             hits_map.pixels[Healpix.ang2pix(hits_map, π/2 - skydirs[i, 1],
                                             skydirs[i, 2])] += 1.0
         end
-
+        
         if n != nchunks
             actual_t_start = actual_t_stop + Dates.Second(1)
             actual_t_stop = actual_t_start + Dates.Second(chunks_len-1)
@@ -82,11 +79,11 @@ pars_arg = ARGS
 
 NSIDE = 256
 
-effects = Dict("precess" => false,
-               "nutate" => false,
-               "aberrate" => false,
-               "refract" => false)
-    
+effects = Dict("precess" => true,
+               "nutate" => true,
+               "aberrate" => true,
+               "refract" => true)
+
 day_start = parse(Int, pars_arg[3])
 month_start = parse(Int, pars_arg[4])
 year_start = parse(Int, pars_arg[5])
@@ -139,7 +136,7 @@ for r in rank
                                     tenerife_height_m,
                                     db.focalplane[k].orientation,
                                     effects)
-            
+                        
             save_to_path = join([pars_arg[2],
                                  db.focalplane[k].name,
                                  "_",
@@ -153,7 +150,7 @@ for r in rank
             Healpix.saveToFITS(hits_map, save_to_path, typechar = "D")
             
             f = FITS(save_to_path, "r+")
-            
+                        
             write_key(f[2], "LATITUDE", tenerife_latitude_deg,
                       "Tenerife Latitude [Deg]")
             write_key(f[2], "LONGITUD", tenerife_longitude_deg,
@@ -174,9 +171,16 @@ for r in rank
             write_key(f[2], "S_RATE", sampling_rate_hz, "Sampling rate [Hz]")
             
             write_key(f[2], "DETECTOR", db.focalplane[k].name, "Detector name")
-            write_key(f[2], "EFFECTS", effects, "List of secondary effects 
-                      applied to the observation")
             
+            write_key(f[2], "PRECESS", effects["precess"], "If true precession is 
+                      taken into account")
+            write_key(f[2], "NUTATE", effects["nutate"], "If true nutation is 
+                      taken into account")
+            write_key(f[2], "ABERRATE", effects["aberrate"], "If true aberration is 
+                      taken into account")
+            write_key(f[2], "REFRACT", effects["refract"], "If true aberration is 
+                      taken into account")
+
             close(f)
         end
     end
