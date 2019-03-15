@@ -38,6 +38,7 @@ The documentation was built using
 [Documenter.jl](https://github.com/JuliaDocs).
 
 ```@example
+import Dates: now #hide
 println("Documentation built $(now()) with Julia $(VERSION).") # hide
 ```
 
