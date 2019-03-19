@@ -1,4 +1,4 @@
-export tod2map_mpi, baseline2map_mpi, destripe
+export tod2map_mpi, baseline2map_mpi, destripe, baselines_covmat
 
 using LinearAlgebra
 
@@ -312,4 +312,77 @@ function destripe(pix_idx, tod, num_of_pixels, baseline_lengths, rank, comm; thr
     end
 
     (destr_map, baselines)
+end
+
+
+
+
+"""
+This structure holds a number of parameters relative to the 1/f baselines measured or simulated for a certain polarimeter.
+It is useful for the computation of the covariance matrix of baselines.
+
+Field               | Type           | Meaning
+:-----------------  |:-------------- |:----------------------------------------------------------------------------------
+`pol_number`        | Int            | ID number of the polarimeter
+`σ`                 | Float          | σ of white noise 
+`num_of_baselines`  | Int            | total number of 1/f baselines in the measured or simulated TOD for this polarimeter
+`baselines_lengths` | Array{Int}     | Array containing the length of each 1/f baseline for this polarimeter
+
+# Example
+match_σ_baselines(31, 0.002463, 5, [100, 100, 100, 100, 100, 100]) 
+
+says that we have 5 baselines simulated for polarimters number 31 (with σ = 0.002463), each of length 100 samples.
+"""
+struct match_σ_baselines
+    polarimeter::Int
+    σ::Float64
+    number_of_baselines::Int
+    baselines_lengths::Array{Int}
+end 
+
+
+
+"""
+baselines_covmat(polarimeters, σ_k, baseline_length_s, fsamp_hz, total_time) -> covariance_matrix
+
+This function produces the covariance matrix of the 1/f baselines computed by the destriper.
+As an approximation, we ignore nondiagonal terms (i.e. the correlations between different baselines).
+The function output is therefore an array corresponding to the covariance matrix diagonal.
+Another assumption is that the white noise variance stays constant over a given baseline.
+
+The baseline error is computed according to equation 29 in https://arxiv.org/abs/0904.3623
+
+The function requires in input:
+-the array of polarimeters ID numbers 
+-the array of corresponding white noise σ (in K)
+-the length (in s) of each 1/f baseline
+-the sampling frequency (in Hz)
+-the duration (in s) of the observation
+
+The function firstly computes an Array of structures `match_σ_baselines`, which matches the white noise variance σ with the number of 1/f baselines
+and their lengths, for each polarimeter.
+Then it computes the covariance matrix according to these matches.     
+"""       
+function baselines_covmat(polarimeters, σ_k, baseline_length_s, fsamp_hz, total_time)
+
+    matches_σ_baselines  = Array{match_σ_baselines}(undef, length(polarimeters))
+    baselines_per_pol =  Int64(total_time/baseline_length_s)
+    for i in 1:length(polarimeters)
+        baselines_lengths  = repeat([baseline_length_s*fsamp_hz], baselines_per_pol)
+        matches_σ_baselines[i]  = match_σ_baselines(polarimeters[i], σ_k[i], baselines_per_pol, baselines_lengths)
+    end
+        
+    covariance_matrix = []
+    for i in 1:length(matches_σ_baselines) 
+        partial_covmat = Array{Float64}(undef,length(matches_σ_baselines[i].baselines_lengths))
+        
+        for j in 1:length(matches_σ_baselines[i].baselines_lengths) 
+            σ = matches_σ_baselines[i].σ
+            this_baseline_length = matches_σ_baselines[i].baselines_lengths[j]  
+            
+            partial_covmat[j] = σ^2/this_baseline_length    
+        end
+        covariance_matrix = append!(covariance_matrix, partial_covmat)
+    end
+    return covariance_matrix
 end

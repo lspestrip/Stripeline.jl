@@ -51,3 +51,13 @@ true_baselines = repeat([1,-2, 1],1000)
 @test pixels ≈ true_map
 @test baselines ≈ true_baselines
 
+
+#Test covariance matrix of baselines computation
+polarimeters = [8, 48, 67] 
+σ_k = [0.0020967137443360585, 0.003495923350914105, 0.0016551546163219948]
+baseline_length_s = 10
+fsamp_hz = 10
+total_time = 20
+covmat = baselines_covmat(polarimeters, σ_k, baseline_length_s, fsamp_hz, total_time)
+
+@test covmat ≈ [4.396208525687735e-8 , 4.396208525687735e-8 , 1.2221480075466504e-7, 1.2221480075466504e-7, 2.73953680393201e-8, 2.73953680393201e-8]
