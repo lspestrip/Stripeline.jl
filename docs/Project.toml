@@ -1,5 +1,5 @@
 [deps]
-CorrNoise = "d5b2c6c8-c265-11e8-014f-49b4891d5439"
+CorrNoise = "0374c0b2-85fe-5995-9aba-c71c9668af00"
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
-Healpix = "0fe3d3e8-c00f-11e8-2353-b5858a79f927"
+Healpix = "9f4e344d-96bc-545a-84a3-ae6b9e1b672b"
 Stripeline = "45029ab0-c194-11e8-0c82-65ed36a31fad"
