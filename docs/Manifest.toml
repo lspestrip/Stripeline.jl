@@ -141,7 +141,6 @@ uuid = "56ddb016-857b-54e1-b83d-db4d58db5568"
 [[MPI]]
 deps = ["BinDeps", "Compat", "Distributed", "Libdl", "LinearAlgebra", "Printf", "Random", "Statistics", "Test"]
 git-tree-sha1 = "b932f8e7115a60208692d474c45d5d6fcea10659"
-pinned = true
 uuid = "da04e1cc-30fd-572f-bb4f-1f8673147195"
 version = "0.7.2"
 
@@ -224,6 +223,12 @@ version = "0.10.3"
 [[Statistics]]
 deps = ["LinearAlgebra", "SparseArrays"]
 uuid = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
+
+[[Stripeline]]
+deps = ["AstroLib", "CorrNoise", "Dates", "Documenter", "FITSIO", "Healpix", "LinearAlgebra", "MPI", "Printf", "Quaternions", "Random", "StaticArrays", "Statistics", "Test", "YAML"]
+path = "/home/tomasi/.julia/dev/Stripeline"
+uuid = "45029ab0-c194-11e8-0c82-65ed36a31fad"
+version = "0.3.2"
 
 [[Test]]
 deps = ["Distributed", "InteractiveUtils", "Logging", "Random"]
