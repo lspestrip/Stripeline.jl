@@ -22,11 +22,7 @@ jobs:
       julia: 1.1
       os: linux
       script:
-        - julia --project=docs/ -e 'using Pkg;
-                                    Pkg.add([PackageSpec(url="https://github.com/ziotom78/CorrNoise.jl"),
-                                             PackageSpec(url="https://github.com/ziotom78/Healpix.jl"),
-                                             PackageSpec(url="https://github.com/lspestrip/Stripeline.jl")])'
-        - julia --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd()));
-                                               Pkg.instantiate()'
+        - julia --project=docs/ -e 'using Pkg; Pkg.add(PackageSpec(url="https://github.com/lspestrip/Stripeline.jl"))'
+        - julia --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()'
         - julia --project=docs/ docs/make.jl
       after_success: skip
