@@ -1,4 +1,4 @@
-using Stripeline, Healpix, ColorSchemes, Plots, FITSIO, Dates, MPI
+using Stripeline, Healpix, ColorSchemes, Plots, FITSIO, Dates, MPI, JSON
 const Sl = Stripeline
 
 MPI.Init()
@@ -7,18 +7,36 @@ comm = MPI.COMM_WORLD
 rank = MPI.Comm_rank(comm)
 size = MPI.Comm_size(comm) 
 
+function modulate_evenly_elevation(t, elevation_angle_deg, tilt_angle_deg, T)
+    elevation_angle_deg + tilt_angle_deg/2 * sin(2π/T*t)
+end
+
+function modulate_unevenly_elevation(t, elevation_angle_deg, tilt_angle_deg, T;
+                                     a=0.45, b=2*0.46, ϕ=-0.30)
+    elevation_angle_deg += 5
+    tilt_angle_deg += 16
+    o = elevation_angle_deg + tilt_angle_deg/2 * sin(2π/T)
+    w = o^-(2/3) / ((elevation_angle_deg + tilt_angle_deg/2)^-(2/3))
+    offset = o*w - elevation_angle_deg
+    el = elevation_angle_deg + tilt_angle_deg/2 * sin(2π*t/T)
+    weight = el^-(2/3) / ((elevation_angle_deg + tilt_angle_deg/2)^-(2/3))
+    el * weight - offset*(a*cos.(2π/T*t + ϕ) + b)
+end
+
 function get_hits_map(elevation_angle::Float64,
                       spin_velocity::Float64,
                       sampling_rate::Float64,
                       time_duration::Int,
                       t_start::DateTime,
-                      t_stop::DateTime,
                       NSIDE::Int,
                       latitude::Float64,
                       longitude::Float64,
                       height::Int,
-                      pointings::Array{Float64,1};
+                      pointings::Array{Float64,1},
+                      effects::Dict,
+                      modulation::Function;
                       tilt_angle::Float64=0.0,
+                      T::Float64=36000.0,
                       chunks_len::Int=86400)
 
     τ_s = 1 / sampling_rate
@@ -27,8 +45,6 @@ function get_hits_map(elevation_angle::Float64,
     skydirs = Array{Float64}(undef, length(times), 2)
     skyψ = Array{Float64}(undef, length(times), 1)
     hits_map = Healpix.Map{Float64, Healpix.RingOrder}(NSIDE)
-    
-    el_angle_mod(t) = elevation_angle + tilt_angle/2 * sin(2π*spin_velocity*t/60)
 
     nchunks = round(Int, times.len / chunks_len)
 
@@ -45,23 +61,30 @@ function get_hits_map(elevation_angle::Float64,
         
         (skydirs, skyψ) = Sl.genpointings(pointings,
                                           actual_times,
-                                          actual_t_start,
-                                          actual_t_stop;
+                                          actual_t_start;
                                           latitude_deg=latitude,
                                           longitude_deg=longitude,
-                                          height_m=height) do time_s
-                                              return (
-                                                  0.0,
-                                                  deg2rad(el_angle_mod(time_s)),
-                                                  Sl.timetorotang(time_s,
-                                                                  spin_velocity))
-                                      end
+                                          height_m=height,
+                                          precession=effects["precess"],
+                                          nutation=effects["nutate"],
+                                          aberration=effects["aberrate"],
+                                          refract=effects["refract"]) do t_s
+                                          return (
+                                              0.0,
+                                              deg2rad(modulation(t_s,
+                                                                 elevation_angle,
+                                                                 tilt_angle,
+                                                                 T)),
+                                              Sl.timetorotang(t_s,
+                                                              spin_velocity))
+                                          end
         
         for i in eachindex(skyψ)
+            
             hits_map.pixels[Healpix.ang2pix(hits_map, π/2 - skydirs[i, 1],
                                             skydirs[i, 2])] += 1.0
         end
-
+        
         if n != nchunks
             actual_t_start = actual_t_stop + Dates.Second(1)
             actual_t_stop = actual_t_start + Dates.Second(chunks_len-1)
@@ -75,6 +98,18 @@ pars_arg = ARGS
 
 NSIDE = 256
 
+effects = Dict("precess" => true,
+               "nutate" => true,
+               "aberrate" => true,
+               "refract" => true)
+
+elevation_angle_deg = parse(Float64, pars_arg[1])
+
+modulation = modulate_unevenly_elevation
+modulation_period = 275.0
+tilt_angle_deg = 30.0
+
+    
 day_start = parse(Int, pars_arg[3])
 month_start = parse(Int, pars_arg[4])
 year_start = parse(Int, pars_arg[5])
@@ -90,7 +125,6 @@ tenerife_latitude_deg = Sl.TENERIFE_LATITUDE_DEG
 tenerife_longitude_deg = Sl.TENERIFE_LONGITUDE_DEG
 tenerife_height_m = Sl.TENERIFE_HEIGHT_M 
 
-elevation_angle_deg = parse(Float64, pars_arg[1])
 spin_velocity_rpm = 1.0
 sampling_rate_hz = 50.0
 
@@ -121,13 +155,16 @@ for r in rank
                                     sampling_rate_hz,
                                     time_duration_s,
                                     t_start,
-                                    t_stop,
                                     NSIDE,
                                     tenerife_latitude_deg,
                                     tenerife_longitude_deg,
                                     tenerife_height_m,
-                                    db.focalplane[k].orientation)
-            
+                                    db.focalplane[k].orientation,
+                                    effects,
+                                    modulation,
+                                    T=modulation_period,
+                                    tilt_angle=tilt_angle_deg)
+                        
             save_to_path = join([pars_arg[2],
                                  db.focalplane[k].name,
                                  "_",
@@ -141,7 +178,7 @@ for r in rank
             Healpix.saveToFITS(hits_map, save_to_path, typechar = "D")
             
             f = FITS(save_to_path, "r+")
-            
+                        
             write_key(f[2], "LATITUDE", tenerife_latitude_deg,
                       "Tenerife Latitude [Deg]")
             write_key(f[2], "LONGITUD", tenerife_longitude_deg,
@@ -155,18 +192,32 @@ for r in rank
             write_key(
                 f[2], "TSTOP", Dates.format(t_stop, "yyyy-mm-dd HH:MM:SS"),
                 "Ending Date and time of the observation: yyyy-mm-dd HH:MM:SS")
-            
-            write_key(f[2], "ANG_EL", elevation_angle_deg,
-                      "Elevation angle [Deg]")
+
+            if tilt_angle_deg == 0.0
+                write_key(f[2], "ANG_EL", elevation_angle_deg,
+                          "Elevation angle [Deg]")
+            else
+                write_key(f[2], "ANG_EL", string(modulation),
+                          "Elevation angle [Deg]")
+            end
+             
             write_key(f[2], "SPIN_VEL", spin_velocity_rpm, "Spin velocity [rpm]")
             write_key(f[2], "S_RATE", sampling_rate_hz, "Sampling rate [Hz]")
             
             write_key(f[2], "DETECTOR", db.focalplane[k].name, "Detector name")
             
+            write_key(f[2], "PRECESS", effects["precess"],
+                      "If true precession is taken into account")
+            write_key(f[2], "NUTATE", effects["nutate"], "If true nutation is 
+                      taken into account")
+            write_key(f[2], "ABERRATE", effects["aberrate"],
+                      "If true aberration is taken into account")
+            write_key(f[2], "REFRACT", effects["refract"],
+                      "If true aberration istaken into account")
+
             close(f)
         end
     end
 end
     
 MPI.Finalize()
-    

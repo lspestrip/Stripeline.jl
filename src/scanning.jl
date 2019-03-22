@@ -197,16 +197,18 @@ end
 
 
 """
-    vector2equatorial(dir, jd, latitude_deg, longitude_deg, height_m)
-
+    vector2equatorial(dir, jd, latitude_deg, longitude_deg, height_m; 
+                      prec=true, nut=true, aber=true)
 Transform the Healpix coordinates of a vector into equatorial coordinates.
 The parameter `vector` is 3D vector, `jd` is the julian date. The
 paramters `latitude_deg`, `longitude_deg` and `height_m` should contain the
 latitude (in degrees, N is positive), the longitude (in degrees, counterclockwise
 is positive) and the height (in meters) of the location where the observation is
-made.
+made. The parameters `prec`, `nut` and `aber` allow to consider secondary effects
+respectively of precession, nutation and aberration. 
 """
-function vector2equatorial(vector, jd, latitude_deg, longitude_deg, height_m)
+function vector2equatorial(vector, jd, latitude_deg, longitude_deg, height_m,
+                           prec, nut, aber, ref)
     (θ, ϕ) = Healpix.vec2ang(vector...)
     alt_rad = π/2 - θ
     az_rad = 2π - ϕ
@@ -217,9 +219,10 @@ function vector2equatorial(vector, jd, latitude_deg, longitude_deg, height_m)
                                          latitude_deg,
                                          longitude_deg,
                                          height_m,
-                                         precession=true,
-                                         nutate=true,
-                                         aberration=true)
+                                         precession=prec,
+                                         nutate=nut,
+                                         aberration=aber,
+                                         refract=ref)
     (deg2rad(dec_deg), deg2rad(ra_deg))
 end
 
@@ -320,7 +323,11 @@ function genpointings(wheelanglesfn,
                       polaxis=Float64[1.0, 0.0, 0.0],
                       latitude_deg=0.0,
                       longitude_deg=0.0,
-                      height_m=0)
+                      height_m=0,
+                      precession=true,
+                      nutation=true,
+                      aberration=true,
+                      refract=true)
 
     skydirs = Array{Float64}(undef, length(timerange_s), 2)
     skyψ = Array{Float64}(undef, length(timerange_s))
@@ -330,12 +337,16 @@ function genpointings(wheelanglesfn,
         rotmatr = Quaternions.rotationmatrix(groundq)
         vector = rotmatr * dir
 
-        jd = AstroLib.jdcnv(t_start + Dates.Nanosecond(round(Int64, time_s * 1e9)))
+        jd = AstroLib.jdcnv(t_start + Dates.Nanosecond(round(Int64, time_s*1e9)))
         Dec_rad, Ra_rad = vector2equatorial(vector,
                                             jd,
                                             latitude_deg,
                                             longitude_deg,
-                                            height_m)
+                                            height_m,
+                                            precession,
+                                            nutation,
+                                            aberration,
+                                            refract)
 
         poldir = rotmatr * polaxis
         northdir = get_northdir(π/2 - Dec_rad, Ra_rad)
@@ -387,7 +398,17 @@ is made (in degrees, North is positive).
   coordinates (columns 1 and 2) and in ground coordinates (columns 3
   and 4). If false, only the Equatorial coordinates are computed.
 
-- `polaxis` is the polarization axis; it must be normalized
+- `polaxis` is the polarization axis; it must be normalized.
+
+- `precession` is a boolen parameter that allow to include the Earth's precession
+  effect; default is true.
+- `nutation` is a boolen parameter that allow to include the Earth's nutation
+  effect; default is true.
+- `aberration` is a boolen parameter that allow to include the stellar aberration
+  effect; default is true.
+- `refract` is a boolen parameter that allow to include the refraction correction
+  ; default is true.
+
 
 # Return values
 
