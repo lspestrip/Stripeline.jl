@@ -128,8 +128,7 @@ function applyz_and_sum(pix_idx, tod, baseline_lengths, num_of_pixels, comm; uns
 end
 
 
-function applya(baselines, pix_idx, tod, baseline_lengths, num_of_pixels, comm; unseen=NaN)
-    @assert length(tod) == length(pix_idx)
+function applya(baselines, pix_idx, baseline_lengths, num_of_pixels, comm; unseen=NaN)
     @assert length(baselines) == length(baseline_lengths)
 
     baselines_sum = zeros(eltype(baselines), length(baseline_lengths))
@@ -201,7 +200,7 @@ function conj_grad(baselines_sum, pix_idx, tod, baseline_lengths, num_of_pixels,
     best_baselines = zeros(T, length(baseline_lengths))
     best_k = zero(N)
     
-    r = baselines_sum - applya(baselines, pix_idx, tod, baseline_lengths, num_of_pixels, comm)  #residual
+    r = baselines_sum - applya(baselines, pix_idx, baseline_lengths, num_of_pixels, comm)  #residual
     p .= r  
     rdotr = mpi_dot_prod(r, r, comm)
     best_convergence_parameter = sqrt(rdotr)
@@ -213,7 +212,7 @@ function conj_grad(baselines_sum, pix_idx, tod, baseline_lengths, num_of_pixels,
 
     while true        
 
-        Ap =  applya(p, pix_idx, tod, baseline_lengths, num_of_pixels, comm)
+        Ap =  applya(p, pix_idx, baseline_lengths, num_of_pixels, comm)
 
         rdotr = mpi_dot_prod(r, r, comm)
         pdotAp = mpi_dot_prod(p, Ap, comm)
