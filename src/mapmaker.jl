@@ -243,6 +243,25 @@ function baseline2map_mpi(pix_idx, baselines, num_of_pixels, data_properties, nu
             baseline_idx += 1
         end 
     end
+
+    if(!ismissing(comm))
+        noise_map = MPI.allreduce(partial_map, MPI.SUM, comm)
+        hits = MPI.allreduce(partial_hits, MPI.SUM, comm)
+    else 
+        
+        noise_map .= partial_map
+        hits .= partial_hits
+    end
+
+    for i in eachindex(noise_map)
+        if (hits[i] > 0)
+            noise_map[i] /= hits[i]
+        else
+            noise_map[i] = unseen
+        end
+    end 
+    
+    noise_map
 end
 
 
