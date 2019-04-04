@@ -120,7 +120,7 @@ function  generate_noise_mpi(chunks, baselines_per_process, baseline_length_s, t
     
 
     ################ IF MORE PROCESSES THAN POLARIMETERS ################
-    if(commsize > total_number_of_polarimeters) 
+    if(commsize >= total_number_of_polarimeters) 
       
         noisechunks_to_send = generate_noisechunks_to_send(chunks, baseline_length_s, fsamp_hz, total_number_of_polarimeters)
 
