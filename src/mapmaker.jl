@@ -243,6 +243,7 @@ function baseline2map_mpi(pix_idx, baselines, num_of_pixels, data_properties, nu
             baseline_idx += 1
         end 
     end
+end
 
 
 
