@@ -1,4 +1,4 @@
-using Stripeline, Healpix, ColorSchemes, Plots, FITSIO, Dates, MPI
+using Stripeline, Healpix, ColorSchemes, Plots, FITSIO, Dates, MPI, JSON
 const Sl = Stripeline
 
 MPI.Init()
@@ -12,12 +12,12 @@ function get_hits_map(elevation_angle::Float64,
                       sampling_rate::Float64,
                       time_duration::Int,
                       t_start::DateTime,
-                      t_stop::DateTime,
                       NSIDE::Int,
                       latitude::Float64,
                       longitude::Float64,
                       height::Int,
-                      pointings::Array{Float64,1};
+                      pointings::Array{Float64,1},
+                      effects::Dict;
                       tilt_angle::Float64=0.0,
                       chunks_len::Int=86400)
 
@@ -45,11 +45,14 @@ function get_hits_map(elevation_angle::Float64,
         
         (skydirs, skyψ) = Sl.genpointings(pointings,
                                           actual_times,
-                                          actual_t_start,
-                                          actual_t_stop;
+                                          actual_t_start;
                                           latitude_deg=latitude,
                                           longitude_deg=longitude,
-                                          height_m=height) do time_s
+                                          height_m=height,
+                                          precession=effects["precess"],
+                                          nutation=effects["nutate"],
+                                          aberration=effects["aberrate"],
+                                          refract=effects["refract"]) do time_s
                                               return (
                                                   0.0,
                                                   deg2rad(el_angle_mod(time_s)),
@@ -58,10 +61,11 @@ function get_hits_map(elevation_angle::Float64,
                                       end
         
         for i in eachindex(skyψ)
+            
             hits_map.pixels[Healpix.ang2pix(hits_map, π/2 - skydirs[i, 1],
                                             skydirs[i, 2])] += 1.0
         end
-
+        
         if n != nchunks
             actual_t_start = actual_t_stop + Dates.Second(1)
             actual_t_stop = actual_t_start + Dates.Second(chunks_len-1)
@@ -74,6 +78,11 @@ end
 pars_arg = ARGS
 
 NSIDE = 256
+
+effects = Dict("precess" => true,
+               "nutate" => true,
+               "aberrate" => true,
+               "refract" => true)
 
 day_start = parse(Int, pars_arg[3])
 month_start = parse(Int, pars_arg[4])
@@ -121,13 +130,13 @@ for r in rank
                                     sampling_rate_hz,
                                     time_duration_s,
                                     t_start,
-                                    t_stop,
                                     NSIDE,
                                     tenerife_latitude_deg,
                                     tenerife_longitude_deg,
                                     tenerife_height_m,
-                                    db.focalplane[k].orientation)
-            
+                                    db.focalplane[k].orientation,
+                                    effects)
+                        
             save_to_path = join([pars_arg[2],
                                  db.focalplane[k].name,
                                  "_",
@@ -141,7 +150,7 @@ for r in rank
             Healpix.saveToFITS(hits_map, save_to_path, typechar = "D")
             
             f = FITS(save_to_path, "r+")
-            
+                        
             write_key(f[2], "LATITUDE", tenerife_latitude_deg,
                       "Tenerife Latitude [Deg]")
             write_key(f[2], "LONGITUD", tenerife_longitude_deg,
@@ -163,6 +172,15 @@ for r in rank
             
             write_key(f[2], "DETECTOR", db.focalplane[k].name, "Detector name")
             
+            write_key(f[2], "PRECESS", effects["precess"], "If true precession is 
+                      taken into account")
+            write_key(f[2], "NUTATE", effects["nutate"], "If true nutation is 
+                      taken into account")
+            write_key(f[2], "ABERRATE", effects["aberrate"], "If true aberration is 
+                      taken into account")
+            write_key(f[2], "REFRACT", effects["refract"], "If true aberration is 
+                      taken into account")
+
             close(f)
         end
     end

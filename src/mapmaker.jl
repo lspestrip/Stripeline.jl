@@ -7,8 +7,6 @@ try
 catch
 end 
 
-
-
 @doc raw"""
 This structure holds a number of parameters relative to the noise level and
 the 1/f baselines measured or simulated for a certain polarimeter.
@@ -162,14 +160,6 @@ end
     baseline2map_mpi(pix_idx, baselines, baseline_lengths, num_of_pixels, comm)-> noise_map
     baseline2map_mpi(pix_idx, baselines, num_of_pixels, data_properties, comm) -> noise_map
 
-This function creates a binned map from the sequence of baselines in
-`baselines`. Each baseline covers a number of samples equal to the
-corresponding element in `baseline_lengths`. The function assumes that
-each sample is observing the pixel whose index is in `pix_idx`. The
-parameter `num_of_pixels` contains the number of pixels in the Healpix
-map, and it is used as an upper bound for the values in `pix_idx`. The
-parameter `comm` must be a MPI communicator, or `missing` if you are
-not using MPI.
 This is a MPI based function: each MPI process computes a map from its
 available data.  All partial maps are then combined together with
 MPI.allreduce.
@@ -186,7 +176,8 @@ In this way, the less noisy polarimeters will count more in the estimation of th
 baseline2map_mpi
 
 
-function baseline2map_mpi(pix_idx, baselines, baseline_lengths, num_of_pixels, comm; unseen=NaN)
+function baseline2map_mpi(pix_idx, baselines, baseline_lengths, num_of_pixels, comm;
+                          unseen=NaN)
     
     T = eltype(baselines)
     N = eltype(pix_idx)
@@ -253,28 +244,10 @@ function baseline2map_mpi(pix_idx, baselines, num_of_pixels, data_properties, nu
         end 
     end
 
-    if(!ismissing(comm))
-        noise_map = MPI.allreduce(partial_map, MPI.SUM, comm)
-        hits = MPI.allreduce(partial_hits, MPI.SUM, comm)
-    else 
-        
-        noise_map .= partial_map
-        hits .= partial_hits
-    end
-
-    for i in eachindex(noise_map)
-        if (hits[i] > 0)
-            noise_map[i] /= hits[i]
-        else
-            noise_map[i] = unseen
-        end
-    end 
-    
-    noise_map
-end
 
 
 function applyz_and_sum(pix_idx, tod, num_of_pixels, data_properties, num_of_baselines, comm; unseen=NaN)
+
     @assert length(tod) == length(pix_idx)
         
     baselines_sum = zeros(eltype(tod), num_of_baselines)
@@ -290,14 +263,10 @@ function applyz_and_sum(pix_idx, tod, num_of_pixels, data_properties, num_of_bas
     baseline_idx = 1
     startidx = 1
     for l in eachindex(data_properties)  #loop on detectors
+      
         for i in eachindex(data_properties[l].baselines_lengths)
             endidx = data_properties[l].baselines_lengths[i] + startidx - 1
 
-        # The inner for is equivalent to
-        #
-        #   baselines_sum[i] += sum(tod[startidx:endidx] - binned_map[pix_idx[startidx:endidx]])
-        #
-        # but roundoff errors are reduced
             for j in startidx:endidx
                 baselines_sum[baseline_idx] += (tod[j] - binned_map[pix_idx[j]]) * 1/(data_properties[l].σ)^2
             end
@@ -313,7 +282,7 @@ end
 
 function applya(baselines, pix_idx, num_of_baselines, num_of_pixels, data_properties, comm; unseen=NaN)
     @assert length(baselines) == num_of_baselines
-
+    
     baselines_sum = zeros(eltype(baselines), num_of_baselines)
     total_sum = zero(eltype(baselines))
 
@@ -330,6 +299,7 @@ function applya(baselines, pix_idx, num_of_baselines, num_of_pixels, data_proper
     baseline_idx = 1
 
     for l in eachindex(data_properties)
+      
         for i in eachindex(data_properties[l].baselines_lengths)
             endidx = data_properties[l].baselines_lengths[i] + startidx - 1
         
@@ -371,12 +341,11 @@ end
 
 
 
-
 function conj_grad(baselines_sum, pix_idx, tod,
                    num_of_pixels, data_properties, 
                    num_of_baselines, rank, comm; 
                    threshold = 1e-9, max_iter=10000)
-    
+
     T = eltype(tod)
     N = eltype(pix_idx)
     
@@ -438,14 +407,8 @@ function conj_grad(baselines_sum, pix_idx, tod,
         k += 1
     end
 
-    if rank==0
-        println("Last iteration number $k, Last residual = $convergence_parameter")
-        println("BEST iteration number $best_k, BEST residual = $best_convergence_parameter")
-    end
-
     return best_baselines
 end
-
 
 
 function destriped_map(baselines, pix_idx, tod, data_properties, num_of_pixels, num_of_baselines, comm; unseen=NaN)
@@ -603,3 +566,6 @@ function baselines_covmat(polarimeters, σ_k, baseline_length_s, fsamp_hz, total
     end
     return covariance_matrix
 end
+
+
+   

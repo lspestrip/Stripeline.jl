@@ -1,15 +1,15 @@
 name = "Stripeline"
 uuid = "45029ab0-c194-11e8-0c82-65ed36a31fad"
 authors = ["Maurizio Tomasi <maurizio.tomasi@unimi.it>", "Silvia Caprioli <silvia.caprioli@unimi.it>", "Federico Incardona <federico.incardona@unimi.it>"]
-version = "0.3.2"
+version = "0.4.2"
 
 [deps]
 AstroLib = "c7932e45-9af1-51e7-9da9-f004cd3a462b"
-CorrNoise = "d5b2c6c8-c265-11e8-014f-49b4891d5439"
+CorrNoise = "0374c0b2-85fe-5995-9aba-c71c9668af00"
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
 FITSIO = "525bcba6-941b-5504-bd06-fd0dc1a4d2eb"
-Healpix = "0fe3d3e8-c00f-11e8-2353-b5858a79f927"
+Healpix = "9f4e344d-96bc-545a-84a3-ae6b9e1b672b"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 MPI = "da04e1cc-30fd-572f-bb4f-1f8673147195"
 Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"

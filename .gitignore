@@ -2,4 +2,5 @@
 .cache
 .ipynb_checkpoints
 docs/build
-
+Manifest.toml
+docs/Manifest.toml
