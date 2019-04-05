@@ -135,7 +135,9 @@ function  generate_noise_mpi(chunks, baselines_per_process, baseline_length_s, t
             pol_noise = Float64[CorrNoise.randoof(rng) * σ_k[pol_number] for i in 1:(samples_per_pol)]
         end
 
-        MPI.Barrier(comm)
+        if(!ismissing(comm))
+            MPI.Barrier(comm)
+        end
 
         ##### SEND AND RECEIVE #####
 
