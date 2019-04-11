@@ -117,7 +117,7 @@ function Base.show(io::IO, band::BandshapeInfo)
             band.center_frequency_hz * 1e-9, band.center_frequency_err_hz * 1e-9,
             band.bandwidth_hz * 1e-9, band.bandwidth_err_hz * 1e-9,
             band.lowest_frequency_hz * 1e-9, band.highest_frequency_hz * 1e-9, band.num_of_frequencies,
-            band.test_id,
+            join(["$x" for x in band.test_id], ", "),
             band.analysis_id)
     end
 end
