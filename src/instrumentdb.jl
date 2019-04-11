@@ -112,7 +112,7 @@ function Base.show(io::IO, band::BandshapeInfo)
                 Center frequency: %.2f ± %.2f GHz
                 Bandwidth: %.2f ± %.2f GHz
                 Frequency range: [%.2f, %.2f] GHz (%d points)
-                Test ID: %d
+                Test ID: [%s]
                 Analysis ID: %d""",
             band.center_frequency_hz * 1e-9, band.center_frequency_err_hz * 1e-9,
             band.bandwidth_hz * 1e-9, band.bandwidth_err_hz * 1e-9,
