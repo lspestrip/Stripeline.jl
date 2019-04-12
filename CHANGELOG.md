@@ -4,6 +4,7 @@
   ([#30a0f](https://github.com/lspestrip/Stripeline.jl/commit/30a0fbdb5fe45fa20cd7a2fef08bc114ad3d7956),
   [#0418a](https://github.com/lspestrip/Stripeline.jl/commit/0418a40a489cd2dfd7607effe661c55af1ca649e))
 - Add `day_duration_s` keyword to `genpointings`
+- Add error bars to bandshape and always measure them as positive quantities
 
 # Version 0.3.2
 
