@@ -82,8 +82,9 @@ Field                      | Type             | Meaning
 `lowest_frequency_hz`      | Float64          | Lowest frequency of the bandshape in `response`, in Hz
 `highest_frequency_hz`     | Float64          | Highest frequency of the bandshape in `response`, in Hz
 `num_of_frequencies`       | Int              | Number of samples in `response`
-`response`                 | Array{1,Float64} | Profile of the bandshape (pure numbers)
-`test_id`                  | Int              | ID of the unit-level test used to characterize the bandshape
+`bandshape`                | Array{Float64,1} | Profile of the bandshape (pure numbers)
+`bandshape_error`          | Array{Float64,1} | Estimated error on the profile of the bandshape 
+`test_id`                  | Array{Int,1}     | ID of the unit-level test used to characterize the bandshape
 `analysis_id`              | Int              | ID of the unit-level analysis used to characterize the bandshape
 """
 struct BandshapeInfo
@@ -94,8 +95,9 @@ struct BandshapeInfo
     lowest_frequency_hz::Float64
     highest_frequency_hz::Float64
     num_of_frequencies::Int
-    response::Array{Float64,1}
-    test_id::Int
+    bandshape::Array{Float64,1}
+    bandshape_error::Array{Float64,1}
+    test_id::Array{Int,1}
     analysis_id::Int
 end
 
@@ -110,12 +112,12 @@ function Base.show(io::IO, band::BandshapeInfo)
                 Center frequency: %.2f ± %.2f GHz
                 Bandwidth: %.2f ± %.2f GHz
                 Frequency range: [%.2f, %.2f] GHz (%d points)
-                Test ID: %d
+                Test ID: [%s]
                 Analysis ID: %d""",
             band.center_frequency_hz * 1e-9, band.center_frequency_err_hz * 1e-9,
             band.bandwidth_hz * 1e-9, band.bandwidth_err_hz * 1e-9,
             band.lowest_frequency_hz * 1e-9, band.highest_frequency_hz * 1e-9, band.num_of_frequencies,
-            band.test_id,
+            join(["$x" for x in band.test_id], ", "),
             band.analysis_id)
     end
 end
@@ -389,8 +391,9 @@ function parsebandshape(banddict::Dict{Any,Any})
         get(banddict, "lowest_frequency_hz", 0.0),
         get(banddict, "highest_frequency_hz", 0.0),
         get(banddict, "num_of_frequencies", 0),
-        get(banddict, "response", Float64[]),
-        get(banddict, "test_id", 0),
+        get(banddict, "bandshape", Float64[]),
+        get(banddict, "bandshape_error", Float64[]),
+        get(banddict, "test_id", Int[]),
         get(banddict, "analysis_id", 0))
 end
 
