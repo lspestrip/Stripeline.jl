@@ -3,6 +3,7 @@ export InstrumentDB, defaultdbfolder, parsefpdict, parsedetdict
 
 import YAML
 import Stripeline
+import Base: show
 using Printf
 
 @doc raw"""
@@ -334,6 +335,20 @@ Number of horns in the database: 55
 julia> print("Number of polarimeters in the database: $(length(keys(db.detectors)))")
 Number of polarimeters in the database: 66
 ```
+
+# Visualization
+
+You can produce a table describing the contents of the instrument
+database using `show` and passing `text/markdown` as MIME type:
+
+````julia
+db = InstrumentDB()
+show(stdout, MIME("text/markdown"), db)
+````
+
+The table can be converted to other formats (HTML, LaTeX, Microsoft
+Word, …) using commonly-available tools, e.g.,
+[Pandoc](https://pandoc.org/).
 """
 struct InstrumentDB
     focalplane::Dict{String,Horn}
@@ -344,6 +359,54 @@ function Base.show(io::IO, db::InstrumentDB)
     @printf(io, "InstrumentDB(%d horns, %d detectors)",
             length(keys(db.focalplane)),
             length(keys(db.detectors)))
+end
+
+function Base.show(io::IO, ::MIME"text/markdown", db::InstrumentDB)
+    print(io, """# Horns
+
+| Horn | Band | Polarimeter | FWHM (x) [deg] | FWHM (y) [deg] |
+|------|------|-------------|----------------|----------------|
+""")
+
+    # Present the horns in a well-defined order (alphabetic order
+    # would put W-band before the Y module).
+    for mod in ["I", "V", "B", "G", "Y", "O", "R", "W"]
+        for horn in 0:6
+            cur_key = "$mod$horn"
+            cur_key in keys(db.focalplane) || continue
+            cur_horn = db.focalplane[cur_key]
+            @printf(
+                "| %s | %s | %s | %.2f | %.2f |\n",
+                cur_key,
+                db.detectors[cur_horn.polid].name,
+                db.detectors[cur_horn.polid].band,
+                cur_horn.fwhm_x_deg,
+                cur_horn.fwhm_y_deg,
+            )
+        end
+    end
+
+    print(io, """
+
+# Polarimeters
+
+| Name | Band | Noise temperature [K] | Center Frequency [GHz] | Bandpass [GHz] |
+|------|------|-----------------------|------------------------|----------------|
+""")
+
+    det_keys = sort(keys(db.detectors) |> collect)
+    for cur_key in det_keys
+        cur_horn = db.detectors[cur_key]
+        @printf(
+            "| %s | %s | %.1f | %.2f | %.2f |\n",
+            cur_horn.name,
+            cur_horn.band,
+            cur_horn.tnoise.tnoise_k,
+            cur_horn.bandshape.center_frequency_hz * 1e-9,
+            cur_horn.bandshape.bandwidth_hz * 1e-9,
+        )
+    end
+        
 end
 
 @doc raw"""
