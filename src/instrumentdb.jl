@@ -1,5 +1,6 @@
 export Horn, Detector, InstrumentDB, BandshapeInfo, SpectrumInfo, NoiseTemperatureInfo
 export InstrumentDB, defaultdbfolder, parsefpdict, parsedetdict
+export sensitivity_tant, t_to_trj, trj_to_t, deltat_to_deltatrj, deltatrj_to_deltat
 
 import YAML
 import Stripeline
@@ -554,3 +555,122 @@ Load the STRIP instrument database from the directory returned by
 [`defaultdbfolder`](@ref). Return an instance of a InstrumentDB object.
 """
 InstrumentDB() = InstrumentDB(defaultdbfolder())
+
+################################################################################
+
+@doc raw"""
+    sensitivity_tant(db::InstrumentDB, load_tant; modules = Set([0, 1, 2, 3, 4, 5, 6]))
+
+Calculate the white-noise sensitivity of an array of detectors, measured in
+K⋅√s, given some antenna temperature for the load. The result takes in account
+only those horns belonging to the modules listed in the keyword `modules` (the
+W-band horns belong to module `-1`). By default, only the Q-band modules are
+considered.
+
+The result assumes the radiometer equation: ``σ⋅√τ = \frac{T_{sys}}{√2β}``,
+where `T_{sys}` is the system temperature, `β` is the bandwidth, and `τ` is the
+acquisition time. The factor 2 comes from the way Strip polarimeters operate.
+The system temperature is assumed to be the noise temperature of each detector,
+plus the term `load_tant`, which should take into account all the other sources
+of power entering the system (e.g., telescope, atmosphere, etc.). The term
+`load_tant` should be expressed as an antenna temperature.
+
+"""
+function sensitivity_tant(db::InstrumentDB, load_tant; modules = Set([0, 1, 2, 3, 4, 5, 6]))
+    result = 0.0
+    num = 0
+
+    for (name, horn) in db.focalplane
+        (horn.moduleid ∈ modules) || continue
+
+        polarimeter = db.detectors[horn.polid]
+        tsys = load_tant + polarimeter.tnoise.tnoise_k
+        result += 2 * polarimeter.bandshape.bandwidth_hz / (tsys^2)
+        num += 1
+    end
+
+    (1.0 / sqrt(result), num)
+end
+
+const kb = 1.3806503e-23  # Boltzmann constant
+const hplanck = 6.62607015e-34 # Planck constant
+
+@doc raw"""
+    t_to_trj(temperature_k, nu_hz)
+
+Convert a thermodynamic temperature (in K) into a Rayleigh-Jeans temperature, given some
+specified frequency `nu_hz` (in Hz).
+
+See also [`trj_to_t`](@ref) for the inverse transformation.
+"""
+t_to_trj(temperature_k, nu_hz) = hplanck * nu_hz / kb / (exp(hplanck * nu_hz / (kb * temperature_k)) - 1)
+
+function bisect(fn, range)
+    # Plain old bisection method, with a fixed precision
+
+    min_x, max_x = range
+    threshold = 1e-9
+
+    while true
+        mid_x = (min_x + max_x) / 2
+        abs(max_x - min_x) < threshold && return mid_x
+
+        min_y, mid_y, max_y = (fn(x) for x in (min_x, mid_x, max_x))
+        if sign(min_y * mid_y) < 0
+            max_x = mid_x
+        else
+            min_x = mid_x
+        end
+    end
+end
+
+
+@doc raw"""
+    trj_to_t(temperature_k, nu_hz)
+
+Convert a Rayleigh-Jeans temperature (in K) into a thermodynamic temperature, given some
+specified frequency `nu_hz` (in Hz).
+
+See also [`t_to_trj`](@ref) for the inverse transformation.
+
+"""
+function trj_to_t(temperature_k, nu_hz)
+    bisect(x->t_to_trj(x, nu_hz) - temperature_k,
+        (temperature_k / 10.0, temperature_k * 10.0),
+    )
+end
+
+@doc raw"""
+    deltat_to_deltatrj(temperature_k, deltat_k, nu_hz)
+
+Convert a small temperature fluctuation `deltat_k` around temperature
+`temperature_k` from thermodynamic temperature to Rayleigh-Jeans (RJ)
+temperature. This function can be used to convert sensitivities expressed as
+thermodynamic temperatures in RJ sensitivities.
+
+See also `deltatrj_to_deltat` for the inverse function.
+"""
+function deltat_to_deltatrj(temperature_k, deltat_k, nu_hz)
+    # The formula we are using here is ∂T_RJ/∂T × δT, but we are
+    # using the analytical formula for the derivative
+    
+    exponential = exp(hplanck * nu_hz / (kb * temperature_k))
+    (hplanck * nu_hz / (temperature_k * kb))^2 * exponential / (exponential - 1)^2 * deltat_k
+end
+
+@doc raw"""
+    deltat_to_deltatrj(temperature_k, deltat_k, nu_hz)
+
+Convert a small temperature fluctuation `deltat_k` around temperature
+`temperature_k` from Rayleigh-Jeans (RJ) temperature to thermodynamic
+temperature. This function can be used to convert sensitivities expressed as
+RJ temperatures in thermodynamic sensitivities.
+
+See also `deltatrj_to_deltat` for the inverse function.
+"""
+function deltatrj_to_deltat(temperature_k, deltat_k, nu_hz)
+    tcmb_k = trj_to_t(temperature_k, nu_hz)
+
+    exponential = exp(hplanck * nu_hz / (kb * tcmb_k))
+    (tcmb_k * kb / (hplanck * nu_hz))^2 * (exponential - 1)^2 / exponential * deltat_k
+end
