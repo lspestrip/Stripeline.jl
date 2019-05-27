@@ -7,7 +7,7 @@
 - Add error bars to bandshape and always measure them as positive quantities ([#70dc6](https://github.com/lspestrip/Stripeline.jl/commit/70dc6612e3784e4b3cfded55540e01cccec0bbf3), [PR#22](https://github.com/lspestrip/Stripeline.jl/pull/22))
 - Print the instrument database in Markdown format [#f2c2b](https://github.com/lspestrip/Stripeline.jl/commit/f2c2b11b317b149131ee4ab447a4ffe680148f2d)
 - Add functions `sensitivity_tant`, `t_to_trj`, `trj_to_t`,
-  `deltat_to_deltatrj, `deltatrj_to_deltat`
+  `deltat_to_deltatrj, `deltatrj_to_deltat` [#23](https://github.com/lspestrip/Stripeline.jl/pull/23)
 
 # Version 0.3.2
 
