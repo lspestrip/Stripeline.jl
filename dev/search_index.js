@@ -33,6 +33,70 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
+    "location": "basic/#",
+    "page": "Basic functions",
+    "title": "Basic functions",
+    "category": "page",
+    "text": "DocTestSetup = quote\n    using Stripeline\nend"
+},
+
+{
+    "location": "basic/#Basic-functions-1",
+    "page": "Basic functions",
+    "title": "Basic functions",
+    "category": "section",
+    "text": ""
+},
+
+{
+    "location": "basic/#Stripeline.sensitivity_tant",
+    "page": "Basic functions",
+    "title": "Stripeline.sensitivity_tant",
+    "category": "function",
+    "text": "sensitivity_tant(db::InstrumentDB, load_tant; modules = Set([0, 1, 2, 3, 4, 5, 6]))\n\nCalculate the white-noise sensitivity of an array of detectors, measured in K⋅√s, given some antenna temperature for the load. The result takes in account only those horns belonging to the modules listed in the keyword modules (the W-band horns belong to module -1). By default, only the Q-band modules are considered.\n\nThe result assumes the radiometer equation: στ = fracT_sys2β, where T_{sys} is the system temperature, β is the bandwidth, and τ is the acquisition time. The factor 2 comes from the way Strip polarimeters operate. The system temperature is assumed to be the noise temperature of each detector, plus the term load_tant, which should take into account all the other sources of power entering the system (e.g., telescope, atmosphere, etc.). The term load_tant should be expressed as an antenna temperature.\n\n\n\n\n\n"
+},
+
+{
+    "location": "basic/#Stripeline.t_to_trj",
+    "page": "Basic functions",
+    "title": "Stripeline.t_to_trj",
+    "category": "function",
+    "text": "t_to_trj(temperature_k, nu_hz)\n\nConvert a thermodynamic temperature (in K) into a Rayleigh-Jeans temperature, given some specified frequency nu_hz (in Hz).\n\nSee also trj_to_t for the inverse transformation.\n\n\n\n\n\n"
+},
+
+{
+    "location": "basic/#Stripeline.trj_to_t",
+    "page": "Basic functions",
+    "title": "Stripeline.trj_to_t",
+    "category": "function",
+    "text": "trj_to_t(temperature_k, nu_hz)\n\nConvert a Rayleigh-Jeans temperature (in K) into a thermodynamic temperature, given some specified frequency nu_hz (in Hz).\n\nSee also t_to_trj for the inverse transformation.\n\n\n\n\n\n"
+},
+
+{
+    "location": "basic/#Stripeline.deltat_to_deltatrj",
+    "page": "Basic functions",
+    "title": "Stripeline.deltat_to_deltatrj",
+    "category": "function",
+    "text": "deltat_to_deltatrj(temperature_k, deltat_k, nu_hz)\n\nConvert a small temperature fluctuation deltat_k around temperature temperature_k from thermodynamic temperature to Rayleigh-Jeans (RJ) temperature. This function can be used to convert sensitivities expressed as thermodynamic temperatures in RJ sensitivities.\n\nSee also deltatrj_to_deltat for the inverse function.\n\n\n\n\n\n"
+},
+
+{
+    "location": "basic/#Stripeline.deltatrj_to_deltat",
+    "page": "Basic functions",
+    "title": "Stripeline.deltatrj_to_deltat",
+    "category": "function",
+    "text": "deltat_to_deltatrj(temperature_k, deltat_k, nu_hz)\n\nConvert a small temperature fluctuation deltat_k around temperature temperature_k from Rayleigh-Jeans (RJ) temperature to thermodynamic temperature. This function can be used to convert sensitivities expressed as RJ temperatures in thermodynamic sensitivities.\n\nSee also deltatrj_to_deltat for the inverse function.\n\n\n\n\n\n"
+},
+
+{
+    "location": "basic/#Measure-unit-conversion-1",
+    "page": "Basic functions",
+    "title": "Measure unit conversion",
+    "category": "section",
+    "text": "It is often useful to convert measurements between thermodynamic temperatures and Rayleigh-Jeans temperatures. The following functions implement this kind of conversion. Note that there are two families of functions:Functions that convert absolute measurements: t_to_trj, trj_to_t;\nFunctions that convert sensitivities (i.e., small fluctuations around an absolute value): deltat_to_deltatrj, deltatrj_to_deltatThe function sensitivity_tant computes the overall sensitivity of a set of polarimeters, using information from the Instrument database.sensitivity_tant\nt_to_trj\ntrj_to_t\ndeltat_to_deltatrj\ndeltatrj_to_deltat"
+},
+
+{
     "location": "instrumentdb/#",
     "page": "Instrument database",
     "title": "Instrument database",
