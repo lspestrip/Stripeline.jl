@@ -14,6 +14,7 @@ makedocs(
     sitename = "Stripeline.jl",
     pages = [
         "Introduction" => "index.md",
+        "Basic functions" => "basic.md",
         "Instrument database" => "instrumentdb.md",
         "Scanning strategy" => "scanning.md",
         "Map making" => "mapmaking.md",
