@@ -152,7 +152,6 @@ result is still a temperature, after it has been converted into ADUs by the ADC
 and then converted back to a temperature again. If non-linearities are specified
 in `adc`, they will be applied only to the K→ADU transformation.
 """
-
 function adc_filter(adc::ADC, input_k; include_non_linearities = true)
     adu = adc_response(adc, input_k, include_non_linearities = include_non_linearities)
     adc_inv_response(adc, adu)
