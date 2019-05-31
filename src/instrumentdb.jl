@@ -32,7 +32,7 @@ Field              | Type           | Meaning
 `directivity_dbi`  | Float64        | Directivity, in dBi
 `ellipticity`      | Float64        | Ellipticity
 """
-struct Horn
+mutable struct Horn
     name::String
     id::Int
     polid::Int
@@ -89,7 +89,7 @@ Field                      | Type             | Meaning
 `test_id`                  | Array{Int,1}     | ID of the unit-level test used to characterize the bandshape
 `analysis_id`              | Int              | ID of the unit-level analysis used to characterize the bandshape
 """
-struct BandshapeInfo
+mutable struct BandshapeInfo
     center_frequency_hz::Float64
     center_frequency_err_hz::Float64
     bandwidth_hz::Float64
@@ -159,7 +159,7 @@ Field             | Type     | Meaning
 `test_id`         | Int      | ID of the unit-level test used to characterize the bandshape
 `analysis_id`     | Int      | ID of the unit-level analysis used to characterize the bandshape
 """
-struct SpectrumInfo
+mutable struct SpectrumInfo
     slope_i::Float64
     slope_q::Float64
     slope_u::Float64
@@ -230,7 +230,7 @@ Field          | Type             | Meaning
 `analysis_ids` | Array{Int,1}     | List of unit-level analysis report IDs used to estimate the noise temperature
 `values_k`     | Array{Float64,1} | List of noise temperatures estimated from the tests
 """
-struct NoiseTemperatureInfo
+mutable struct NoiseTemperatureInfo
     tnoise_k::Float64
     tnoise_err_k::Float64
     test_ids::Array{Int,1}
@@ -281,7 +281,7 @@ Field       | Type                 | Meaning
 `spectrum`  | SpectrumInfo         | Information about the noise spectrum (white noise and 1/f noise)
 `tnoise`    | NoiseTemperatureInfo | Information about the noise temperature
 """
-struct Detector
+mutable struct Detector
     id::Int
     name::String
     band::String
@@ -351,7 +351,7 @@ The table can be converted to other formats (HTML, LaTeX, Microsoft
 Word, …) using commonly-available tools, e.g.,
 [Pandoc](https://pandoc.org/).
 """
-struct InstrumentDB
+mutable struct InstrumentDB
     focalplane::Dict{String,Horn}
     detectors::Dict{Int,Detector}
 end

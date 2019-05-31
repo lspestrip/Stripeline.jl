@@ -4,14 +4,14 @@ import CorrNoise
 using Random
 using FITSIO
 
-
 try
     import MPI
 catch
 end 
 
-"""
-This structure holds informations about a certain chunk of data produced by a certain MPI process to send to another MPI process.
+@doc raw"""
+This structure holds informations about some chunk of data produced by a MPI
+process that needs to be sent to another MPI process.
 
 Field              | Type           | Meaning
 :----------------- |:-------------- |:------------------------------------------------------------
@@ -20,21 +20,20 @@ Field              | Type           | Meaning
 `last_idx`         | Int            | Index of the last element of the chunk
 `dest_rank`        | Int            | Number of destination rank 
 
-
 # Example
-Suppose that the following array of data: [1, 10, 20, 3, 4, 5, 7]
-is measured by the polarimeter number 2.
-If the chunk [20, 3, 4] needs to be sent to rank number 3, the corresponding structure will be:
 
-chunk_to_send(2, 3, 5, 3)
+Suppose that polarimeter #2 measures the following data: [1, 10, 20, 3, 4, 5, 7].
+If chunk [20, 3, 4] needs to be sent to rank number 3, the corresponding
+structure will be:
+
+    chunk_to_send(2, 3, 5, 3)
 """
 struct chunk_to_send
-    pol_number ::Int
+    pol_number::Int
     first_idx::Int
     last_idx::Int
     dest_rank::Int
 end 
-
 
 
 function generate_noisechunks_to_send(chunks, baseline_length_s, fsamp_hz, total_number_of_polarimeters)
@@ -42,25 +41,25 @@ function generate_noisechunks_to_send(chunks, baseline_length_s, fsamp_hz, total
     commsize = length(chunks)
     noisechunks_to_send = []
  
-    for cur_rank in 0:(commsize-1) #loop on ranks
-        pol_cur_rank  = cur_rank+1 #polarimeter assigned to cur_rank for noise production
+    for cur_rank in 0:(commsize - 1) #loop on ranks
+        pol_cur_rank  = cur_rank + 1 #polarimeter assigned to cur_rank for noise production
         chunk_cur_rank = []
  
         #Only the first "total_number_of_polarimeters" ranks will generate noise, so they will have something to send.
         if  0 <= cur_rank < total_number_of_polarimeters   
             for i in 1:length(chunks) #loop on chunks
-                rank_it = i-1
+                rank_it = i - 1
                 for j in 1:length(chunks[i]) #loop on detectors per rank
                     if chunks[i][j].pol_number == pol_cur_rank #if cur_rank is going to produce noise for the "correct" polarimeter
-                        first_idx = (chunks[i][j].first_idx-1)*baseline_length_s*fsamp_hz+1
-                        last_idx = first_idx + chunks[i][j].num_of_elements*baseline_length_s*fsamp_hz -1
+                        first_idx = (chunks[i][j].first_idx - 1) * baseline_length_s * fsamp_hz + 1
+                        last_idx = first_idx + chunks[i][j].num_of_elements * baseline_length_s * fsamp_hz - 1
                         dest_rank = rank_it
                         chunk = chunk_to_send(pol_cur_rank, first_idx, last_idx, dest_rank)
                         chunk_cur_rank = append!(chunk_cur_rank, [chunk])
                     end
                 end
             end
-            noisechunks_to_send= append!(noisechunks_to_send, [chunk_cur_rank])
+            noisechunks_to_send = append!(noisechunks_to_send, [chunk_cur_rank])
         end 
     end
 
@@ -68,74 +67,85 @@ function generate_noisechunks_to_send(chunks, baseline_length_s, fsamp_hz, total
 
 end
 
+@doc raw"""
+    generate_noise_mpi(chunks, baseline_length_s, baselines_per_process, fsamp_hz, σ_k, fknee_hz, rank, comm)
 
+This MPI-based function can be used to generate white noise and 1/f noise when
+the simulation is splitted in various MPI processes.
 
+It accepts the following parameters:
 
-"""
-    function generate_noise_mpi(chunks, baseline_length_s, baselines_per_process, fsamp_hz, σ_k, fknee_hz, rank, comm)
+- `chunks` is an array containing the data chunks. This is typically the result
+  of a call to [`split_tod_mpi`](@ref).
 
-    This MPI based function can be used to generate white noise and 1/f noise when the simulation is splitted in various MPI processes.
+- `baseline_length_s` is an array containing the number of 1/f baselines to
+  simulate for each process. This is usually the result of a call to
+  [`split_into_n`](@ref), like in the following example:
 
-    It requires in input:
-    - the data chunks (which can be obtained by using the function `split_tod_mpi`)
-    - the array containing the number of 1/f baselines to simulate for each process.
-            It can be obtained by using the function `split_into_n` in the following way:
+        split_into_n(num_of_polarimeters * baselines_per_pol, num_of_MPI_proc)
+            
+  where `baselines_per_pol = Int64(total_time/baseline_length_s)`` is the number
+  of baselines of each polarimeter
 
-            split_into_n(num_of_polarimeters*baselines_per_pol, num_of_MPI_proc)
-                
-            where baselines_per_pol = Int64(total_time/baseline_length_s) is the number of baselines of each polarimeter
-    - the length (in seconds) of each 1/f noise baseline
-    - the total duration (in seconds) of data acquisition
-    - the sampling frequency (in Hz)
-    - an array containing the RMS of the temperature (in K) for each polarimeter, σ_k[i]= tsys_k[i] / sqrt(β_hz[i] * τ_s)
-    - an array containing the knee frequency (in Hz) for each polarimeter
-    - the MPI communicator
-    - the random generator seed, as optional argument.
+- the length (in seconds) of each 1/f noise baseline
 
-    It returns the noise TOD for the current rank. 
-    
-    The function behaves differently according to the number of processes used:
+- the total duration (in seconds) of data acquisition
 
-        1. If the number of processes is greater than the number of polarimeters:
-           the first "number of polarimeters" processes will simultaneously produce the noise, one process for one polarimeter 
-           (rank 0 for pol.1, rank 1 for pol.2 and so on).
-           After that, the noise is redistributed between the ranks according to the input chunk structure.
+- the sampling frequency (in Hz)
 
+- an array containing the RMS of the temperature (in K) for each polarimeter,
+  σ_k[i]= tsys_k[i] / sqrt(β_hz[i] * τ_s)
 
-        2. If the number of processes is lesser than the number of polarimeters,
-           Each partial noise TOD is generated by rank 0 and then sent to the correspondent rank. 
+- an array containing the knee frequency (in Hz) for each polarimeter
 
-    N.B. if you want to use this function without MPI, remember to put rank = 0 and comm = missing
+- the MPI communicator
 
+- the random generator seed, as optional argument.
 
+The function returns the noise TOD for the current rank. 
+
+Note that `generate_noise_mpi` behaves differently according to the number of
+processes used:
+
+1. If the number of processes is greater than the number of polarimeters,
+    then the first "number of polarimeters" processes will simultaneously
+    produce the noise, one process for one polarimeter (rank 0 for pol.1, rank 1
+    for pol.2 and so on). After that, the noise is redistributed between the
+    ranks according to the input chunk structure.
+
+2. If the number of processes is lesser than the number of polarimeters, each
+   partial noise TOD is generated by rank 0 and then sent to the correspondent
+   rank. 
+   
+N.B. if you want to use this function without MPI, remember to use `rank = 0` and
+`comm = missing`
 """
 function  generate_noise_mpi(chunks, baselines_per_process, baseline_length_s, total_time, fsamp_hz, σ_k, fknee_hz, rank, comm, input_seed = missing)
     
     total_number_of_polarimeters = length(σ_k)
     commsize = length(chunks)
 
-    if ismissing(input_seed) father_seed = rand(1:10000) else father_seed = input_seed end
+    father_seed = ismissing(input_seed) ? rand(1:10000) : input_seed
     Random.seed!(father_seed)
     seeds = Int64[rand(1:10000) for i in 1:total_number_of_polarimeters]
-    
 
     ################ IF MORE PROCESSES THAN POLARIMETERS ################
-    if(commsize >= total_number_of_polarimeters) 
+    if commsize >= total_number_of_polarimeters
       
         noisechunks_to_send = generate_noisechunks_to_send(chunks, baseline_length_s, fsamp_hz, total_number_of_polarimeters)
 
         ##### NOISE PRODUCTION #####
-        pol_number = rank+1 
+        pol_number = rank + 1 
         pol_noise = Float64[]
-        noise = Array{Float64}(undef, baselines_per_process[rank+1]*baseline_length_s*fsamp_hz)    
+        noise = Array{Float64}(undef, baselines_per_process[rank + 1] * baseline_length_s * fsamp_hz)    
         
         if  0 <= rank < total_number_of_polarimeters  #if first "total_number_of_polarimeters" ranks
             rng = CorrNoise.OofRNG(Random.MersenneTwister(seeds[pol_number]), -1, 1.15e-5, fknee_hz[pol_number], fsamp_hz)
-            samples_per_pol = total_time*fsamp_hz
+            samples_per_pol = total_time * fsamp_hz
             pol_noise = Float64[CorrNoise.randoof(rng) * σ_k[pol_number] for i in 1:(samples_per_pol)]
         end
 
-        if(!ismissing(comm))
+        if !ismissing(comm)
             MPI.Barrier(comm)
         end
 
@@ -145,14 +155,14 @@ function  generate_noise_mpi(chunks, baselines_per_process, baseline_length_s, t
         end_idx = 0 
 
         for i in 1:length(noisechunks_to_send)  #loop on ranks
-            cur_rank = i-1
+            cur_rank = i - 1
     
             for j in 1:length(noisechunks_to_send[i]) #loop on the noise chunks produced by cur_rank
                 start_idx_noise = noisechunks_to_send[i][j].first_idx
                 end_idx_noise = noisechunks_to_send[i][j].last_idx
                 dest_rank = noisechunks_to_send[i][j].dest_rank
 
-                cur_num_noise_samples = end_idx_noise-start_idx_noise+1
+                cur_num_noise_samples = end_idx_noise - start_idx_noise + 1
                 
                 #if rank has to send noise (since it produced it)
                 if cur_rank == rank 
@@ -166,28 +176,22 @@ function  generate_noise_mpi(chunks, baselines_per_process, baseline_length_s, t
                     #otherwise send to the destination rank
                     else 
                         cur_noise_send = pol_noise[start_idx_noise:end_idx_noise]
-                        MPI.Send(cur_noise_send, dest_rank , 0, comm)
+                        MPI.Send(cur_noise_send, dest_rank, 0, comm)
                     end
                 
                 #if rank is a destination rank for someone
                 elseif dest_rank == rank 
 
                     cur_noise_rec = Array{Float64}(undef, cur_num_noise_samples)
-                    end_idx = start_idx + cur_num_noise_samples -1
+                    end_idx = start_idx + cur_num_noise_samples - 1
                     MPI.Recv!(cur_noise_rec, cur_rank, 0, comm)
                     noise[start_idx:end_idx] = cur_noise_rec
                     start_idx += cur_num_noise_samples 
                 end
-            
             end
-  
         end
-    
-
-###################################################################
-
-    ################IF LESS PROCESSES THAN POLARIMETERS################
     else
+        ################IF LESS PROCESSES THAN POLARIMETERS################
         if rank == 0
             previous_detector = chunks[1][1].pol_number
             noise = Float64[]  #noise rank 0
@@ -195,7 +199,7 @@ function  generate_noise_mpi(chunks, baselines_per_process, baseline_length_s, t
             rng = CorrNoise.OofRNG(Random.MersenneTwister(seeds[1]), -1, 1.15e-5, fknee_hz[1], fsamp_hz)
 
             for i in 1:length(chunks)   #loop on ranks
-                num_noise_samples = baselines_per_process[i]*baseline_length_s*fsamp_hz
+                num_noise_samples = baselines_per_process[i] * baseline_length_s * fsamp_hz
 
                 for j in 1:length(chunks[i]) #loop on detectors per rank
                     cur_detector = chunks[i][j].pol_number
@@ -203,12 +207,12 @@ function  generate_noise_mpi(chunks, baselines_per_process, baseline_length_s, t
                     if cur_detector != previous_detector  #if new detector generate new noise
                         rng = CorrNoise.OofRNG(Random.MersenneTwister(seeds[cur_detector]), -1, 1.15e-5, fknee_hz[cur_detector], fsamp_hz)
                     end
-                    cur_num_noise_samples = chunks[i][j].num_of_elements*baseline_length_s*fsamp_hz
+                    cur_num_noise_samples = chunks[i][j].num_of_elements * baseline_length_s * fsamp_hz
                     cur_noise = Float64[CorrNoise.randoof(rng) * σ_k[cur_detector] for i in 1:(cur_num_noise_samples)]
                     previous_detector =  cur_detector
 
                     if (i > 1)  #send to other ranks, not rank 0
-                        MPI.Send(cur_noise, i-1, 0, comm)
+                        MPI.Send(cur_noise, i - 1, 0, comm)
                     else
                         noise = append!(noise, cur_noise)
                     end
@@ -216,8 +220,8 @@ function  generate_noise_mpi(chunks, baselines_per_process, baseline_length_s, t
             end
         else
             noise = Float64[]
-            for j in 1:length(chunks[rank+1])
-                cur_noise = Array{Float64}(undef, chunks[rank+1][j].num_of_elements*baseline_length_s*fsamp_hz)
+            for j in 1:length(chunks[rank + 1])
+                cur_noise = Array{Float64}(undef, chunks[rank + 1][j].num_of_elements * baseline_length_s * fsamp_hz)
                 MPI.Recv!(cur_noise, 0, 0, comm)
                 noise = append!(noise, cur_noise)
             end
@@ -225,8 +229,5 @@ function  generate_noise_mpi(chunks, baselines_per_process, baseline_length_s, t
 
     end
 
-    return noise
-    
-
+    noise
 end
-

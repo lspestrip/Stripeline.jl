@@ -36,7 +36,7 @@
 # +-----+-----------------------------+------------------------------------------+
 # | MCS | Mount Coordinate System     | Centered at the basis of the telescope   |
 # +-------+---------------------------+------------------------------------------+
-# | ACS | A zimuth Coordinate System  | Moveable, centered in the middle of      |
+# | ACS | Azimuth Coordinate System   | Moveable, centered in the middle of      |
 # |     |                             | ground motor. Positive angles go from    |
 # |     |                             | North to *East* (beware!)                |
 # +-----+-----------------------------+------------------------------------------+
@@ -363,11 +363,13 @@ end
 
 @doc raw"""
     genpointings(wheelanglesfn, dir, timerange_s; 
-                 polaxis=Float64[1.0, 0.0, 0.0],
-                 latitude_deg=0.0, ground=false)
+                 polaxis = Float64[1.0, 0.0, 0.0],
+                 latitude_deg = 0.0, ground = false)
     genpointings(wheelanglesfn, dir, timerange_s, t_start;
-                 polaxis=Float64[1.0, 0.0, 0.0],
-                 latitude_deg=0.0, longitude_deg=0.0, height_m=0.0)
+                 polaxis = Float64[1.0, 0.0, 0.0],
+                 latitude_deg = 0.0, longitude_deg = 0.0, height_m = 0.0,
+                 precession = true, nutation = true,
+                 aberration = true, refract = true)
 
 Generate a set of pointings for a STRIP detector. The parameter
 `wheelanglesfn` must be a function which takes as input a time in
@@ -404,17 +406,17 @@ The meaning of the parameters/keywords is the following:
 
 - `polaxis` is the polarization axis; it must be normalized.
 
-- `precession` is a boolen parameter that allow to include the Earth's precession
+- `precession` is a Boolean parameter that allow to include the Earth's
+  precession effect; default is true.
+
+- `nutation` is a Boolean parameter that allow to include the Earth's nutation
   effect; default is true.
 
-- `nutation` is a boolen parameter that allow to include the Earth's nutation
+- `aberration` is a Boolean parameter that allow to include the stellar aberration
   effect; default is true.
 
-- `aberration` is a boolen parameter that allow to include the stellar aberration
-  effect; default is true.
-
-- `refract` is a boolen parameter that allow to include the refraction correction
-  ; default is true.
+- `refract` is a Boolean parameter that allow to include the refraction
+  correction; default is true.
 
 # Return values
 

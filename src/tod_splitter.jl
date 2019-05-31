@@ -32,7 +32,7 @@ will correspond to the following structure:
 datachunk(2, 3, 5, 3)
 """
 struct datachunk
-    pol_number ::Int
+    pol_number::Int
     first_idx::Int
     last_idx::Int
     num_of_elements::Int
@@ -40,92 +40,90 @@ end
 
 
 """
-    function split_into_n(length, num_of_segments)
-        Given the `length` of the array, it convenientely 
-        splits it into `num_of_segments` sections of as similar length as possible.
-        It returns an array containing the number of elements of each section.
+    split_into_n(length, num_of_segments)
 
-        # Example
-        julia> split_into_n(20, 3)
-        3-element Array{Int64,1}:
-        6
-        7
-        7
+Given the `length` of the array, it splits it into `num_of_segments` sections,
+whose length is as much similar as possible. It returns an array containing the
+number of elements of each section.
+
+# Example
+
+    julia> split_into_n(20, 3)
+    3-element Array{Int64,1}:
+    6
+    7
+    7
 """
 function split_into_n(length, num_of_segments)
-    @assert num_of_segments >0
+    @assert num_of_segments > 0
     @assert length >= num_of_segments
-    start_pos = zeros(Int, num_of_segments+1)
+    start_pos = zeros(Int, num_of_segments + 1)
     
-    for i in 1:num_of_segments+1
-        start_pos[i] =  floor(((i-1)*length/num_of_segments))
+    for i in 1:num_of_segments + 1
+        start_pos[i] =  floor(((i - 1) * length / num_of_segments))
     end
    
-    return start_pos[2:end]-start_pos[1:end-1]    
+    return start_pos[2:end] - start_pos[1:end - 1]    
 end
 
 
 """
-    function split_tod_mpi(total_time, baseline_length_s, baselines_per_process, num_of_MPI_proc)
+    split_tod_mpi(total_time_s, baseline_length_s, baselines_per_process, num_of_MPI_proc)
            
-        This function can be used to split the TOD production of many polarimeters among MPI processes.
+This function can be used to split the TOD production of many polarimeters among
+MPI processes.
 
-        It requires in input:
+The meaning of the parameters is the following:
 
-        -the total time (in seconds) of the simulated observation 
-        -the length (in seconds) of each 1/f noise baseline
-        -the array containing the number of 1/f baselines to simulate for each process.
-            It can be obtained by using the function `plit_into_n` in the following way:
+- `total_time_s` is the duration (in seconds) of the simulated observation 
+- `baseline_length_s` is the length (in seconds) of each 1/f noise baseline
 
-            split_into_n(num_of_polarimeters*baselines_per_pol, num_of_MPI_proc)
-                
-            where baselines_per_pol = Int64(total_time/baseline_length_s) is the number of baselines of each polarimeter
+- `baselines_per_process` is the array containing the number of 1/f baselines to
+  simulate for each process. It can be obtained by using the function
+  `split_into_n`, like in the example shown below.
 
-        -the number of MPI processes used
+- `num_of_MPI_proc` is the number of MPI processes used
 
-        It returns an array of arrays of `datachunk` instances, of length == num_of_MPI_proc
-        where each element tells the chunk of data that each process should simulate (see Example) 
+The function returns an array of arrays of `datachunk` instances, of length ==
+num_of_MPI_proc where each element tells the chunk of data that each process
+should simulate (see Example) 
 
-        # Example
-        ```julia-repl
-        julia> num_of_polarimeters = 4
-        julia> num_of_MPI_proc = 3
-        julia> total_time = 50
-        julia> baseline_length_s = 10
-        julia> baselines_per_pol = Int64(total_time/baseline_length_s)
-        5
+# Example
 
-        julia> baselines_per_process = split_into_n(20, 3)
-        3-element Array{Int64,1}:
-        6
-        7
-        7
+```julia-repl
+julia> num_of_polarimeters = 4
+julia> num_of_MPI_proc = 3
+julia> total_time = 50
+julia> baseline_length_s = 10
+julia> baselines_per_pol = Int64(total_time / baseline_length_s)
+5julia> baselines_per_process = split_into_n(20, 3)
+3-element Array{Int64,1}:
+6
+7
+7julia> chunks = split_tod_mpi(total_time, baseline_length_s, baselines_per_process, num_of_MPI_proc)
+3-element Array{Any,1}:
+Any[datachunk(1, 1, 5, 5), datachunk(2, 1, 1, 1)]
+Any[datachunk(2, 2, 5, 4), datachunk(3, 1, 3, 3)]
+Any[datachunk(3, 4, 5, 2), datachunk(4, 1, 5, 5)]
+```
 
-        julia> chunks = split_tod_mpi(total_time, baseline_length_s, baselines_per_process, num_of_MPI_proc)
-        3-element Array{Any,1}:
-        Any[datachunk(1, 1, 5, 5), datachunk(2, 1, 1, 1)]
-        Any[datachunk(2, 2, 5, 4), datachunk(3, 1, 3, 3)]
-        Any[datachunk(3, 4, 5, 2), datachunk(4, 1, 5, 5)]
-        ```
+The example above splits the data according to the following layout:
 
-        which means:
+- process number 0 should simulate: 
+    - polarimeter number 1 from baseline 1 to baseline 5,  total number of baselines = 5
+    - polarimeter number 2 from baseline 1 to baseline 1 , total number of baselines = 1
 
-        - process number 0 should simulate: 
-        polarimeter number 1 from baseline 1 to baseline 5,  total number of baselines = 5
-        polarimeter number 2 from baseline 1 to baseline 1 , total number of baselines = 1
+- process number 1 should simulate: 
+    - polarimeter number 2 from baseline 2 to baseline 5,  total number of baselines = 4
+    - polarimeter number 3 from baseline 1 to baseline 3 , total number of baselines = 3
 
-        - process number 1 should simulate: 
-        polarimeter number 2 from baseline 2 to baseline 5,  total number of baselines = 4
-        polarimeter number 3 from baseline 1 to baseline 3 , total number of baselines = 3
-
-        - process number 2 should simulate: 
-        polarimeter number 3 from baseline 4 to baseline 5,  total number of baselines = 2
-        polarimeter number 4 from baseline 1 to baseline 5,  total number of baselines = 5
-
+- process number 2 should simulate: 
+    - polarimeter number 3 from baseline 4 to baseline 5,  total number of baselines = 2
+    - polarimeter number 4 from baseline 1 to baseline 5,  total number of baselines = 5
 """
-function split_tod_mpi(total_time, baseline_length_s, baselines_per_process, num_of_MPI_proc)
+function split_tod_mpi(total_time_s, baseline_length_s, baselines_per_process, num_of_MPI_proc)
 
-    duration = Int64(total_time/baseline_length_s)
+    duration = Int64(total_time_s / baseline_length_s)
 
     #initialization
     detector_num = 1
@@ -133,9 +131,9 @@ function split_tod_mpi(total_time, baseline_length_s, baselines_per_process, num
     samples_in_det = duration
     result = []
     
-    for rank_num in 0:(num_of_MPI_proc-1)  #loop on MPI processes
+    for rank_num in 0:(num_of_MPI_proc - 1)  #loop on MPI processes
         
-        samples_for_this_process = baselines_per_process[rank_num+1]
+        samples_for_this_process = baselines_per_process[rank_num + 1]
         samples_left = samples_for_this_process
         data_this_rank = []
         
@@ -144,10 +142,10 @@ function split_tod_mpi(total_time, baseline_length_s, baselines_per_process, num
             #if the current detector has more samples than needed to fill the current MPI process
             if samples_in_det > samples_left
                 
-                first_idx = sample_idx+1
-                last_idx = sample_idx+samples_left
+                first_idx = sample_idx + 1
+                last_idx = sample_idx + samples_left
                 data = datachunk(detector_num, first_idx, last_idx, samples_left)
-                data_this_rank = append!(data_this_rank, [data])
+                append!(data_this_rank, [data])
                 
                 sample_idx = sample_idx + samples_left
                 samples_in_det = samples_in_det - samples_left
@@ -157,82 +155,78 @@ function split_tod_mpi(total_time, baseline_length_s, baselines_per_process, num
             #with the required number of samples. In this case we need to increase "detector_num" before the next iteration
             else 
                 
-                first_idx = sample_idx+1
-                last_idx = sample_idx+samples_in_det
+                first_idx = sample_idx + 1
+                last_idx = sample_idx + samples_in_det
                 data = datachunk(detector_num, first_idx, last_idx, samples_in_det)
-                data_this_rank = append!(data_this_rank, [data])
+                append!(data_this_rank, [data])
                
                 samples_left = samples_left - samples_in_det
                 samples_in_det = 0
             end
             
             if samples_in_det == 0
-                detector_num +=1
+                detector_num += 1
                 sample_idx = 0
                 samples_in_det = duration 
             end
         
         end   
         
-        result = append!(result, [data_this_rank])
+        append!(result, [data_this_rank])
         
     end 
         
-    return result
-    
+    result
 end
 
 """
-    function get_chunk_properties(chunks, baseline_length_s, fsamp_hz, rank)
+function get_chunk_properties(chunks, baseline_length_s, fsamp_hz, rank)
+
+Given:
+- the data chunks (which can be obtained by using the function `split_tod_mpi`)
+- the length (in seconds) of each 1/f noise baseline
+- the sampling frequency (in Hz)
+- the number of current MPI rank
+
+this function extracts useful information to perform the TOD simulation in the current rank.
+
+It returns a tuple containing 5 arrays:
+- the ID number of the polarimeters that the current rank will simulate
+- the start time of the acquisition portion for each polarimeter
+- the stop time of the acquisition portion for each polarimeter
+- the number of 1/f baselines for each polarimeter
+- the total number of samples for each polarimeter
+
+# Example
+ ```julia-repl
+julia> baseline_length_s = 10
+julia> fsamp_hz = 10
+julia> rank = 1
+
+julia> chunks = [[datachunk(1, 1, 5, 5), datachunk(2, 1, 1, 1)], [datachunk(2, 2, 5, 4), datachunk(3, 1, 3, 3)], [datachunk(3, 4, 5, 2), datachunk(4, 1, 5, 5)]]
+julia> get_chunk_properties(chunks, baseline_length_s, fsamp_hz, rank)
+([2, 3], [10.0, 0.0], [50.0, 30.0], [4, 3], [400, 300])
+```
+
+In this way, rank 1 will simulate:
+- polarimeter number 2 from 10 s (from the starting of the acquisition) to 50 s, 
+  with a total of 4 1/f baselines and 400 samples.
+- polarimeter number 3 from 0 s (from the starting of the acquisition) to 30 s, 
+  with a total of 3 1/f baselines and 300 samples.
+"""
+function get_chunk_properties(chunks, baseline_length_s, fsamp_hz, rank)
+
+    this_rank_chunk = chunks[rank + 1]
+    first_time, last_time = [Array{Float64}(undef, length(this_rank_chunk)) for i in (1:2)]
+    detector_number, num_of_baselines, baseline_len, num_of_samples = [Array{Int64}(undef, length(this_rank_chunk)) for i in (1:4)]
     
-        Given:
-        - the data chunks (which can be obtained by using the function `split_tod_mpi`)
-        - the length (in seconds) of each 1/f noise baseline
-        - the sampling frequency (in Hz)
-        - the number of current MPI rank
-
-        this function extracts useful information to perform the TOD simulation in the current rank.
-
-
-        It returns a tuple containing 5 arrays:
-        - the ID number of the polarimeters that the current rank will simulate
-        - the start time of the acquisition portion for each polarimeter
-        - the stop time of the acquisition portion for each polarimeter
-        - the number of 1/f baselines for each polarimeter
-        - the total number of samples for each polarimeter
-
-        # Example
-        ```julia-repl
-        julia> baseline_length_s = 10
-        julia> fsamp_hz = 10
-        julia> rank = 1
-
-        julia> chunks = [[datachunk(1, 1, 5, 5), datachunk(2, 1, 1, 1)], [datachunk(2, 2, 5, 4), datachunk(3, 1, 3, 3)], [datachunk(3, 4, 5, 2), datachunk(4, 1, 5, 5)]]
-
-        get_chunk_properties(chunks, baseline_length_s, fsamp_hz, rank)
-        ([2, 3], [10.0, 0.0], [50.0, 30.0], [4, 3], [400, 300])
-
-        which means that rank 1 will simulate:
-        - polarimeter number 2 from 10 s (from the starting of the acquisition) to 50 s, 
-          with a total of 4 1/f baselines and 400 samples.
-        - polarimeter number 3 from 0 s (from the starting of the acquisition) to 30 s, 
-          with a total of 3 1/f baselines and 300 samples.
-
-    """
-    function get_chunk_properties(chunks, baseline_length_s, fsamp_hz, rank)
-
-        this_rank_chunk = chunks[rank+1]
-        first_time, last_time = [Array{Float64}(undef, length(this_rank_chunk)) for i in (1:2)]
-        detector_number, num_of_baselines, baseline_len, num_of_samples = [Array{Int64}(undef, length(this_rank_chunk)) for i in (1:4)]
-    
-        for i in 1:length(this_rank_chunk)
-            detector_number[i] = this_rank_chunk[i].pol_number
-            first_time[i] = (this_rank_chunk[i].first_idx-1)*baseline_length_s
-            last_time[i] = this_rank_chunk[i].last_idx*baseline_length_s -0.99*(1/fsamp_hz)
-            num_of_baselines[i] =  this_rank_chunk[i].num_of_elements
-            num_of_samples[i] = num_of_baselines[i]*baseline_length_s*fsamp_hz  
-        end
-        return (detector_number, first_time, last_time, num_of_baselines, num_of_samples)
+    for i in 1:length(this_rank_chunk)
+        detector_number[i] = this_rank_chunk[i].pol_number
+        first_time[i] = (this_rank_chunk[i].first_idx - 1) * baseline_length_s
+        last_time[i] = this_rank_chunk[i].last_idx * baseline_length_s - 0.99 * (1 / fsamp_hz)
+        num_of_baselines[i] =  this_rank_chunk[i].num_of_elements
+        num_of_samples[i] = num_of_baselines[i] * baseline_length_s * fsamp_hz  
     end
     
-
+    (detector_number, first_time, last_time, num_of_baselines, num_of_samples)
+end
