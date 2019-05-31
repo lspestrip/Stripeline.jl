@@ -1,5 +1,7 @@
 # HEAD
 
+- Add functions to simulate ADCs [#24](https://github.com/lspestrip/Stripeline.jl/pull/24)
+
 # Version 0.4
 
 - Conform coordinate systems to LSPE-STRIP-SP-017
