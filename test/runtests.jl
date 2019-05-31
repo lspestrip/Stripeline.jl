@@ -20,3 +20,7 @@ end
 @testset "Noise generation" begin
     include("noisegeneration_tests.jl")
 end
+
+@testset "ADC simulation" begin
+    include("adc_tests.jl")
+end

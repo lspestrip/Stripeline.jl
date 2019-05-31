@@ -17,8 +17,9 @@ makedocs(
         "Basic functions" => "basic.md",
         "Instrument database" => "instrumentdb.md",
         "Scanning strategy" => "scanning.md",
+        "Data acquisition" => "acquisition.md",
         "Map making" => "mapmaking.md",
-	"Simulation tutorial" => "simulation_tutorial.md",
+	    "Simulation tutorial" => "simulation_tutorial.md",
     ])
 
 deploydocs(
