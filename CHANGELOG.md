@@ -1,5 +1,6 @@
 # HEAD
 
+- Most of the structures used in the code (e.g., `InstrumentDB`) are now mutable
 - Add functions to simulate ADCs [#24](https://github.com/lspestrip/Stripeline.jl/pull/24)
 
 # Version 0.4

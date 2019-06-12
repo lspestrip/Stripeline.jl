@@ -226,7 +226,6 @@ function  generate_noise_mpi(chunks, baselines_per_process, baseline_length_s, t
                 noise = append!(noise, cur_noise)
             end
         end
-
     end
 
     noise
