@@ -10,11 +10,9 @@ notifications:
 addons:
   apt:
     packages:
-      - libcfitsio3
       - gfortran
       - mpich
       - libmpich-dev
-      - curl
 
 jobs:
   include:
