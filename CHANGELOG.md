@@ -1,6 +1,7 @@
 # HEAD
 
 - Add functions to simulate ADCs [#24](https://github.com/lspestrip/Stripeline.jl/pull/24)
+- Add a high-level API for accessing the instrument database [#30](https://github.com/lspestrip/Stripeline.jl/pull/30)
 
 # Version 0.4
 
