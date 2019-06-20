@@ -1,7 +1,7 @@
 export Horn, Detector, InstrumentDB, BandshapeInfo, SpectrumInfo, NoiseTemperatureInfo
 export InstrumentDB, defaultdbfolder, parsefpdict, parsedetdict
 export sensitivity_tant, t_to_trj, trj_to_t, deltat_to_deltatrj, deltatrj_to_deltat
-export detector, bandpass, spectrum, fknee_hz
+export detector, bandpass, spectrum, fknee_hz, tnoise
 
 import YAML
 import Stripeline

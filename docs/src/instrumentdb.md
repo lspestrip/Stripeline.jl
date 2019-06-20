@@ -80,7 +80,7 @@ NoiseTemperatureInfo
 detector
 bandpass
 spectrum
-fknee
+fknee_hz
 tnoise
 ```
 
