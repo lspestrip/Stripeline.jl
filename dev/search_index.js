@@ -117,7 +117,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Instrument database",
     "title": "Quick introduction",
     "category": "section",
-    "text": "The following example initializes an object of type InstrumentDB with the values referred to the standard STRIP instrument:using Stripeline; # hide\ndb = InstrumentDB()As db is a struct, its field can be accessed with the usual dot notation. The two fields in db are focalplane and detectors. They are both dictionaries, associating horn names to Horn objects and detectors IDs to Detector objects, respectively:db.focalplane[\"I0\"]\ndb.detectors[2]The structure Detector is complex, as it is built over three other structures:BandshapeInfo\nSpectrumInfo\nNoiseTemperatureInfoAll these structures know how to show themselves on the REPL:db.detectors[2].bandshape\ndb.detectors[2].spectrum\ndb.detectors[2].tnoiseFor more information about the fields in the structures listed above, as well as their meaning, keep reading."
+    "text": "The following example initializes an object of type InstrumentDB with the values referred to the standard STRIP instrument:using Stripeline; # hide\ndb = InstrumentDB()As db is a struct, its field can be accessed with the usual dot notation. The two fields in db are focalplane and detectors. They are both dictionaries, associating horn names to Horn objects and detectors IDs to Detector objects, respectively:db.focalplane[\"I0\"]\ndb.detectors[2]A number of high-level functions ease the access of the fields in a InstrumentDB object:detector returns a Detector structure, containing the details of a polarimeter;\nbandpass returns the shape of the bandpass of a detector, as a pair of arrays containing the frequency and the band response, respectively;\nspectrum returns a SpectrumInfo\nfknee returns the knee frequency of the 1/f noise for the I, Q, and U signals, adapted to the brightness temperature of the load being observed by the detector;\ntnoise returns the noise temperature for the I, Q, and U components.The structure Detector uses three structures to organize its data in a hierarchical way:BandshapeInfo\nSpectrumInfo\nNoiseTemperatureInfoAll these structures know how to show themselves on the REPL:db.detectors[2].bandshape\ndb.detectors[2].spectrum\ndb.detectors[2].tnoiseFor more information about the fields in the structures listed above, as well as their meaning, keep reading."
 },
 
 {
@@ -157,7 +157,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Instrument database",
     "title": "Stripeline.SpectrumInfo",
     "category": "type",
-    "text": "SpectrumInfo\n\nInformation about the noise spectrum of the output of a polarimeter.\n\nField Type Meaning\nslope_i Float64 The slope (alpha) of the 1/f component of the noise in the I signal\nslope_i_err Float64 Error associated with the value of slope_i\nslope_q Float64 Same as slope_i, but for the Q signal\nslope_q_err Float64 Error associated with the value of slope_q\nslope_u Float64 Same as slope_i, but for the U signal\nslope_u_err Float64 Error associated with the value of slope_u\nfknee_i_hz Float64 Knee frequency of the I signal, in Hz\nfknee_i_err_hz Float64 Error associated with the value of fknee_i_hz\nfknee_q_hz Float64 Knee frequency of the Q signal, in Hz\nfknee_q_err_hz Float64 Error associated with the value of fknee_q_hz\nfknee_u_hz Float64 Knee frequency of the U signal, in Hz\nfknee_u_err_hz Float64 Error associated with the value of fknee_u_hz\nwn_i_k2_hz Float64 White noise level for the I signal, in K^2 Hz\nwn_i_err_k2_hz Float64 Error associated with the value of wn_i_k2_hz\nwn_q_k2_hz Float64 White noise level for the Q signal, in K^2 Hz\nwn_q_err_k2_hz Float64 Error associated with the value of wn_q_k2_hz\nwn_u_k2_hz Float64 White noise level for the U signal, in K^2 Hz\nwn_u_err_k2_hz Float64 Error associated with the value of wn_u_k2_hz\ntest_id Int ID of the unit-level test used to characterize the bandshape\nanalysis_id Int ID of the unit-level analysis used to characterize the bandshape\n\n\n\n\n\n"
+    "text": "SpectrumInfo\n\nInformation about the noise spectrum of the output of a polarimeter.\n\nField Type Meaning\nslope_i Float64 The slope (alpha) of the 1/f component of the noise in the I signal\nslope_i_err Float64 Error associated with the value of slope_i\nslope_q Float64 Same as slope_i, but for the Q signal\nslope_q_err Float64 Error associated with the value of slope_q\nslope_u Float64 Same as slope_i, but for the U signal\nslope_u_err Float64 Error associated with the value of slope_u\nfknee_i_hz Float64 Knee frequency of the I signal, in Hz\nfknee_i_err_hz Float64 Error associated with the value of fknee_i_hz\nfknee_q_hz Float64 Knee frequency of the Q signal, in Hz\nfknee_q_err_hz Float64 Error associated with the value of fknee_q_hz\nfknee_u_hz Float64 Knee frequency of the U signal, in Hz\nfknee_u_err_hz Float64 Error associated with the value of fknee_u_hz\nwn_i_k2_hz Float64 White noise level for the I signal, in K^2 Hz\nwn_i_err_k2_hz Float64 Error associated with the value of wn_i_k2_hz\nwn_q_k2_hz Float64 White noise level for the Q signal, in K^2 Hz\nwn_q_err_k2_hz Float64 Error associated with the value of wn_q_k2_hz\nwn_u_k2_hz Float64 White noise level for the U signal, in K^2 Hz\nwn_u_err_k2_hz Float64 Error associated with the value of wn_u_k2_hz\nload_temperature_k Float64 System brightness temperature used during the tests (in K)\ntest_id Int ID of the unit-level test used to characterize the bandshape\nanalysis_id Int ID of the unit-level analysis used to characterize the bandshape\n\n\n\n\n\n"
 },
 
 {
@@ -174,6 +174,54 @@ var documenterSearchIndex = {"docs": [
     "title": "Structures",
     "category": "section",
     "text": "InstrumentDB\nHorn\nDetector\nBandshapeInfo\nSpectrumInfo\nNoiseTemperatureInfo"
+},
+
+{
+    "location": "instrumentdb/#Stripeline.detector",
+    "page": "Instrument database",
+    "title": "Stripeline.detector",
+    "category": "function",
+    "text": "detector(db::InstrumentDB, polid::Integer) -> Detector\ndetector(db::InstrumentDB, horn_name::AbstractString) -> Detector\n\nReturn a Detector structure, taken from the instrument database. If the form with polid is used, polid is the progressive number of the polarimeter; e.g., for STRIP02, polid == 2. In the second form, you pass the string identifying the horn on the focal plane, e.g., I0, W3, etc.\n\ndb = InstrumentDB()\npol1 = detector(db, 16)   # Get information about STRIP16\npol2 = detector(db, \"V4\") # Get information about the detector connected to horn V4\n\n\n\n\n\n"
+},
+
+{
+    "location": "instrumentdb/#Stripeline.bandpass",
+    "page": "Instrument database",
+    "title": "Stripeline.bandpass",
+    "category": "function",
+    "text": "bandpass(db::InstrumentDB, polid::Integer) -> Tuple{Array{Float64, 1}, Array{Float64, 1}}\nbandpass(db::InstrumentDB, horn_name::AbstractString) -> Tuple{Array{Float64, 1}, Array{Float64, 1}}\n\nReturn a pair (ν_hz, B) containing the bandpass B for the horn with the specified ID (polid) or associated to some horn (horn_name). To understand how polid and horn_name work, see the documentation for detector.\n\nThe two elements of the tuple (ν_hz, B) are two arrays of the same length containing the frequencies (in Hz) and the bandpass response at the same frequency (pure number).\n\ndb = InstrumentDB()\nx, y = bandpass(db, \"G2\")\nplot(x, y)   # Plot the bandpass\n\n\n\n\n\n"
+},
+
+{
+    "location": "instrumentdb/#Stripeline.spectrum",
+    "page": "Instrument database",
+    "title": "Stripeline.spectrum",
+    "category": "function",
+    "text": "spectrum(db::InstrumentDB, polid::Integer) -> SpectrumInfo\nspectrum(db::InstrumentDB, horn_name::AbstractString) -> SpectrumInfo\n\nReturn a SpectrumInfo object, taken from the instrument database. The meaning of the parameters polid and horn_name is explained in the documentation for detector.\n\n\n\n\n\n"
+},
+
+{
+    "location": "instrumentdb/#Stripeline.fknee_hz",
+    "page": "Instrument database",
+    "title": "Stripeline.fknee_hz",
+    "category": "function",
+    "text": "fknee_hz(db::InstrumentDB, polid::Integer; tsys_k = missing) -> Tuple{Float64, Float64, Float64}\nfknee_hz(db::InstrumentDB, horn_name::AbstractString; tsys_k = missing) -> Tuple{Float64, Float64, Float64}\n\nReturn the knee frequency for the selected detector, taken from the instrument database. The meaning of the parameters polid and horn_name is explained in the documentation for detector.\n\nIf tsys_k is specified, the system temperature is rescaled to the desired temperature of the load feeding the polarimeter, so that the 1/f component of the noise remains unchanged but the white noise plateau raises/lowers by an appropriate amount. Otherwise, the function returns the raw frequency taken from the instrument database.\n\n\n\n\n\n"
+},
+
+{
+    "location": "instrumentdb/#Stripeline.tnoise",
+    "page": "Instrument database",
+    "title": "Stripeline.tnoise",
+    "category": "function",
+    "text": "tnoise(db::InstrumentDB, polid::Integer) -> NoiseTemperatureInfo\ntnoise(db::InstrumentDB, horn_name::AbstractString) -> NoiseTemperatureInfo\n\nReturn a NoiseTemperatureInfo object, taken from the instrument database. The meaning of the parameters polid and horn_name is explained in the documentation for detector.\n\n\n\n\n\n"
+},
+
+{
+    "location": "instrumentdb/#High-level-access-functions-1",
+    "page": "Instrument database",
+    "title": "High-level access functions",
+    "category": "section",
+    "text": "detector\nbandpass\nspectrum\nfknee_hz\ntnoise"
 },
 
 {
