@@ -14,6 +14,27 @@ defaultdb = Sl.InstrumentDB()
 @test sort(collect(keys(defaultdb.focalplane))) == sort(collect(keys(db.focalplane)))
 @test sort(collect(keys(defaultdb.detectors))) == sort(collect(keys(db.detectors)))
 
+# Check the high-level API
+
+@test Sl.detector(defaultdb, "I0") != nothing
+@test Sl.detector(defaultdb, 2) != nothing
+
+@test Sl.spectrum(defaultdb, 2) != nothing
+@test Sl.spectrum(defaultdb, "I0") != nothing
+
+@test Sl.tnoise(defaultdb, 2) != nothing
+@test Sl.tnoise(defaultdb, "I0") != nothing
+
+x, y = Sl.bandpass(defaultdb, "I0")
+@test length(x) > 0
+@test length(x) == length(y)
+
+f1_i, f1_q, f1_u = Sl.fknee_hz(defaultdb, 10)
+f2_i, f2_q, f2_u = Sl.fknee_hz(defaultdb, 10, tsys_k = 1000.0)
+
+@test f2_q < f1_q
+@test f2_u < f1_u
+
 # Just a few basic checks, to verify that the function does not crash
 (sensitivity, num) = Sl.sensitivity_tant(defaultdb, 10.0)
 @test sensitivity > 0.0
