@@ -154,7 +154,8 @@
     I_wn_level_err_k2_hz: 0.0, I_wn_level_k2_hz: 0.0, Q_fknee_err_hz: 0.0007, Q_fknee_hz: 0.0077,
     Q_slope: 2.217, Q_slope_err: 0.004, Q_wn_level_err_k2_hz: 2.0e-07, Q_wn_level_k2_hz: 1.9e-06,
     U_fknee_err_hz: 0.0009, U_fknee_hz: 0.0062, U_slope: 1.816, U_slope_err: 0.007,
-    U_wn_level_err_k2_hz: 1.0e-07, U_wn_level_k2_hz: 1.2e-06, analysis_id: 17, test_id: 239}
+    U_wn_level_err_k2_hz: 1.0e-07, U_wn_level_k2_hz: 1.2e-06, analysis_id: 17, load_a_temperature_k: 22.75078475,
+    load_average_temperature_k: 21.330017375, load_b_temperature_k: 19.90925, test_id: 239}
   tnoise:
     analysis_ids: [107, 108]
     test_ids: [125, 126]
@@ -372,7 +373,8 @@
     I_wn_level_err_k2_hz: 0.0, I_wn_level_k2_hz: 0.0, Q_fknee_err_hz: 0.03, Q_fknee_hz: 0.05,
     Q_slope: 0.736, Q_slope_err: 0.01, Q_wn_level_err_k2_hz: 2.0e-06, Q_wn_level_k2_hz: 7.0e-06,
     U_fknee_err_hz: 0.03, U_fknee_hz: 0.04, U_slope: 0.38, U_slope_err: 0.005, U_wn_level_err_k2_hz: 1.0e-06,
-    U_wn_level_k2_hz: 4.0e-06, analysis_id: 20, test_id: 208}
+    U_wn_level_k2_hz: 4.0e-06, analysis_id: 20, load_a_temperature_k: 22.686223000000005,
+    load_average_temperature_k: 21.2922365, load_b_temperature_k: 19.89825, test_id: 208}
   tnoise:
     analysis_ids: [32, 33]
     test_ids: [272, 273]
@@ -484,7 +486,8 @@
     I_wn_level_err_k2_hz: 0.0, I_wn_level_k2_hz: 0.0, Q_fknee_err_hz: 0.002, Q_fknee_hz: 0.014,
     Q_slope: 2.516, Q_slope_err: 0.008, Q_wn_level_err_k2_hz: 3.0e-07, Q_wn_level_k2_hz: 2.5e-06,
     U_fknee_err_hz: 0.0008, U_fknee_hz: 0.0094, U_slope: 2.076, U_slope_err: 0.004,
-    U_wn_level_err_k2_hz: 3.0e-07, U_wn_level_k2_hz: 2.2e-06, analysis_id: 22, test_id: 489}
+    U_wn_level_err_k2_hz: 3.0e-07, U_wn_level_k2_hz: 2.2e-06, analysis_id: 22, load_a_temperature_k: 22.732807750000003,
+    load_average_temperature_k: 21.308653875, load_b_temperature_k: 19.8845, test_id: 489}
   tnoise:
     analysis_ids: [111, 112]
     test_ids: [460, 461]
@@ -883,7 +886,8 @@
     I_wn_level_err_k2_hz: 0.0, I_wn_level_k2_hz: 0.0, Q_fknee_err_hz: 0.9, Q_fknee_hz: 4.5,
     Q_slope: 0.34967, Q_slope_err: 2.0e-05, Q_wn_level_err_k2_hz: 3.5, Q_wn_level_k2_hz: 48.8,
     U_fknee_err_hz: 2.4, U_fknee_hz: 6.1, U_slope: 0.577706, U_slope_err: 5.0e-06,
-    U_wn_level_err_k2_hz: 134.02, U_wn_level_k2_hz: 588.04, analysis_id: 25, test_id: 406}
+    U_wn_level_err_k2_hz: 134.02, U_wn_level_k2_hz: 588.04, analysis_id: 25, load_a_temperature_k: 22.72730775,
+    load_average_temperature_k: 21.305903875, load_b_temperature_k: 19.8845, test_id: 406}
 - band: Q
   bandpass:
     analysis_id: 112
@@ -933,7 +937,8 @@
     I_wn_level_err_k2_hz: 0.0, I_wn_level_k2_hz: 0.0, Q_fknee_err_hz: 0.002, Q_fknee_hz: 0.002,
     Q_slope: 1.28, Q_slope_err: 0.02, Q_wn_level_err_k2_hz: 2.0e-06, Q_wn_level_k2_hz: 8.0e-06,
     U_fknee_err_hz: 0.005, U_fknee_hz: 0.004, U_slope: 1.01, U_slope_err: 0.03, U_wn_level_err_k2_hz: 1.0e-06,
-    U_wn_level_k2_hz: 4.0e-06, analysis_id: 26, test_id: 413}
+    U_wn_level_k2_hz: 4.0e-06, analysis_id: 26, load_a_temperature_k: 22.75480775,
+    load_average_temperature_k: 21.319653875, load_b_temperature_k: 19.8845, test_id: 413}
   tnoise:
     analysis_ids: [102, 103]
     test_ids: [425, 426]
@@ -1038,7 +1043,8 @@
     I_wn_level_err_k2_hz: 0.0, I_wn_level_k2_hz: 0.0, Q_fknee_err_hz: 0.002, Q_fknee_hz: 0.01,
     Q_slope: 1.4604, Q_slope_err: 0.0009, Q_wn_level_err_k2_hz: 1.0e-06, Q_wn_level_k2_hz: 5.0e-06,
     U_fknee_err_hz: 0.003, U_fknee_hz: 0.011, U_slope: 0.915, U_slope_err: 0.001,
-    U_wn_level_err_k2_hz: 7.0e-07, U_wn_level_k2_hz: 3.0e-06, analysis_id: 27, test_id: 202}
+    U_wn_level_err_k2_hz: 7.0e-07, U_wn_level_k2_hz: 3.0e-06, analysis_id: 27, load_a_temperature_k: 22.7504155,
+    load_average_temperature_k: 21.32983275, load_b_temperature_k: 19.90925, test_id: 202}
   tnoise:
     analysis_ids: [46, 47]
     test_ids: [64, 119]
@@ -1137,7 +1143,8 @@
     I_wn_level_err_k2_hz: 0.0, I_wn_level_k2_hz: 0.0, Q_fknee_err_hz: 0.004, Q_fknee_hz: 0.027,
     Q_slope: 0.943, Q_slope_err: 0.003, Q_wn_level_err_k2_hz: 3.0e-07, Q_wn_level_k2_hz: 2.9e-06,
     U_fknee_err_hz: 0.005, U_fknee_hz: 0.035, U_slope: 0.811, U_slope_err: 0.003,
-    U_wn_level_err_k2_hz: 2.0e-07, U_wn_level_k2_hz: 2.4e-06, analysis_id: 79, test_id: 625}
+    U_wn_level_err_k2_hz: 2.0e-07, U_wn_level_k2_hz: 2.4e-06, analysis_id: 79, load_a_temperature_k: 22.086800500000003,
+    load_average_temperature_k: 21.14790025, load_b_temperature_k: 20.209, test_id: 625}
   tnoise:
     analysis_ids: [51]
     test_ids: [244]
@@ -1295,7 +1302,9 @@
     I_wn_level_err_k2_hz: 0.0, I_wn_level_k2_hz: 0.0, Q_fknee_err_hz: 0.004, Q_fknee_hz: 0.02,
     Q_slope: 1.3278, Q_slope_err: 0.0007, Q_wn_level_err_k2_hz: 4.0e-07, Q_wn_level_k2_hz: 1.8e-06,
     U_fknee_err_hz: 0.004, U_fknee_hz: 0.018, U_slope: 0.9673, U_slope_err: 0.0007,
-    U_wn_level_err_k2_hz: 4.0e-07, U_wn_level_k2_hz: 1.6e-06, analysis_id: 30, test_id: 234}
+    U_wn_level_err_k2_hz: 4.0e-07, U_wn_level_k2_hz: 1.6e-06, analysis_id: 30, load_a_temperature_k: 22.729154000000005,
+    load_average_temperature_k: 21.316452000000005, load_b_temperature_k: 19.903750000000002,
+    test_id: 234}
   tnoise:
     analysis_ids: [54, 55]
     test_ids: [235, 236]
@@ -1411,7 +1420,9 @@
     I_wn_level_err_k2_hz: 0.0, I_wn_level_k2_hz: 0.0, Q_fknee_err_hz: 0.1, Q_fknee_hz: 0.4,
     Q_slope: 0.62, Q_slope_err: 0.001, Q_wn_level_err_k2_hz: 5.0e-07, Q_wn_level_k2_hz: 2.7e-06,
     U_fknee_err_hz: 0.1, U_fknee_hz: 0.3, U_slope: 0.512, U_slope_err: 0.002, U_wn_level_err_k2_hz: 4.0e-07,
-    U_wn_level_k2_hz: 2.4e-06, analysis_id: 32, test_id: 211}
+    U_wn_level_k2_hz: 2.4e-06, analysis_id: 32, load_a_temperature_k: 22.726569250000004,
+    load_average_temperature_k: 21.311034625000005, load_b_temperature_k: 19.895500000000002,
+    test_id: 211}
   tnoise:
     analysis_ids: [56, 57]
     test_ids: [224, 225]
@@ -1522,7 +1533,9 @@
     I_wn_level_err_k2_hz: 0.0, I_wn_level_k2_hz: 0.0, Q_fknee_err_hz: 0.002, Q_fknee_hz: 0.016,
     Q_slope: 1.821, Q_slope_err: 0.005, Q_wn_level_err_k2_hz: 2.0e-07, Q_wn_level_k2_hz: 1.9e-06,
     U_fknee_err_hz: 0.002, U_fknee_hz: 0.013, U_slope: 1.232, U_slope_err: 0.006,
-    U_wn_level_err_k2_hz: 2.0e-07, U_wn_level_k2_hz: 1.7e-06, analysis_id: 34, test_id: 199}
+    U_wn_level_err_k2_hz: 2.0e-07, U_wn_level_k2_hz: 1.7e-06, analysis_id: 34, load_a_temperature_k: 22.67485375,
+    load_average_temperature_k: 21.298926875, load_b_temperature_k: 19.923000000000002,
+    test_id: 199}
   tnoise:
     analysis_ids: [58, 59]
     test_ids: [216, 217]
@@ -1579,7 +1592,8 @@
     I_wn_level_err_k2_hz: 0.0, I_wn_level_k2_hz: 0.0, Q_fknee_err_hz: 0.0007, Q_fknee_hz: 0.0048,
     Q_slope: 1.689, Q_slope_err: 0.004, Q_wn_level_err_k2_hz: 4.0e-07, Q_wn_level_k2_hz: 2.0e-06,
     U_fknee_err_hz: 0.0007, U_fknee_hz: 0.0037, U_slope: 1.371, U_slope_err: 0.004,
-    U_wn_level_err_k2_hz: 3.0e-07, U_wn_level_k2_hz: 1.5e-06, analysis_id: 73, test_id: 507}
+    U_wn_level_err_k2_hz: 3.0e-07, U_wn_level_k2_hz: 1.5e-06, analysis_id: 73, load_a_temperature_k: 22.644807750000002,
+    load_average_temperature_k: 21.264653875, load_b_temperature_k: 19.8845, test_id: 507}
   tnoise:
     analysis_ids: [119, 120]
     test_ids: [505, 506]
@@ -2105,7 +2119,9 @@
     I_wn_level_err_k2_hz: 0.0, I_wn_level_k2_hz: 0.0, Q_fknee_err_hz: 0.07, Q_fknee_hz: 0.41,
     Q_slope: 0.834, Q_slope_err: 0.0007, Q_wn_level_err_k2_hz: 2.0e-07, Q_wn_level_k2_hz: 1.3e-06,
     U_fknee_err_hz: 0.02, U_fknee_hz: 0.07, U_slope: 0.3585, U_slope_err: 0.0003,
-    U_wn_level_err_k2_hz: 1.0e-07, U_wn_level_k2_hz: 1.1e-06, analysis_id: 41, test_id: 198}
+    U_wn_level_err_k2_hz: 1.0e-07, U_wn_level_k2_hz: 1.1e-06, analysis_id: 41, load_a_temperature_k: 22.744546250000006,
+    load_average_temperature_k: 21.325523125000004, load_b_temperature_k: 19.9065,
+    test_id: 198}
   tnoise:
     analysis_ids: [66, 87]
     test_ids: [150, 151]
@@ -2158,7 +2174,9 @@
     I_wn_level_err_k2_hz: 0.0, I_wn_level_k2_hz: 0.0, Q_fknee_err_hz: 0.05, Q_fknee_hz: 0.23,
     Q_slope: 1.598, Q_slope_err: 0.001, Q_wn_level_err_k2_hz: 8.0e-07, Q_wn_level_k2_hz: 2.1e-06,
     U_fknee_err_hz: 0.02, U_fknee_hz: 0.09, U_slope: 1.421, U_slope_err: 0.001, U_wn_level_err_k2_hz: 6.0e-07,
-    U_wn_level_k2_hz: 1.7e-06, analysis_id: 65, test_id: 609}
+    U_wn_level_k2_hz: 1.7e-06, analysis_id: 65, load_a_temperature_k: 22.680353750000002,
+    load_average_temperature_k: 21.290676875000003, load_b_temperature_k: 19.901,
+    test_id: 609}
   tnoise:
     analysis_ids: [67, 68]
     test_ids: [281, 282]
@@ -2312,7 +2330,8 @@
     I_wn_level_err_k2_hz: 0.0, I_wn_level_k2_hz: 0.0, Q_fknee_err_hz: 0.03, Q_fknee_hz: 0.09,
     Q_slope: 1.176, Q_slope_err: 0.004, Q_wn_level_err_k2_hz: 5.0e-07, Q_wn_level_k2_hz: 1.5e-06,
     U_fknee_err_hz: 0.03, U_fknee_hz: 0.06, U_slope: 0.576, U_slope_err: 0.006, U_wn_level_err_k2_hz: 4.0e-07,
-    U_wn_level_k2_hz: 1.4e-06, analysis_id: 44, test_id: 166}
+    U_wn_level_k2_hz: 1.4e-06, analysis_id: 44, load_a_temperature_k: 22.6822, load_average_temperature_k: 21.298475000000003,
+    load_b_temperature_k: 19.91475, test_id: 166}
   tnoise:
     analysis_ids: [71, 72]
     test_ids: [146, 147]
@@ -2367,7 +2386,9 @@
     I_wn_level_err_k2_hz: 0.0, I_wn_level_k2_hz: 0.0, Q_fknee_err_hz: 0.08, Q_fknee_hz: 0.13,
     Q_slope: 1.41, Q_slope_err: 0.02, Q_wn_level_err_k2_hz: 1.0e-07, Q_wn_level_k2_hz: 9.0e-07,
     U_fknee_err_hz: 0.01, U_fknee_hz: 0.02, U_slope: 1.22, U_slope_err: 0.02, U_wn_level_err_k2_hz: 9.0e-08,
-    U_wn_level_k2_hz: 7.4e-07, analysis_id: 45, test_id: 226}
+    U_wn_level_k2_hz: 7.4e-07, analysis_id: 45, load_a_temperature_k: 22.749677000000002,
+    load_average_temperature_k: 21.336338500000004, load_b_temperature_k: 19.923000000000002,
+    test_id: 226}
   tnoise:
     analysis_ids: [73, 74]
     test_ids: [142, 143]
@@ -2528,7 +2549,8 @@
     I_wn_level_err_k2_hz: 0.0, I_wn_level_k2_hz: 0.0, Q_fknee_err_hz: 0.2, Q_fknee_hz: 0.3,
     Q_slope: 0.65, Q_slope_err: 0.02, Q_wn_level_err_k2_hz: 9.0e-07, Q_wn_level_k2_hz: 2.2e-06,
     U_fknee_err_hz: 0.04, U_fknee_hz: 0.04, U_slope: 0.64, U_slope_err: 0.03, U_wn_level_err_k2_hz: 8.0e-07,
-    U_wn_level_k2_hz: 2.1e-06, analysis_id: 48, test_id: 462}
+    U_wn_level_k2_hz: 2.1e-06, analysis_id: 48, load_a_temperature_k: 22.67337675,
+    load_average_temperature_k: 21.285813375, load_b_temperature_k: 19.89825, test_id: 462}
   tnoise:
     analysis_ids: [115, 116]
     test_ids: [466, 467]
@@ -2581,7 +2603,9 @@
     I_wn_level_err_k2_hz: 0.0, I_wn_level_k2_hz: 0.0, Q_fknee_err_hz: 0.02, Q_fknee_hz: 0.09,
     Q_slope: 1.322, Q_slope_err: 0.006, Q_wn_level_err_k2_hz: 4.0e-07, Q_wn_level_k2_hz: 1.1e-06,
     U_fknee_err_hz: 0.01, U_fknee_hz: 0.05, U_slope: 1.053, U_slope_err: 0.004, U_wn_level_err_k2_hz: 3.0e-07,
-    U_wn_level_k2_hz: 1.0e-06, analysis_id: 49, test_id: 195}
+    U_wn_level_k2_hz: 1.0e-06, analysis_id: 49, load_a_temperature_k: 22.725092250000003,
+    load_average_temperature_k: 21.310296125, load_b_temperature_k: 19.895500000000002,
+    test_id: 195}
   tnoise:
     analysis_ids: [77, 78]
     test_ids: [138, 139]
@@ -2635,7 +2659,8 @@
     I_wn_level_err_k2_hz: 0.0, I_wn_level_k2_hz: 0.0, Q_fknee_err_hz: 0.3, Q_fknee_hz: 1.3,
     Q_slope: 0.78852, Q_slope_err: 3.0e-05, Q_wn_level_err_k2_hz: 5.0e-07, Q_wn_level_k2_hz: 2.9e-06,
     U_fknee_err_hz: 0.2, U_fknee_hz: 0.8, U_slope: 0.63419, U_slope_err: 3.0e-05,
-    U_wn_level_err_k2_hz: 3.0e-07, U_wn_level_k2_hz: 2.0e-06, analysis_id: 67, test_id: 620}
+    U_wn_level_err_k2_hz: 3.0e-07, U_wn_level_k2_hz: 2.0e-06, analysis_id: 67, load_a_temperature_k: 22.060447,
+    load_average_temperature_k: 21.140223499999998, load_b_temperature_k: 20.22, test_id: 620}
   tnoise:
     analysis_ids: [79, 80]
     test_ids: [74, 75]
@@ -2688,7 +2713,9 @@
     I_wn_level_err_k2_hz: 0.0, I_wn_level_k2_hz: 0.0, Q_fknee_err_hz: 0.01, Q_fknee_hz: 0.138,
     Q_slope: 1.548, Q_slope_err: 0.003, Q_wn_level_err_k2_hz: 1.0e-07, Q_wn_level_k2_hz: 1.5e-06,
     U_fknee_err_hz: 0.006, U_fknee_hz: 0.113, U_slope: 1.73, U_slope_err: 0.0007,
-    U_wn_level_err_k2_hz: 1.0e-07, U_wn_level_k2_hz: 1.2e-06, analysis_id: 51, test_id: 476}
+    U_wn_level_err_k2_hz: 1.0e-07, U_wn_level_k2_hz: 1.2e-06, analysis_id: 51, load_a_temperature_k: 22.697592250000003,
+    load_average_temperature_k: 21.295171125000003, load_b_temperature_k: 19.89275,
+    test_id: 476}
   tnoise:
     analysis_ids: [126, 127]
     test_ids: [474, 475]
@@ -2957,7 +2984,9 @@
     I_wn_level_err_k2_hz: 0.0, I_wn_level_k2_hz: 0.0, Q_fknee_err_hz: 0.01, Q_fknee_hz: 0.025,
     Q_slope: 1.47, Q_slope_err: 0.01, Q_wn_level_err_k2_hz: 2.0e-07, Q_wn_level_k2_hz: 1.5e-06,
     U_fknee_err_hz: 0.003, U_fknee_hz: 0.01, U_slope: 1.033, U_slope_err: 0.006, U_wn_level_err_k2_hz: 2.0e-07,
-    U_wn_level_k2_hz: 1.4e-06, analysis_id: 58, test_id: 583}
+    U_wn_level_k2_hz: 1.4e-06, analysis_id: 58, load_a_temperature_k: 22.203720500000003,
+    load_average_temperature_k: 21.041360250000004, load_b_temperature_k: 19.879,
+    test_id: 583}
   tnoise:
     analysis_ids: [117, 118]
     test_ids: [483, 484]
@@ -3139,7 +3168,8 @@
     I_wn_level_err_k2_hz: 0.0, I_wn_level_k2_hz: 0.0, Q_fknee_err_hz: 0.002, Q_fknee_hz: 0.017,
     Q_slope: 2.51, Q_slope_err: 0.01, Q_wn_level_err_k2_hz: 8.0e-07, Q_wn_level_k2_hz: 6.7e-06,
     U_fknee_err_hz: 0.004, U_fknee_hz: 0.033, U_slope: 1.217, U_slope_err: 0.003,
-    U_wn_level_err_k2_hz: 6.0e-07, U_wn_level_k2_hz: 5.1e-06, analysis_id: 68, test_id: 662}
+    U_wn_level_err_k2_hz: 6.0e-07, U_wn_level_k2_hz: 5.1e-06, analysis_id: 68, load_a_temperature_k: 21.23666,
+    load_average_temperature_k: 20.803330000000003, load_b_temperature_k: 20.37, test_id: 662}
   tnoise:
     analysis_ids: [161, 162]
     test_ids: [655, 656]
@@ -3227,7 +3257,8 @@
     I_wn_level_err_k2_hz: 0.0, I_wn_level_k2_hz: 0.0, Q_fknee_err_hz: 0.04, Q_fknee_hz: 0.3,
     Q_slope: 1.0512, Q_slope_err: 0.0002, Q_wn_level_err_k2_hz: 5.0e-07, Q_wn_level_k2_hz: 4.2e-06,
     U_fknee_err_hz: 0.6, U_fknee_hz: 2.7, U_slope: 0.9053, U_slope_err: 0.0002, U_wn_level_err_k2_hz: 1.0e-06,
-    U_wn_level_k2_hz: 6.0e-06, analysis_id: 71, test_id: 607}
+    U_wn_level_k2_hz: 6.0e-06, analysis_id: 71, load_a_temperature_k: 21.284800000000004,
+    load_average_temperature_k: 21.232400000000002, load_b_temperature_k: 21.18, test_id: 607}
   tnoise:
     analysis_ids: [163, 144]
     test_ids: [595, 596]
@@ -3314,7 +3345,8 @@
     I_wn_level_err_k2_hz: 0.0, I_wn_level_k2_hz: 0.0, Q_fknee_err_hz: 0.7, Q_fknee_hz: 3.0,
     Q_slope: 1.0281, Q_slope_err: 0.0003, Q_wn_level_err_k2_hz: 3.0e-06, Q_wn_level_k2_hz: 1.3e-05,
     U_fknee_err_hz: 2.4, U_fknee_hz: 8.0, U_slope: 0.9752, U_slope_err: 0.0003, U_wn_level_err_k2_hz: 2.0e-06,
-    U_wn_level_k2_hz: 6.0e-06, analysis_id: 72, test_id: 671}
+    U_wn_level_k2_hz: 6.0e-06, analysis_id: 72, load_a_temperature_k: 21.2375, load_average_temperature_k: 20.49875,
+    load_b_temperature_k: 19.759999999999998, test_id: 671}
   tnoise:
     analysis_ids: [164, 165]
     test_ids: [668, 669]
@@ -3397,7 +3429,8 @@
     I_wn_level_err_k2_hz: 0.0, I_wn_level_k2_hz: 0.0, Q_fknee_err_hz: 0.2, Q_fknee_hz: 1.7,
     Q_slope: 1.12097, Q_slope_err: 9.0e-05, Q_wn_level_err_k2_hz: 4.0e-07, Q_wn_level_k2_hz: 3.2e-06,
     U_fknee_err_hz: 0.2, U_fknee_hz: 1.5, U_slope: 0.9872, U_slope_err: 0.0001, U_wn_level_err_k2_hz: 3.0e-07,
-    U_wn_level_k2_hz: 2.6e-06, analysis_id: 80, test_id: 681}
+    U_wn_level_k2_hz: 2.6e-06, analysis_id: 80, load_a_temperature_k: 20.619600000000002,
+    load_average_temperature_k: 20.3698, load_b_temperature_k: 20.12, test_id: 681}
   tnoise:
     analysis_ids: [173, 174]
     test_ids: [674, 675]
@@ -3487,7 +3520,8 @@
     I_wn_level_err_k2_hz: 0.0, I_wn_level_k2_hz: 0.0, Q_fknee_err_hz: 0.002, Q_fknee_hz: 0.007,
     Q_slope: 0.64, Q_slope_err: 0.002, Q_wn_level_err_k2_hz: 3.0e-05, Q_wn_level_k2_hz: 0.00023,
     U_fknee_err_hz: 0.005, U_fknee_hz: 0.046, U_slope: 1.178, U_slope_err: 0.001,
-    U_wn_level_err_k2_hz: 6.0e-07, U_wn_level_k2_hz: 5.0e-06, analysis_id: 75, test_id: 517}
+    U_wn_level_err_k2_hz: 6.0e-07, U_wn_level_k2_hz: 5.0e-06, analysis_id: 75, load_a_temperature_k: 22.798240000000003,
+    load_average_temperature_k: 21.59912, load_b_temperature_k: 20.4, test_id: 517}
   tnoise:
     analysis_ids: [145, 146]
     test_ids: [520, 521]
@@ -3578,7 +3612,9 @@
     I_wn_level_err_k2_hz: 0.0, I_wn_level_k2_hz: 0.0, Q_fknee_err_hz: 0.002, Q_fknee_hz: 0.001,
     Q_slope: 1.33, Q_slope_err: 0.06, Q_wn_level_err_k2_hz: 0.0001, Q_wn_level_k2_hz: 0.0001,
     U_fknee_err_hz: 0.0009, U_fknee_hz: 0.0006, U_slope: 1.94, U_slope_err: 0.04,
-    U_wn_level_err_k2_hz: 4.0e-05, U_wn_level_k2_hz: 5.0e-05, analysis_id: 76, test_id: 594}
+    U_wn_level_err_k2_hz: 4.0e-05, U_wn_level_k2_hz: 5.0e-05, analysis_id: 76, load_a_temperature_k: 21.285220000000002,
+    load_average_temperature_k: 21.207610000000003, load_b_temperature_k: 21.130000000000003,
+    test_id: 594}
   tnoise:
     analysis_ids: [147, 148, 149, 150]
     test_ids: [551, 552, 553, 554]
@@ -3671,7 +3707,8 @@
     I_wn_level_err_k2_hz: 0.0, I_wn_level_k2_hz: 0.0, Q_fknee_err_hz: 0.008, Q_fknee_hz: 0.066,
     Q_slope: 3.404, Q_slope_err: 0.006, Q_wn_level_err_k2_hz: 9.0e-07, Q_wn_level_k2_hz: 2.3e-06,
     U_fknee_err_hz: 0.009, U_fknee_hz: 0.069, U_slope: 3.716, U_slope_err: 0.01, U_wn_level_err_k2_hz: 9.0e-07,
-    U_wn_level_k2_hz: 2.1e-06, analysis_id: 77, test_id: 531}
+    U_wn_level_k2_hz: 2.1e-06, analysis_id: 77, load_a_temperature_k: 21.22186, load_average_temperature_k: 20.98093,
+    load_b_temperature_k: 20.740000000000002, test_id: 531}
   tnoise:
     analysis_ids: [151, 152, 153, 154]
     test_ids: [535, 536, 537, 538]
@@ -3762,7 +3799,8 @@
     I_wn_level_err_k2_hz: 0.0, I_wn_level_k2_hz: 0.0, Q_fknee_err_hz: 0.004, Q_fknee_hz: 0.011,
     Q_slope: 1.38, Q_slope_err: 0.01, Q_wn_level_err_k2_hz: 1.0e-06, Q_wn_level_k2_hz: 8.0e-06,
     U_fknee_err_hz: 0.01, U_fknee_hz: 0.02, U_slope: 0.93, U_slope_err: 0.009, U_wn_level_err_k2_hz: 5.0e-07,
-    U_wn_level_k2_hz: 3.1e-06, analysis_id: 78, test_id: 523}
+    U_wn_level_k2_hz: 3.1e-06, analysis_id: 78, load_a_temperature_k: 20.906740000000003,
+    load_average_temperature_k: 21.14837, load_b_temperature_k: 21.39, test_id: 523}
   tnoise:
     analysis_ids: [155, 156]
     test_ids: [525, 528]
@@ -3849,7 +3887,9 @@
     I_wn_level_err_k2_hz: 0.0, I_wn_level_k2_hz: 0.0, Q_fknee_err_hz: 0.003, Q_fknee_hz: 0.016,
     Q_slope: 1.057, Q_slope_err: 0.001, Q_wn_level_err_k2_hz: 5.0e-06, Q_wn_level_k2_hz: 2.7e-05,
     U_fknee_err_hz: 0.003, U_fknee_hz: 0.023, U_slope: 1.333, U_slope_err: 0.001,
-    U_wn_level_err_k2_hz: 3.0e-06, U_wn_level_k2_hz: 1.7e-05, analysis_id: 74, test_id: 539}
+    U_wn_level_err_k2_hz: 3.0e-06, U_wn_level_k2_hz: 1.7e-05, analysis_id: 74, load_a_temperature_k: 21.40186,
+    load_average_temperature_k: 21.05093, load_b_temperature_k: 20.700000000000003,
+    test_id: 539}
   tnoise:
     analysis_ids: [157, 158]
     test_ids: [543, 544]
@@ -3857,3 +3897,4 @@
     tnoise_k: 183.162
     values_k: [-152.22, 125.434, 128.157, 130.684, 144.719, 154.498, 183.162, 215.438,
       218.571, 221.982, 226.472, 228.589, 242.448]
+

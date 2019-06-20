@@ -32,8 +32,21 @@ db.focalplane["I0"]
 db.detectors[2]
 ```
 
-The structure `Detector` is complex, as it is built over three other
-structures:
+A number of high-level functions ease the access of the fields in a
+[`InstrumentDB`](@ref) object:
+
+- [`detector`](@ref) returns a [`Detector`](@ref) structure, containing the
+  details of a polarimeter;
+- [`bandpass`](@ref) returns the shape of the bandpass of a detector, as a pair of
+  arrays containing the frequency and the band response, respectively;
+- [`spectrum`](@ref) returns a [`SpectrumInfo`](@ref)
+- [`fknee`](@ref) returns the knee frequency of the 1/f noise for the I, Q, and
+  U signals, adapted to the brightness temperature of the load being observed by
+  the detector;
+- [`tnoise`](@ref) returns the noise temperature for the I, Q, and U components.
+
+The structure `Detector` uses three structures to organize its data in a
+hierarchical way:
 
 - [`BandshapeInfo`](@ref)
 - [`SpectrumInfo`](@ref)
@@ -59,6 +72,16 @@ Detector
 BandshapeInfo
 SpectrumInfo
 NoiseTemperatureInfo
+```
+
+## High-level access functions
+
+```@docs
+detector
+bandpass
+spectrum
+fknee
+tnoise
 ```
 
 ## Loading custom databases
