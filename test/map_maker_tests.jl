@@ -87,6 +87,7 @@ num_of_pixels = resol.numOfPixels
 num_of_polarimeters =2
 σ_k =  [0.001, 1000]
 fknee_hz = [0.01, 0.01]
+slope = [1,-1]
 baselines_per_process = Int64(total_time/baseline_length_s)*num_of_polarimeters
 
 chunks = Any[Any[datachunk(1, 1, 6, 6), datachunk(2, 1, 6, 6)]]
@@ -104,7 +105,7 @@ for i in 1:2  #loop on detectors
     global pix_idx = append!(pix_idx, partial_pix_idx)
 end
 
-noise_tod = generate_noise_mpi(chunks, baselines_per_process, baseline_length_s, total_time, fsamp_hz, σ_k, fknee_hz, rank, comm, 1234)
+noise_tod = generate_noise_mpi(chunks, baselines_per_process, baseline_length_s, total_time, fsamp_hz, slope, σ_k, fknee_hz, rank, comm, 1234)
 (destr_map, a)=destripe(pix_idx, noise_tod, num_of_pixels, data_properties, rank, comm; threshold = 1e-9, max_iter = 1000)
 
 # 1 polarimeter
@@ -112,6 +113,7 @@ num_of_polarimeters = 1
 baselines_per_process = Int64(total_time/baseline_length_s)*num_of_polarimeters
 σ_k =  [0.001]
 fknee_hz = [0.01]
+slope = [-1]
 
 chunks = Any[Any[datachunk(1, 1, 6, 6)]]
 data_properties =  [data_properties_struct(1, 0.001, 600, 6, [100, 100, 100, 100, 100, 100])]
@@ -130,7 +132,7 @@ for i in 1:1  #loop on detectors
 
 end
 
-noise_tod = generate_noise_mpi(chunks, baselines_per_process, baseline_length_s, total_time, fsamp_hz, σ_k, fknee_hz, rank, comm, 1234)
+noise_tod = generate_noise_mpi(chunks, baselines_per_process, baseline_length_s, total_time, fsamp_hz, slope, σ_k, fknee_hz, rank, comm, 1234)
 
 (destr_map_sigma1, a_1)=destripe(pix_idx, noise_tod, num_of_pixels, data_properties, rank, comm; threshold = 1e-9, max_iter = 1000)
 
