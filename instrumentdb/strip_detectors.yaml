@@ -3066,9 +3066,9 @@
     bandwidth_hz: 9003272275
     center_frequency_err_hz: 407779571
     center_frequency_hz: 95171361635
-    highest_frequency_hz: 109699996948
+    highest_frequency_hz: 109500000000
     lowest_frequency_hz: 80000000000
-    num_of_frequencies: 298
+    num_of_frequencies: 296
     test_id: [644, 645]
   id: 71
   name: STRIP71
@@ -3158,9 +3158,9 @@
     bandwidth_hz: 7787867912
     center_frequency_err_hz: 612100078
     center_frequency_hz: 96253106304
-    highest_frequency_hz: 109699996948
+    highest_frequency_hz: 109500000000
     lowest_frequency_hz: 80000000000
-    num_of_frequencies: 298
+    num_of_frequencies: 296
     test_id: [653, 654]
   id: 72
   name: STRIP72
@@ -3335,9 +3335,9 @@
     bandwidth_hz: 4090938837
     center_frequency_err_hz: 935338489
     center_frequency_hz: 95534388036
-    highest_frequency_hz: 109699996948
+    highest_frequency_hz: 109500000000
     lowest_frequency_hz: 80000000000
-    num_of_frequencies: 298
+    num_of_frequencies: 296
     test_id: [666, 667]
   id: 74
   name: STRIP74
@@ -3419,9 +3419,9 @@
     bandwidth_hz: 5285643346
     center_frequency_err_hz: 300795625
     center_frequency_hz: 95685445884
-    highest_frequency_hz: 109699996948
+    highest_frequency_hz: 109500000000
     lowest_frequency_hz: 80000000000
-    num_of_frequencies: 298
+    num_of_frequencies: 296
     test_id: [672, 673]
   id: 75
   name: STRIP75
@@ -3510,9 +3510,9 @@
     bandwidth_hz: 6570119393
     center_frequency_err_hz: 430697488
     center_frequency_hz: 97516890416
-    highest_frequency_hz: 109600000000
+    highest_frequency_hz: 109500000000
     lowest_frequency_hz: 80000000000
-    num_of_frequencies: 297
+    num_of_frequencies: 296
     test_id: [518, 519]
   id: 76
   name: STRIP76
@@ -3602,9 +3602,9 @@
     bandwidth_hz: 8117989796
     center_frequency_err_hz: 396232645
     center_frequency_hz: 98499570291
-    highest_frequency_hz: 109600000000
+    highest_frequency_hz: 109500000000
     lowest_frequency_hz: 80000000000
-    num_of_frequencies: 297
+    num_of_frequencies: 296
     test_id: [548, 549]
   id: 77
   name: STRIP77
@@ -3789,9 +3789,9 @@
     bandwidth_hz: 8642675750
     center_frequency_err_hz: 429829028
     center_frequency_hz: 99767648702
-    highest_frequency_hz: 109700000000
+    highest_frequency_hz: 109500000000
     lowest_frequency_hz: 80000000000
-    num_of_frequencies: 298
+    num_of_frequencies: 296
     test_id: [529, 530]
   id: 81
   name: STRIP81
