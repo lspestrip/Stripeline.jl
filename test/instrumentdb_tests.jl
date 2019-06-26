@@ -25,7 +25,10 @@ defaultdb = Sl.InstrumentDB()
 @test Sl.tnoise(defaultdb, 2) != nothing
 @test Sl.tnoise(defaultdb, "I0") != nothing
 
-x, y = Sl.bandpass(defaultdb, "I0")
+@test Sl.bandpass(defaultdb, 2) != nothing
+@test Sl.bandpass(defaultdb, "I0") != nothing
+
+x, y = Sl.bandshape(defaultdb, "I0")
 @test length(x) > 0
 @test length(x) == length(y)
 
