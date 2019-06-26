@@ -1,11 +1,13 @@
 export Horn, Detector, InstrumentDB, BandshapeInfo, SpectrumInfo, NoiseTemperatureInfo
 export InstrumentDB, defaultdbfolder, parsefpdict, parsedetdict
 export sensitivity_tant, t_to_trj, trj_to_t, deltat_to_deltatrj, deltatrj_to_deltat
-export detector, bandpass, spectrum, fknee_hz, tnoise
+export detector, bandpass, bandshape, spectrum, fknee_hz, tnoise
 
 import YAML
 import Stripeline
 import Base: show
+import RecipesBase
+
 using Printf
 
 @doc raw"""
@@ -89,6 +91,20 @@ Field                      | Type             | Meaning
 `bandshape_error`          | Array{Float64,1} | Estimated error on the profile of the bandshape 
 `test_id`                  | Array{Int,1}     | ID of the unit-level test used to characterize the bandshape
 `analysis_id`              | Int              | ID of the unit-level analysis used to characterize the bandshape
+
+You can plot a `BandshapeInfo` object by importing `Plots` and using `plot`:
+
+```julia
+db = InstrumentDB()
+plot(bandpass(db, "I0"), show_error = true)
+```
+
+The following keywords are recognized in the call to `plot`:
+
+- `show_error` (default: `true`): include an error bar.
+- `show_centerfreq` (default: `false`): include a vertical bar showing
+  the position of the center frequency
+
 """
 struct BandshapeInfo
     center_frequency_hz::Float64
@@ -125,12 +141,69 @@ function Base.show(io::IO, band::BandshapeInfo)
     end
 end
 
+RecipesBase.@recipe function plot(band::BandshapeInfo; show_error = true, show_centerfreq = false)
+    seriestype --> :path
+    xlabel --> "Frequency [GHz]"
+
+    if show_centerfreq
+        RecipesBase.@series begin
+            seriestype --> :path
+            color --> :gray
+            label --> ""
+            let centerfreq = band.center_frequency_hz * 1e-9
+                [centerfreq, centerfreq], [0, 1]
+            end
+        end
+    end
+    
+    if show_error
+        ribbon --> (band.bandshape_error, band.bandshape_error)
+        fillalpha --> 0.3
+    end
+    
+    ν, profile = bandshape(band)
+    ν .* 1e-9, profile
+end
+
+
 @doc raw"""
     BandshapeInfo()
 
 Initialize a BandshapeInfo object with all values set to zero.
 """
 BandshapeInfo() = BandshapeInfo(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, Float64[], 0, 0)
+
+function bandshape(bandinfo::BandshapeInfo)
+    ν = range(bandinfo.lowest_frequency_hz, bandinfo.highest_frequency_hz, length = bandinfo.num_of_frequencies)
+
+    @assert length(ν) == length(bandinfo.bandshape)
+    (ν, bandinfo.bandshape, bandinfo.bandshape_error)
+end
+
+@doc raw"""
+    bandshape(bandinfo::BandshapeInfo) -> Tuple{Array{Float64, 1}, Array{Float64, 1}}
+    bandshape(db::InstrumentDB, polid::Integer) -> Tuple{Array{Float64, 1}, Array{Float64, 1}}
+    bandshape(db::InstrumentDB, horn_name::AbstractString) -> Tuple{Array{Float64, 1}, Array{Float64, 1}}
+
+Return a pair `(ν_hz, B, Berr)` containing the shape of the bandpass
+in `bandinfo` (first form), or the bandpass taken from the instrument
+database (second and third form). The two elements of the tuple
+`(ν_hz, B)` are two arrays of the same length containing the
+frequencies (in Hz) and the bandpass response at the same frequency
+(pure number), and they are suitable to be plotted, like in the
+following example:
+
+```julia
+db = InstrumentDB()
+x, y, err = bandshape(db, "G2")
+plot(x, y, ribbon=(err, err))   # Plot the bandpass and the error bar
+```
+
+However, it is easier just to use `plot` on a [`BandshapeInfo`](@ref)
+object.
+
+"""
+bandshape
 
 @doc raw"""
     SpectrumInfo
@@ -160,6 +233,10 @@ Field                | Type     | Meaning
 `load_temperature_k` | Float64  | System brightness temperature used during the tests (in K)
 `test_id`            | Int      | ID of the unit-level test used to characterize the bandshape
 `analysis_id`        | Int      | ID of the unit-level analysis used to characterize the bandshape
+
+You can quickly plot the theoretical shape of the noise power spectrum
+using `plot` on a `SpectrumInfo` object.
+
 """
 struct SpectrumInfo
     slope_i::Float64
@@ -212,6 +289,32 @@ function Base.show(io::IO, spec::SpectrumInfo)
             spec.test_id,
             spec.analysis_id)
     end
+end
+
+RecipesBase.@recipe function plot(spec::SpectrumInfo)
+    model = (freq, α, fknee, wn) -> wn * (1 + fknee/freq)^α
+    fknee = Float64[]
+    spec.fknee_q_hz > 0 && push!(fknee, spec.fknee_q_hz)
+    spec.fknee_u_hz > 0 && push!(fknee, spec.fknee_u_hz)
+
+    min_freq, max_freq = if length(fknee) ≥ 1
+        1e-4 * minimum(fknee), 1e+4 * maximum(fknee)
+    else
+        0.01, 1.0
+    end
+    freqs = 10 .^ range(log10(min_freq), log10(max_freq), length = 30)
+
+    scale --> :log10
+    
+    RecipesBase.@series begin
+        label --> "Q"
+        (freqs, model.(freqs, Ref(spec.slope_q), Ref(spec.fknee_q_hz), Ref(spec.wn_q_k2_hz)))
+    end
+
+    label --> "U"
+    xlabel --> "Frequency [Hz]"
+    ylabel --> "Power [K^2/Hz]"
+    (freqs, model.(freqs, Ref(spec.slope_u), Ref(spec.fknee_u_hz), Ref(spec.wn_u_k2_hz)))
 end
 
 @doc raw"""
@@ -585,19 +688,16 @@ pol2 = detector(db, "V4") # Get information about the detector connected to horn
 """
 detector
 
-function bandpass(db::InstrumentDB, polid::Integer)
-    bandinfo = detector(db, polid).bandshape
-    ν = range(bandinfo.lowest_frequency_hz, bandinfo.highest_frequency_hz, length = bandinfo.num_of_frequencies)
+# These functions are already documented above
+bandshape(db::InstrumentDB, polid::Integer) = bandshape(bandpass(db, polid))
+bandshape(db::InstrumentDB, horn_name::AbstractString) = bandshape(bandpass(db, horn_name))
 
-    @assert length(ν) == length(bandinfo.bandshape)
-    (ν, bandinfo.bandshape)
-end
-
+bandpass(db::InstrumentDB, polid::Integer) = detector(db, polid).bandshape
 bandpass(db::InstrumentDB, horn_name::AbstractString) = bandpass(db, db.focalplane[horn_name].polid)
 
 @doc raw"""
-    bandpass(db::InstrumentDB, polid::Integer) -> Tuple{Array{Float64, 1}, Array{Float64, 1}}
-    bandpass(db::InstrumentDB, horn_name::AbstractString) -> Tuple{Array{Float64, 1}, Array{Float64, 1}}
+    bandpass(db::InstrumentDB, polid::Integer) -> BandshapeInfo
+    bandpass(db::InstrumentDB, horn_name::AbstractString) -> BandshapeInfo
 
 Return a pair `(ν_hz, B)` containing the bandpass `B` for the horn with the
 specified ID (`polid`) or associated to some horn (`horn_name`). To understand
@@ -612,6 +712,8 @@ db = InstrumentDB()
 x, y = bandpass(db, "G2")
 plot(x, y)   # Plot the bandpass
 ```
+
+See also [`bandshape`](@ref).
 
 """
 bandpass

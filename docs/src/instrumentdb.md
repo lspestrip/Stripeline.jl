@@ -37,8 +37,8 @@ A number of high-level functions ease the access of the fields in a
 
 - [`detector`](@ref) returns a [`Detector`](@ref) structure, containing the
   details of a polarimeter;
-- [`bandpass`](@ref) returns the shape of the bandpass of a detector, as a pair of
-  arrays containing the frequency and the band response, respectively;
+- [`bandpass`](@ref) returns a [`BandshapeInfo`](@ref) structure,
+  containing the shape of the bandpass of a detector;
 - [`spectrum`](@ref) returns a [`SpectrumInfo`](@ref)
 - [`fknee`](@ref) returns the knee frequency of the 1/f noise for the I, Q, and
   U signals, adapted to the brightness temperature of the load being observed by
@@ -70,6 +70,7 @@ InstrumentDB
 Horn
 Detector
 BandshapeInfo
+bandshape
 SpectrumInfo
 NoiseTemperatureInfo
 ```
