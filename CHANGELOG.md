@@ -1,5 +1,7 @@
 # HEAD
 
+- Make the 1/f slope always in the range 0..2 [#34](https://github.com/lspestrip/Stripeline.jl/pull/34)
+
 # Version 0.4.3
 
 - Add functions to simulate ADCs [#24](https://github.com/lspestrip/Stripeline.jl/pull/24)
