@@ -30,7 +30,7 @@ function get_info_from_DB(db, horns, Stokes)
     β_hz = Array{Float64}(undef,length(horns))
     tnoise_k = Array{Float64}(undef,length(horns))
     fknee_hz = Array{Float64}(undef,length(horns))
-    slope = Array{Float64}(undef,length(horns))
+    slopes = Array{Float64}(undef,length(horns))
 
     measured_fknees = Float64[]
     measured_slopes = Float64[]
@@ -39,15 +39,22 @@ function get_info_from_DB(db, horns, Stokes)
         polarimeters[i] = db.focalplane[horns[i]].polid
         if(db.detectors[polarimeters[i]].spectrum.fknee_q_hz !=0)
             if Stokes == "Q"
-                push!(measured_fknees, db.detectors[polarimeters[i]].spectrum.fknee_q_hz)
-                push!(measured_slopes, db.detectors[polarimeters[i]].spectrum.slope_q)
+                fknee = db.detectors[polarimeters[i]].spectrum.fknee_q_hz
+                slope = db.detectors[polarimeters[i]].spectrum.slope_q
             elseif Stokes == "U"
-                push!(measured_fknees, db.detectors[polarimeters[i]].spectrum.fknee_u_hz)
-                push!(measured_slopes, db.detectors[polarimeters[i]].spectrum.slope_u)   
+                fknee = db.detectors[polarimeters[i]].spectrum.fknee_u_hz
+                slope = db.detectors[polarimeters[i]].spectrum.slope_u
+            else
+                print("Choose a Stokes parameter: Q or U") 
+                break
             end
+                push!(measured_fknees, fknee)
+                #correct for too high slopes, since noise generator works till slope=2
+                if slope > 2 slope = 2.0 end 
+                push!(measured_slopes, slope)
+
         end
     end
-
     rng = Random.MersenneTwister(1234)
 
     for i in 1:length(horns)
@@ -57,16 +64,22 @@ function get_info_from_DB(db, horns, Stokes)
           
         if(db.detectors[polarimeters[i]].spectrum.fknee_q_hz ==0)
             fknee_hz[i] = rand(rng, measured_fknees)
-            slope[i] = rand(rng, measured_slopes)
+            slopes[i] = rand(rng, measured_slopes)
         else
             if Stokes == "Q"
                 fknee_hz[i] = db.detectors[polarimeters[i]].spectrum.fknee_q_hz
-                slope[i] = db.detectors[polarimeters[i]].spectrum.slope_q
+                slope = db.detectors[polarimeters[i]].spectrum.slope_q
             elseif Stokes == "U"
                 fknee_hz[i] = db.detectors[polarimeters[i]].spectrum.fknee_u_hz
-                slope[i] = db.detectors[polarimeters[i]].spectrum.slope_u
+                slope = db.detectors[polarimeters[i]].spectrum.slope_u
+            end
+            #correct for too high slopes, since noise generator works till slope=2
+            if slope > 2 
+                slopes[i] = 2.0
+            else
+                slopes[i] = slope
             end
         end
     end
-    return orientations, polarimeters, β_hz, tnoise_k, fknee_hz, slope
+    return orientations, polarimeters, β_hz, tnoise_k, fknee_hz, slopes
 end
