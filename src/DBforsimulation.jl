@@ -48,10 +48,8 @@ function get_info_from_DB(db, horns, Stokes)
                 print("Choose a Stokes parameter: Q or U") 
                 break
             end
-                push!(measured_fknees, fknee)
-                #correct for too high slopes, since noise generator works till slope=2
-                if slope > 2 slope = 2.0 end 
-                push!(measured_slopes, slope)
+            push!(measured_fknees, fknee)
+            push!(measured_slopes, clamp(slope, 0.0, 2.0))
 
         end
     end
