@@ -3,28 +3,34 @@ import Random
 
 
 """
-    function get_info_from_DB(db, horns)
+    function get_info_from_DB(db, horns, stokes)
     
-        This function can be used to take information about specific horns from the STRIP instrument database.
+This function can be used to take information about specific horns
+from the STRIP instrument database.
 
-        Given:
-        -The database (db = Stripeline.InstrumentDB())
-        -A vector containg the names of the horns of interest  (e.g. ["Y0", "I1", "R6"])
-        -A string indicating the Stokes parameter object of the simulation ("Q" or "U")
+Given:
+- The database (db = Stripeline.InstrumentDB())
+- A vector containg the names of the horns of interest (e.g. ["Y0",
+  "I1", "R6"])
+- A string indicating the Stokes parameter object of the simulation
+  (`"Q"` or `"U"`)
 
-        It returns 5 arrays, containing for each horn:
-        - the 3D vector containing the orientation of the horn in the sky
-        - the unique ID of the polarimeter associated to the horn
-        - the estimated bandwidth, in Hz
-        - the estimated noise temperature, in K
-        - the estimated knee frequency, in Hz
+It returns 5 arrays, containing for each horn:
+- the 3D vector containing the orientation of the horn in the sky
+- the unique ID of the polarimeter associated to the horn
+- the estimated bandwidth, in Hz
+- the estimated noise temperature, in K
+- the estimated knee frequency, in Hz
         
-        For those polarimeters without an available measurement of the knee frequency (13 out of 49)
-        the function randomly picks a value from a vector containing all the 36 fknee measurements available in the database.
+For those polarimeters without valid measurements of the knee
+frequency, the function randomly picks a value from a vector
+containing all the fknee measurements available in the database.
 
 """
-function get_info_from_DB(db, horns, Stokes)
+function get_info_from_DB(db, horns, stokes)
 
+    @assert stokes in ["Q", "U"]
+    
     orientations=[]
     polarimeters = Array{Int64}(undef, length(horns))
     β_hz = Array{Float64}(undef,length(horns))
@@ -38,15 +44,12 @@ function get_info_from_DB(db, horns, Stokes)
     for i in 1:length(horns)
         polarimeters[i] = db.focalplane[horns[i]].polid
         if(db.detectors[polarimeters[i]].spectrum.fknee_q_hz !=0)
-            if Stokes == "Q"
+            if stokes == "Q"
                 fknee = db.detectors[polarimeters[i]].spectrum.fknee_q_hz
                 slope = db.detectors[polarimeters[i]].spectrum.slope_q
-            elseif Stokes == "U"
+            else stokes == "U"
                 fknee = db.detectors[polarimeters[i]].spectrum.fknee_u_hz
                 slope = db.detectors[polarimeters[i]].spectrum.slope_u
-            else
-                print("Choose a Stokes parameter: Q or U") 
-                break
             end
             push!(measured_fknees, fknee)
             push!(measured_slopes, clamp(slope, 0.0, 2.0))
@@ -64,10 +67,10 @@ function get_info_from_DB(db, horns, Stokes)
             fknee_hz[i] = rand(rng, measured_fknees)
             slopes[i] = rand(rng, measured_slopes)
         else
-            if Stokes == "Q"
+            if stokes == "Q"
                 fknee_hz[i] = db.detectors[polarimeters[i]].spectrum.fknee_q_hz
                 slope = db.detectors[polarimeters[i]].spectrum.slope_q
-            elseif Stokes == "U"
+            else
                 fknee_hz[i] = db.detectors[polarimeters[i]].spectrum.fknee_u_hz
                 slope = db.detectors[polarimeters[i]].spectrum.slope_u
             end
