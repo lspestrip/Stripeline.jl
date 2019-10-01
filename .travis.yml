@@ -1,25 +1,26 @@
 language: julia
 julia:
-  - 0.7
   - 1.0
+  - 1.1
   - nightly
   
-matrix:
-  - PYTHON=Conda-python
-
 notifications:
   email: false
   
 addons:
   apt:
     packages:
-      - libcfitsio3
       - gfortran
       - mpich
       - libmpich-dev
-      - curl
 
-after_success:
-  - julia -e 'cd(Pkg.dir("Stripeline")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())'
-  - julia -e 'Pkg.add("Documenter")'
-  - julia -e 'cd(Pkg.dir("Stripeline")); include(joinpath("docs", "make.jl"))'
+jobs:
+  include:
+    - stage: "Documentation"
+      julia: 1.1
+      os: linux
+      script:
+        - julia --project=docs/ -e 'using Pkg; Pkg.add(PackageSpec(url="https://github.com/lspestrip/Stripeline.jl"))'
+        - julia --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()'
+        - julia --project=docs/ docs/make.jl
+      after_success: skip

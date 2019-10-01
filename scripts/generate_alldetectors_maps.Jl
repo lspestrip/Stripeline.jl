@@ -63,6 +63,7 @@ write_key(f[2], "S_RATE", h["S_RATE"], "Sampling rate [Hz]")
 
 write_key(f[2], "DETECTOR", "all detectors", "Sum of all detectors")
 
+<<<<<<< HEAD
 write_key(f[2], "PRECESS", h["PRECESS"],
           "If true precession is taken into account")
 write_key(f[2], "NUTATE", h["NUTATE"], "If true nutation is taken into account")
@@ -70,5 +71,13 @@ write_key(f[2], "ABERRATE", h["ABERRATE"],
           "If true aberration is taken into account")
 write_key(f[2], "REFRACT", h["REFRACT"],
           "If true aberration is taken into account")
+=======
+write_key(f[2], "PRECESS", h["PRECESS"], "If true precession is taken into account")
+write_key(f[2], "NUTATE", h["NUTATE"], "If true nutation is taken into account")
+write_key(f[2], "ABERRATE", h["ABERRATE"], "If true aberration is taken into account")
+write_key(f[2], "REFRACT", h["REFRACT"], "If true aberration is taken into account")
+
+close(f)
+>>>>>>> e4dd169f9952e26b16292dccd44ce64cf69db67e
 
 close(f)

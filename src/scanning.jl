@@ -199,6 +199,10 @@ end
 """
     vector2equatorial(dir, jd, latitude_deg, longitude_deg, height_m; 
                       prec=true, nut=true, aber=true)
+<<<<<<< HEAD
+=======
+
+>>>>>>> e4dd169f9952e26b16292dccd44ce64cf69db67e
 Transform the Healpix coordinates of a vector into equatorial coordinates.
 The parameter `vector` is 3D vector, `jd` is the julian date. The
 paramters `latitude_deg`, `longitude_deg` and `height_m` should contain the
@@ -390,8 +394,11 @@ The meaning of the parameters/keywords is the following:
 - `timerange_s` is an enumerable type that specifies at which times
   (in seconds) pointings must be computed.
 
+- `t_start` is a DateTime which tells the exact UTC date and time of the 
+  observation.
+
 - `latitude_deg` is the latitude of the location where the observation
-is made (in degrees, North is positive).
+  is made (in degrees, North is positive).
 
 - `ground` is a Boolean: if `true`, the function will return a 4-tuple
   containing the colatitude and longitude measured in Equatorial
@@ -402,6 +409,7 @@ is made (in degrees, North is positive).
 
 - `precession` is a boolen parameter that allow to include the Earth's precession
   effect; default is true.
+<<<<<<< HEAD
 - `nutation` is a boolen parameter that allow to include the Earth's nutation
   effect; default is true.
 - `aberration` is a boolen parameter that allow to include the stellar aberration
@@ -409,6 +417,17 @@ is made (in degrees, North is positive).
 - `refract` is a boolen parameter that allow to include the refraction correction
   ; default is true.
 
+=======
+
+- `nutation` is a boolen parameter that allow to include the Earth's nutation
+  effect; default is true.
+
+- `aberration` is a boolen parameter that allow to include the stellar aberration
+  effect; default is true.
+
+- `refract` is a boolen parameter that allow to include the refraction correction
+  ; default is true.
+>>>>>>> e4dd169f9952e26b16292dccd44ce64cf69db67e
 
 # Return values
 

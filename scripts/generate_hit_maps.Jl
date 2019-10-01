@@ -40,8 +40,12 @@ function get_hits_map(elevation_angle::Float64,
                       longitude::Float64,
                       height::Int,
                       pointings::Array{Float64,1},
+<<<<<<< HEAD
                       effects::Dict,
                       modulation::Function;
+=======
+                      effects::Dict;
+>>>>>>> e4dd169f9952e26b16292dccd44ce64cf69db67e
                       tilt_angle::Float64=0.0,
                       T::Float64=36000.0,
                       chunks_len::Int=86400)
@@ -75,6 +79,7 @@ function get_hits_map(elevation_angle::Float64,
                                           precession=effects["precess"],
                                           nutation=effects["nutate"],
                                           aberration=effects["aberrate"],
+<<<<<<< HEAD
                                           refract=effects["refract"]) do t_s
                                           return (
                                               0.0,
@@ -85,6 +90,15 @@ function get_hits_map(elevation_angle::Float64,
                                               Sl.timetorotang(t_s,
                                                               spin_velocity))
                                           end
+=======
+                                          refract=effects["refract"]) do time_s
+                                              return (
+                                                  0.0,
+                                                  deg2rad(el_angle_mod(time_s)),
+                                                  Sl.timetorotang(time_s,
+                                                                  spin_velocity))
+                                      end
+>>>>>>> e4dd169f9952e26b16292dccd44ce64cf69db67e
         
         for i in eachindex(skyψ)
             
@@ -110,12 +124,15 @@ effects = Dict("precess" => true,
                "aberrate" => true,
                "refract" => true)
 
+<<<<<<< HEAD
 modulation = bezier1D  # choose the function to modulate the elevation
 elevation_angle_deg = 20.0     
 modulation_period = parse(Float64, pars_arg[1]) 
 tilt_angle_deg = 30.0
 
     
+=======
+>>>>>>> e4dd169f9952e26b16292dccd44ce64cf69db67e
 day_start = parse(Int, pars_arg[3])
 month_start = parse(Int, pars_arg[4])
 year_start = parse(Int, pars_arg[5])
@@ -166,10 +183,14 @@ for r in rank
                                     tenerife_longitude_deg,
                                     tenerife_height_m,
                                     db.focalplane[k].orientation,
+<<<<<<< HEAD
                                     effects,
                                     modulation,
                                     T=modulation_period,
                                     tilt_angle=tilt_angle_deg)
+=======
+                                    effects)
+>>>>>>> e4dd169f9952e26b16292dccd44ce64cf69db67e
                         
             save_to_path = join([pars_arg[2],
                                  db.focalplane[k].name,
@@ -212,6 +233,7 @@ for r in rank
             
             write_key(f[2], "DETECTOR", db.focalplane[k].name, "Detector name")
             
+<<<<<<< HEAD
             write_key(f[2], "PRECESS", effects["precess"],
                       "If true precession is taken into account")
             write_key(f[2], "NUTATE", effects["nutate"], "If true nutation is 
@@ -220,6 +242,16 @@ for r in rank
                       "If true aberration is taken into account")
             write_key(f[2], "REFRACT", effects["refract"],
                       "If true aberration istaken into account")
+=======
+            write_key(f[2], "PRECESS", effects["precess"], "If true precession is 
+                      taken into account")
+            write_key(f[2], "NUTATE", effects["nutate"], "If true nutation is 
+                      taken into account")
+            write_key(f[2], "ABERRATE", effects["aberrate"], "If true aberration is 
+                      taken into account")
+            write_key(f[2], "REFRACT", effects["refract"], "If true aberration is 
+                      taken into account")
+>>>>>>> e4dd169f9952e26b16292dccd44ce64cf69db67e
 
             close(f)
         end
