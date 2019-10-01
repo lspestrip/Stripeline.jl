@@ -7,6 +7,13 @@ comm = MPI.COMM_WORLD
 rank = MPI.Comm_rank(comm)
 size = MPI.Comm_size(comm) 
 
+function bezier1D(t, elevation_angle_deg, tilt_angle_deg, T; a=0.45, b=0.0) 
+    t /= T
+    k = t - floor(t) 
+    y = 3a * k * (1 - k)^2 + 3b * k^2 * (1- k) + k^3
+    return elevation_angle_deg + tilt_angle_deg/2 * sin(2π*y)
+end
+
 function modulate_evenly_elevation(t, elevation_angle_deg, tilt_angle_deg, T)
     elevation_angle_deg + tilt_angle_deg/2 * sin(2π/T*t)
 end
@@ -103,10 +110,9 @@ effects = Dict("precess" => true,
                "aberrate" => true,
                "refract" => true)
 
-elevation_angle_deg = parse(Float64, pars_arg[1])
-
-modulation = modulate_unevenly_elevation
-modulation_period = 275.0
+modulation = bezier1D  # choose the function to modulate the elevation
+elevation_angle_deg = 20.0     
+modulation_period = parse(Float64, pars_arg[1]) 
 tilt_angle_deg = 30.0
 
     

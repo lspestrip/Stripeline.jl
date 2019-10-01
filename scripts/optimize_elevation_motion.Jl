@@ -1,7 +1,6 @@
 @everywhere using Healpix, Stripeline, Plots, Dates, Statistics, Distributed
 @everywhere using SharedArrays, FITSIO
 @everywhere const Sl = Stripeline
-plotlyjs()
 
 pars_arg = ARGS
 
@@ -193,12 +192,12 @@ end
 end
 
 
-nside = 32
+nside = 256
 elevation = 20.0
 T = 3600.0
 tilt = 30.0
-sampling_rate = 1.0
-onlyI0 = true
+sampling_rate = 10.0
+onlyI0 = false
 tstart = DateTime(2021, 4, 1, 0, 0, 0)
 tstop = DateTime(2021, 4, 2, 0, 0, 0)
 
