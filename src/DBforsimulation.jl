@@ -9,7 +9,8 @@ import Random
     of the future data taking in Tenerife.
     The signal "seen" by the polarimeter in Bicocca was about 21.3 K (22.7 on port A, 29.9 on port B of the Magic Tee as written in
     Claudio Pincella's Thesis), while in Tenerife will be of about 28.5 (tatm_k + ttel_k + tcmb_k).
-    Therefore, the white noise level will be different in Tenerife, ad so will be the fknee (the 1/f slope, instead is the same).
+    Moreover, the sampling frequency used in Bicocca was 25 Hz, at Tenerife will be 50 Hz.
+    As a consequence, the white noise level will be different in Tenerife, ad so will be the fknee (the 1/f slope, instead is the same).
 
     This function corrects the fknee according to the following formula:
 
@@ -30,7 +31,7 @@ import Random
 function fix_fknee(f_samp_hz, tcmb_k, tatm_k, ttel_k, tnoise_k, β_hz, slope, fknee_bicocca)
 
     τ_s_tenerife = 1/f_samp_hz
-    τ_s_bicocca = 1/25      #f_samp used in Bicocca tests: 25 Hz
+    τ_s_bicocca = 1/25      
 
     sigma_bicocca = (1/sqrt(2))*(21.3+tnoise_k) / (sqrt(β_hz * τ_s_bicocca))   
     sigma_tenerife = (1/sqrt(2))*(tnoise_k + tatm_k + ttel_k + tcmb_k) / (sqrt(β_hz * τ_s_tenerife))  
