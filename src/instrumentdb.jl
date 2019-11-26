@@ -24,6 +24,7 @@ Field              | Type           | Meaning
 `name`             | String         | Name of the horn, e.g., `I0`
 `id`               | Int            | Unique number of the horn, starting from 1
 `polid`            | Int            | Unique ID of the polarimeter associated with the horn
+`polarizerid`      | Int            | Unique ID of the polarizer+OMT associated with the horn
 `moduleid`         | Int            | Number of the horn within the module, from 0 to 6
 `color`            | String         | Name of the color associated with the module
 `orientation`      | Array{Float64} | 3D vector containing the orientation of the horn in the sky
@@ -39,6 +40,7 @@ struct Horn
     name::String
     id::Int
     polid::Int
+    polarizerid::Int
     moduleid::Int
     color::String
     orientation::Array{Float64,1}
@@ -540,6 +542,7 @@ function parsefpdict(fpdict::Dict{Any,Any})
         focalplane[key] = Horn(key,
                                value["id"],
                                value["polarimeter_id"],
+                               value["polarizer_id"],
                                value["module_id"],
                                value["color"],
                                value["orientation"],
