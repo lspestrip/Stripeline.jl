@@ -72,7 +72,6 @@
 #           v  X axis (aligned with North, when applicable)
 #
 
-import Quaternions
 import Healpix
 import StaticArrays
 import LinearAlgebra: ×, dot
@@ -80,7 +79,6 @@ import AstroLib
 import Dates
 
 export TENERIFE_LATITUDE_DEG, TENERIFE_LONGITUDE_DEG, TENERIFE_HEIGHT_M
-export qrotation_x, qrotation_y, qrotation_z
 export timetorotang, telescopetoground, groundtoearth
 export genpointings, polarizationangle
 
@@ -88,31 +86,7 @@ const TENERIFE_LATITUDE_DEG = 28.3
 const TENERIFE_LONGITUDE_DEG = -16.509722
 const TENERIFE_HEIGHT_M = 2390
 
-# These functions are faster than Quaternions.qrotation2
-
-function qrotation_x(theta)
-    Quaternions.Quaternion(cos(theta / 2), sin(theta / 2), 0.0, 0.0, true)
-end
-
-function qrotation_y(theta)
-    Quaternions.Quaternion(cos(theta / 2), 0.0, sin(theta / 2), 0.0, true)
-end
-
-function qrotation_z(theta)
-    Quaternions.Quaternion(cos(theta / 2), 0.0, 0.0, sin(theta / 2), true)
-end
-
-"""
-    qrotation_x(theta)
-    qrotation_y(theta)
-    qrotation_z(theta)
-
-Return a `Quaternions.Quaternion` object representing a rotation
-around the ``e_x``, ``e_y``, or ``e_z`` axis by an angle `theta` (in
-radians).
-"""
-qrotation_x, qrotation_y, qrotation_z
-
+include("quaternions.jl")
 
 """
     timetorotang(time, rpm)
@@ -188,7 +162,7 @@ positive) of the location where the observation is made.
 The keyword `day_duration_s` specifies the length of a sidereal day in
 seconds.
 """
-function groundtoearth(groundq, time_s, latitude_deg; day_duration_s=86400.0)
+function groundtoearth(groundq, time_s, latitude_deg; day_duration_s = 86400.0)
     locq = qrotation_y(deg2rad(90 - latitude_deg))
     earthq = qrotation_z(2π * time_s / day_duration_s)
 
@@ -211,7 +185,7 @@ respectively of precession, nutation and aberration.
 function vector2equatorial(vector, jd, latitude_deg, longitude_deg, height_m,
                            prec, nut, aber, ref)
     (θ, ϕ) = Healpix.vec2ang(vector...)
-    alt_rad = π/2 - θ
+    alt_rad = π / 2 - θ
     az_rad = 2π - ϕ
 
     ra_deg, dec_deg, _ = AstroLib.hor2eq(rad2deg(alt_rad),
@@ -220,10 +194,10 @@ function vector2equatorial(vector, jd, latitude_deg, longitude_deg, height_m,
                                          latitude_deg,
                                          longitude_deg,
                                          height_m,
-                                         precession=prec,
-                                         nutate=nut,
-                                         aberration=aber,
-                                         refract=ref)
+                                         precession = prec,
+                                         nutate = nut,
+                                         aberration = aber,
+                                         refract = ref)
     (deg2rad(dec_deg), deg2rad(ra_deg))
 end
 
@@ -265,7 +239,7 @@ representing the colatitude, longitude, and polarization angle
 This function is used internally by [`genpointings`](@ref).
 """
 function quat_to_angles(boreaxis, polaxis, quat)
-    rotmatr = Quaternions.rotationmatrix(quat)
+    rotmatr = rotationmatrix_normalized(quat)
     boresight = rotmatr * boreaxis
     poldir = rotmatr * polaxis
 
@@ -279,10 +253,10 @@ end
 function genpointings(wheelanglesfn,
                       dir,
                       timerange_s;
-                      polaxis=Float64[1.0, 0.0, 0.0],
-                      latitude_deg=0.0,
-                      ground=false,
-                      day_duration_s=86400.0)
+                      polaxis = Float64[1.0, 0.0, 0.0],
+                      latitude_deg = 0.0,
+                      ground = false,
+                      day_duration_s = 86400.0)
 
     if ground
         dirs = Array{Float64}(undef, length(timerange_s), 4)
@@ -297,7 +271,7 @@ function genpointings(wheelanglesfn,
         # This converts the RDP into the MCS (ground reference frame)
         groundq = telescopetoground(wheelanglesfn, time_s)
         # This converts the MCS into the celestial reference frame
-        quat = groundtoearth(groundq, time_s, latitude_deg; day_duration_s=day_duration_s)
+        quat = groundtoearth(groundq, time_s, latitude_deg; day_duration_s = day_duration_s)
 
         θ, ϕ, curψ = quat_to_angles(dir, polaxis, quat)
         (dirs[idx, 1], dirs[idx, 2]) = (θ, ϕ)
@@ -321,21 +295,21 @@ function genpointings(wheelanglesfn,
                       dir,
                       timerange_s,
                       t_start;
-                      polaxis=Float64[1.0, 0.0, 0.0],
-                      latitude_deg=0.0,
-                      longitude_deg=0.0,
-                      height_m=0,
-                      precession=true,
-                      nutation=true,
-                      aberration=true,
-                      refract=true)
+                      polaxis = Float64[1.0, 0.0, 0.0],
+                      latitude_deg = 0.0,
+                      longitude_deg = 0.0,
+                      height_m = 0,
+                      precession = true,
+                      nutation = true,
+                      aberration = true,
+                      refract = true)
 
     skydirs = Array{Float64}(undef, length(timerange_s), 2)
     skyψ = Array{Float64}(undef, length(timerange_s))
 
     for (idx, time_s) = enumerate(timerange_s)
         groundq = telescopetoground(wheelanglesfn, time_s)
-        rotmatr = Quaternions.rotationmatrix(groundq)
+        rotmatr = rotationmatrix_normalized(groundq)
         vector = rotmatr * dir
 
         jd = AstroLib.jdcnv(t_start + Dates.Nanosecond(round(Int64, time_s * 1e9)))
@@ -350,7 +324,7 @@ function genpointings(wheelanglesfn,
                                             refract)
 
         poldir = rotmatr * polaxis
-        northdir = get_northdir(π/2 - Dec_rad, Ra_rad)
+        northdir = get_northdir(π / 2 - Dec_rad, Ra_rad)
         
         skydirs[idx, 1] = Dec_rad
         skydirs[idx, 2] = Ra_rad
