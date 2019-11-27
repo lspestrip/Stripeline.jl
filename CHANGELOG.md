@@ -1,5 +1,7 @@
 # HEAD
 
+- Remove the dependency on `Quaternions.jl` [#38](https://github.com/lspestrip/Stripeline.jl/pull/38)
+- Update the instrument database with the number of the polarizer for each horn [#37](https://github.com/lspestrip/Stripeline.jl/pull/37)
 - Make the 1/f slope always in the range 0..2 [#34](https://github.com/lspestrip/Stripeline.jl/pull/34)
 
 # Version 0.4.3
