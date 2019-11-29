@@ -1,4 +1,4 @@
-export TodNoiseProperties, get_data_properties, tod2map_mpi, baseline2map_mpi, destripe, baselines_covmat
+export TodNoiseProperties, build_noise_properties, tod2map_mpi, baseline2map_mpi, destripe, baselines_covmat
 
 using LinearAlgebra
 
@@ -11,30 +11,53 @@ end
 This structure holds a number of parameters relative to the noise level and
 the 1/f baselines measured or simulated for a certain polarimeter.
 
-Field               | Type           | Meaning
-:-----------------  |:-------------- |:----------------------------------------------------------------------------------
-`pol_number`        | Int            | ID number of the polarimeter
-`sigma`             | Float          | sigma of white noise
-`num_of_samples`    | Int            | total number of samples
-`baselines_lengths` | Array{Int}     | Array containing the length of each 1/f baseline for this polarimeter
+Field              | Type           | Meaning
+:----------------- |:-------------- |:----------------------------------------------
+`pol_number`       | Int            | ID number of the polarimeter
+`sigma`            | Float          | sigma of white noise
+`num_of_samples`   | Int            | total number of samples
+`baseline_lengths` | Array{Int}     | Array containing the length of each baseline
+
+The structure provides a constructor that accepts the following
+three keyword parameters:
+
+- `pol`: number of the polarimeter
+- `rms`: the sigma level
+- `baseline_lengths`: array containing the elements of each baseline
 
 # Example
-data_properties(1, 0.002463, 500, 5, [100, 100, 100, 100, 100, 100])
 
-says that we have 5 baselines simulated for polarimeter number 1 (in this case polarimeter STRIP31, with sigma = 0.002463), each of length 100 samples.
+The followng code creates a `TodNoiseProperties` object referring to polarimeter #1
+(int this case, STRIP31) and specifying 0.002463 as the noise level. The data sample
+contains 500 samples, and it is split into 5 baselines of equal length.
+
+```julia
+prop = TodNoiseProperties(
+    pol = 1,
+    rms = 0.002463, 
+    baselines = Int[100, 100, 100, 100, 100, 100],
+)
+```
+
 """
 struct TodNoiseProperties
     polarimeter::Int
     sigma::Float64
     number_of_samples::Int
-    baselines_lengths::Array{Int}
+    baseline_lengths::Array{Int}
+
+    TodNoiseProperties(;
+        pol::Int,
+        rms::Float64,
+        baselines::Array{Int}) = new(pol, rms, sum(baselines), baselines)
 end
 
 
 @doc raw"""
-    function get_data_properties(detector_number, sigma_k, num_of_baselines, num_of_samples) -> data_properties
+    function build_noise_properties(detector_list, rms_list, num_of_baselines, num_of_samples) -> data_properties
 
-This function can be used to build the object `data properties` needed for desriping and calculation of baselines_covmat.
+This function builds a list of `TodNoiseProperties` object. These are
+needed for desriping and calculation of `baselines_covmat`.
 
 It requires in input 4 arrays containing:
 - the ID number of the polarimeters that the current rank will simulate
@@ -47,15 +70,17 @@ N.B. the ID numbers, the number of 1/f baselines and the total number of samples
 It returns an array of `TodNoiseProperties`, of length equal to the number of polarimeters simulated by current rank.
 
 """
-function get_data_properties(detector_number, sigma_k, num_of_baselines, num_of_samples)
-    data_properties  = Array{TodNoiseProperties}(undef, length(detector_number))
-    for i in 1:length(detector_number)
-        baselines_lengths  = repeat([Int64(num_of_samples[i] / num_of_baselines[i])], num_of_baselines[i])  #we suppose baselines of equal lengths
-        data_properties[i]  = TodNoiseProperties(detector_number[i], sigma_k[detector_number[i]], num_of_samples[i], baselines_lengths)
+function build_noise_properties(detector_list, rms_list, num_of_baselines, num_of_samples)
+    @assert length(detector_list) == length(rms_list)
+
+    data_properties  = Array{TodNoiseProperties}(undef, length(detector_list))
+    for i in 1:length(detector_list)
+        # We use baselines of equal lengths
+        baseline_lengths  = repeat([Int64(num_of_samples[i] / num_of_baselines[i])], num_of_baselines[i])
+        data_properties[i] = TodNoiseProperties(detector_list[i], rms_list[detector_list[i]], num_of_samples[i], baseline_lengths)
     end
     data_properties
 end
-
 
 
 @doc raw"""
@@ -68,13 +93,16 @@ whose index is in `pix_idx`. The parameter `num_of_pixels` contains
 the number of pixels in the Healpix map, and it is used as an upper
 bound for the values in `pix_idx`. The parameter `comm` must be a MPI
 communicator, or `missing` if you are not using MPI.
-This is a MPI based function: each MPI process computes a map from its
-available data.  All partial maps are then combined together with MPI.allreduce.
-The function returns an array containing the binned map.
 
-If Array of structures `TodNoiseProperties`is passed to the function, the output binned map will be a weighted binned map.
-Each sample will be weighted according to the inverse white noise variance sigma^2 of the corrisponding polarimeter.
-In this way, the less noisy polarimeters will count more in the estimation of the map.
+This is a MPI-based function: each MPI process computes a map from its
+available data.  All partial maps are then combined together with
+`MPI.allreduce`. The function returns an array containing the binned map.
+
+If Array of structures `TodNoiseProperties`is passed to the function, the
+output binned map will be a weighted binned map. Each sample is weighted
+according to the inverse white noise variance sigma^2 of the corrispondingù
+polarimeter. In this way, the less noisy polarimeters will count more in the
+estimation of the map.
 
 # Requirements
 - The length of the arrays `pix_idx` and `tod` must be the same
@@ -84,6 +112,8 @@ tod2map_mpi
 
 
 function tod2map_mpi(pix_idx, tod, num_of_pixels, comm; unseen = NaN)
+    @assert length(pix_idx) == length(tod)
+
     T = eltype(tod)
     N = eltype(pix_idx)
 
@@ -92,7 +122,7 @@ function tod2map_mpi(pix_idx, tod, num_of_pixels, comm; unseen = NaN)
     binned_map = zeros(T, num_of_pixels)
     hits = zeros(N, num_of_pixels)
 
-    for i in eachindex(pix_idx)
+    @inbounds for i in eachindex(pix_idx)
         partial_map[pix_idx[i]] += tod[i]
         partial_hits[pix_idx[i]] += 1
     end
@@ -117,6 +147,8 @@ function tod2map_mpi(pix_idx, tod, num_of_pixels, comm; unseen = NaN)
 end
 
 function tod2map_mpi(pix_idx, tod, num_of_pixels, data_properties, comm; unseen = NaN)
+    @assert length(pix_idx) == length(tod)
+
     T = eltype(tod)
 
     partial_map = zeros(T, num_of_pixels)
@@ -206,7 +238,7 @@ function baseline2map_mpi(pix_idx, baselines, baseline_lengths, num_of_pixels, c
         hits .= partial_hits
     end
 
-    for i in eachindex(noise_map)
+    @inbounds for i in eachindex(noise_map)
         if (hits[i] > 0)
             noise_map[i] /= hits[i]
         else
@@ -229,15 +261,15 @@ function baseline2map_mpi(pix_idx, baselines, num_of_pixels, data_properties, nu
     startidx = 1
     baseline_idx = 1
 
-    for l in eachindex(data_properties)  #loop on detectors
-        for i in eachindex(data_properties[l].baselines_lengths)
-            endidx = data_properties[l].baselines_lengths[i] + startidx - 1
+    for det_idx in eachindex(data_properties)  #loop on detectors
+        for sample_idx in eachindex(data_properties[det_idx].baseline_lengths)
+            endidx = data_properties[det_idx].baseline_lengths[sample_idx] + startidx - 1
 
             for j in startidx:endidx
-                partial_map[pix_idx[j]] += baselines[baseline_idx] * 1 / (data_properties[l].sigma)^2
-                partial_hits[pix_idx[j]] += 1 / (data_properties[l].sigma)^2
+                partial_map[pix_idx[j]] += baselines[baseline_idx] * 1 / (data_properties[det_idx].sigma)^2
+                partial_hits[pix_idx[j]] += 1 / (data_properties[det_idx].sigma)^2
             end
-            startidx += data_properties[l].baselines_lengths[i]
+            startidx += data_properties[det_idx].baseline_lengths[sample_idx]
             baseline_idx += 1
         end
     end
@@ -251,7 +283,7 @@ function baseline2map_mpi(pix_idx, baselines, num_of_pixels, data_properties, nu
         hits .= partial_hits
     end
 
-    for i in eachindex(noise_map)
+    @inbounds for i in eachindex(noise_map)
         if (hits[i] > 0)
             noise_map[i] /= hits[i]
         else
@@ -261,7 +293,6 @@ function baseline2map_mpi(pix_idx, baselines, num_of_pixels, data_properties, nu
 
     noise_map
 end
-
 
 
 function applyz_and_sum(pix_idx, tod, num_of_pixels, data_properties, num_of_baselines, comm; unseen = NaN)
@@ -279,16 +310,15 @@ function applyz_and_sum(pix_idx, tod, num_of_pixels, data_properties, num_of_bas
 
     baseline_idx = 1
     startidx = 1
-    for l in eachindex(data_properties)  #loop on detectors
-
-        for i in eachindex(data_properties[l].baselines_lengths)
-            endidx = data_properties[l].baselines_lengths[i] + startidx - 1
+    for det_idx in eachindex(data_properties)  #loop on detectors
+        for baseline_idx in eachindex(data_properties[det_idx].baseline_lengths)
+            endidx = data_properties[det_idx].baseline_lengths[baseline_idx] + startidx - 1
 
             for j in startidx:endidx
-                baselines_sum[baseline_idx] += (tod[j] - binned_map[pix_idx[j]]) * 1 / (data_properties[l].sigma)^2
+                baselines_sum[baseline_idx] += (tod[j] - binned_map[pix_idx[j]]) * 1 / (data_properties[det_idx].sigma)^2
             end
 
-            startidx += data_properties[l].baselines_lengths[i]
+            startidx += data_properties[det_idx].baseline_lengths[baseline_idx]
             baseline_idx += 1
         end
     end
@@ -314,16 +344,15 @@ function applya(baselines, pix_idx, num_of_baselines, num_of_pixels, data_proper
     startidx = 1
     baseline_idx = 1
 
-    for l in eachindex(data_properties)
-
-        for i in eachindex(data_properties[l].baselines_lengths)
-            endidx = data_properties[l].baselines_lengths[i] + startidx - 1
+    for det_idx in eachindex(data_properties)
+        for baseline_idx in eachindex(data_properties[det_idx].baseline_lengths)
+            endidx = data_properties[det_idx].baseline_lengths[baseline_idx] + startidx - 1
 
             for j in startidx:endidx
-                baselines_sum[baseline_idx] += (baselines[baseline_idx] - binned_map[pix_idx[j]]) * 1 / (data_properties[l].sigma)^2
+                baselines_sum[baseline_idx] += (baselines[baseline_idx] - binned_map[pix_idx[j]]) * 1 / (data_properties[det_idx].sigma)^2
             end
 
-            startidx += data_properties[l].baselines_lengths[i]
+            startidx += data_properties[det_idx].baseline_lengths[baseline_idx]
             baseline_idx += 1
         end
     end
@@ -447,7 +476,7 @@ The parameters passed to the function have the following meaning:
 - `data_properties`: an array of structures `TodNoiseProperties`,
    holding information on each simulated polarimeter noise level,
    number and length of 1/f baselines and total number of samples.
-   It can be obtained by using function `get_data_properties`.
+   It can be obtained by using function `build_noise_properties`.
 
 - `rank`: the rank of the current MPI process
 
@@ -483,37 +512,39 @@ function destripe(pix_idx, tod, num_of_pixels, data_properties, rank, comm;
 
     num_of_baselines = 0
     for i in 1:length(data_properties)
-        num_of_baselines += length(data_properties[i].baselines_lengths)
+        num_of_baselines += length(data_properties[i].baseline_lengths)
     end
 
     baselines_sum = applyz_and_sum(pix_idx,
-            tod,
-            num_of_pixels,
-            data_properties,
-            num_of_baselines,
-            comm,
-            unseen = unseen)
+        tod,
+        num_of_pixels,
+        data_properties,
+        num_of_baselines,
+        comm,
+        unseen = unseen,
+    )
 
     baselines = conj_grad(baselines_sum,
-            pix_idx,
-            tod,
-            num_of_pixels,
-            data_properties,
-            num_of_baselines,
-            rank,
-            comm;
-            threshold = threshold,
-            max_iter = max_iter)
+        pix_idx,
+        tod,
+        num_of_pixels,
+        data_properties,
+        num_of_baselines,
+        rank,
+        comm;
+        threshold = threshold,
+        max_iter = max_iter,)
 
     # once we have an estimate of the baselines, we can build the destriped map
     destr_map = destriped_map(baselines,
-            pix_idx,
-            tod,
-            data_properties,
-            num_of_pixels,
-            num_of_baselines,
-            comm,
-            unseen = unseen)
+        pix_idx,
+        tod,
+        data_properties,
+        num_of_pixels,
+        num_of_baselines,
+        comm,
+        unseen = unseen,
+    )
 
     #check that sum(baselines) = 0
     if !ismissing(comm)
@@ -552,17 +583,20 @@ function baselines_covmat(polarimeters, sigma_k, baseline_length_s, fsamp_hz, to
     ALL_data_properties = Array{TodNoiseProperties}(undef, length(polarimeters))
     baselines_per_pol =  Int64(total_time / baseline_length_s)
     for i in 1:length(polarimeters)
-        baselines_lengths  = repeat([baseline_length_s * fsamp_hz], baselines_per_pol)
-        ALL_data_properties[i]  = TodNoiseProperties(polarimeters[i], sigma_k[i], sum(baselines_lengths), baselines_lengths)
+        baseline_lengths  = repeat([baseline_length_s * fsamp_hz], baselines_per_pol)
+        ALL_data_properties[i]  = TodNoiseProperties(pol = polarimeters[i], 
+            rms = sigma_k[i],
+            baselines = baseline_lengths,
+        )
     end
 
     covariance_matrix = []
     for i in 1:length(ALL_data_properties)
-        partial_covmat = Array{Float64}(undef, length(ALL_data_properties[i].baselines_lengths))
+        partial_covmat = Array{Float64}(undef, length(ALL_data_properties[i].baseline_lengths))
 
-        for j in 1:length(ALL_data_properties[i].baselines_lengths)
+        for j in 1:length(ALL_data_properties[i].baseline_lengths)
             sigma = ALL_data_properties[i].sigma
-            this_baseline_length = ALL_data_properties[i].baselines_lengths[j]
+            this_baseline_length = ALL_data_properties[i].baseline_lengths[j]
 
             partial_covmat[j] = sigma^2 / this_baseline_length
         end
