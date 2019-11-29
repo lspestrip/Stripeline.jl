@@ -265,8 +265,8 @@ function baseline2map_mpi(pix_idx, baselines, num_of_pixels, data_properties, nu
         for sample_idx in eachindex(data_properties[det_idx].baseline_lengths)
             endidx = data_properties[det_idx].baseline_lengths[sample_idx] + startidx - 1
 
-            for j in startidx:endidx
-                partial_map[pix_idx[j]] += baselines[baseline_idx] * 1 / (data_properties[det_idx].sigma)^2
+            @inbounds for j in startidx:endidx
+                partial_map[pix_idx[j]] += baselines[baseline_idx] / (data_properties[det_idx].sigma)^2
                 partial_hits[pix_idx[j]] += 1 / (data_properties[det_idx].sigma)^2
             end
             startidx += data_properties[det_idx].baseline_lengths[sample_idx]
@@ -384,12 +384,30 @@ function mpi_dot_prod(x, y, comm)
     return result
 end
 
+mutable struct DestripingResults
+    threshold::Float64
+    max_iter::Int
+    convergence_param_list::Array{Float64}
+    best_iteration::Int
+    best_baselines::Array{Float64}
+    best_sky_map::Any
+    baseline_history::Any
 
+    DestripingResults() = new(1e-9,
+        1000,
+        Float64[],
+        -1,
+        Float64[],
+        nothing,
+        nothing,
+    )
+end
 
-function conj_grad(baselines_sum, pix_idx, tod,
-                   num_of_pixels, data_properties,
-                   num_of_baselines, rank, comm;
-                   threshold = 1e-9, max_iter = 10000)
+function conj_grad(results::DestripingResults,
+    baselines_sum, pix_idx, tod,
+    num_of_pixels, data_properties,
+    num_of_baselines, rank, comm;
+    save_baseline_history = false)
 
     T = eltype(tod)
     N = eltype(pix_idx)
@@ -400,24 +418,28 @@ function conj_grad(baselines_sum, pix_idx, tod,
     p = Array{T}(undef, num_of_baselines)
     Ap = Array{T}(undef, num_of_baselines)
 
-
     baselines .= 0    #starting baselines
-    k = zero(N)       #number of iterations
     convergence_parameter = zero(T)
     rdotr = zero(T)
     rdotr_next = zero(T)
 
     best_convergence_parameter = zero(T)
     best_baselines = zeros(T, num_of_baselines)
-    best_k = zero(N)
+    results.best_iteration = 0
 
     r = baselines_sum - applya(baselines, pix_idx, num_of_baselines, num_of_pixels, data_properties, comm)  #residual
     p .= r
     rdotr = mpi_dot_prod(r, r, comm)
     best_convergence_parameter = sqrt(rdotr)
 
-    rdotr == 0 && return best_baselines
+    results.baseline_history = save_baseline_history ? [] : nothing
+    results.best_baselines = Array{Float64}(undef, num_of_baselines)
+    results.best_baselines .= baselines
 
+    rdotr == 0 && return results
+
+    results.convergence_param_list = Float64[]
+    iter_idx = 0
     while true
         Ap = applya(p, pix_idx,  num_of_baselines, num_of_pixels, data_properties, comm)
 
@@ -426,28 +448,27 @@ function conj_grad(baselines_sum, pix_idx, tod,
 
         alpha = rdotr / pdotAp
         @. baselines += alpha * p
+        save_baseline_history && push!(results.baseline_history, copy(baselines))
+
         @. r_next = r - alpha * Ap
-
         rdotr_next = mpi_dot_prod(r_next, r_next, comm)
-
         convergence_parameter = sqrt(rdotr_next)
+        push!(results.convergence_param_list, convergence_parameter)
 
         if (convergence_parameter < best_convergence_parameter)
             best_convergence_parameter = convergence_parameter
-            best_baselines .= baselines
-            best_k = k
+            results.best_baselines .= baselines
+            results.best_iteration = iter_idx
         end
 
-        (convergence_parameter < threshold) || (k > max_iter) && break
+        (convergence_parameter < results.threshold) || (iter_idx > results.max_iter) && break
 
         beta = rdotr_next / rdotr
 
         @. p = r_next + beta * p
         r .= r_next
-        k += 1
+        iter_idx += 1
     end
-
-    best_baselines
 end
 
 
@@ -508,7 +529,7 @@ this is the configuration that will be returned to the caller.
 - If you are not using MPI, pass `missing` to the `comm` parameter.
 """
 function destripe(pix_idx, tod, num_of_pixels, data_properties, rank, comm;
-                 threshold = 1e-9, max_iter = 10000, unseen = NaN)
+                 threshold = 1e-9, max_iter = 10000, save_baseline_history = false, unseen = NaN)
 
     num_of_baselines = 0
     for i in 1:length(data_properties)
@@ -524,7 +545,12 @@ function destripe(pix_idx, tod, num_of_pixels, data_properties, rank, comm;
         unseen = unseen,
     )
 
-    baselines = conj_grad(baselines_sum,
+    results = DestripingResults()
+    results.threshold = threshold
+    results.max_iter = max_iter
+
+    conj_grad(results,
+        baselines_sum,
         pix_idx,
         tod,
         num_of_pixels,
@@ -532,11 +558,10 @@ function destripe(pix_idx, tod, num_of_pixels, data_properties, rank, comm;
         num_of_baselines,
         rank,
         comm;
-        threshold = threshold,
-        max_iter = max_iter,)
+        save_baseline_history = save_baseline_history)
 
     # once we have an estimate of the baselines, we can build the destriped map
-    destr_map = destriped_map(baselines,
+    results.best_sky_map = destriped_map(results.best_baselines,
         pix_idx,
         tod,
         data_properties,
@@ -546,14 +571,7 @@ function destripe(pix_idx, tod, num_of_pixels, data_properties, rank, comm;
         unseen = unseen,
     )
 
-    #check that sum(baselines) = 0
-    if !ismissing(comm)
-        total_sum = MPI.allreduce([sum(baselines)], MPI.SUM, comm)[1]
-    else
-        total_sum = sum(baselines)
-    end
-
-    (destr_map, baselines)
+    results
 end
 
 

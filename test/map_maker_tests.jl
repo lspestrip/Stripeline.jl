@@ -25,9 +25,9 @@ data_properties = [TodNoiseProperties(pol = 1, rms = 1., baselines = baseline_le
 
 # Signal only
 @test tod2map_mpi(pix_idx, tod, num_of_pixels, data_properties, comm) ≈ true_map
-(pixels, baselines) = destripe(pix_idx, tod, num_of_pixels, data_properties, rank, comm)
-@test pixels ≈ true_map
-@test baselines ≈ zeros(length(baselines))
+results = destripe(pix_idx, tod, num_of_pixels, data_properties, rank, comm)
+@test results.best_sky_map ≈ true_map
+@test results.best_baselines ≈ zeros(length(baseline_len))
 
 # Signal only, but with an unseen pixel (the last one)
 @test tod2map_mpi(pix_idx, tod, num_of_pixels + 1, data_properties, comm, unseen = -1) ≈ [true_map; -1]
@@ -37,9 +37,9 @@ data_properties = [TodNoiseProperties(pol = 1, rms = 1., baselines = baseline_le
 @test tod2map_mpi(pix_idx, tod + oofnoise, num_of_pixels, data_properties, comm) ≈ [4.25, 20.0, 10.0]
 
 # Full process (destriping + map making)
-(pixels, baselines) = destripe(pix_idx, tod + oofnoise, num_of_pixels, data_properties, rank, comm)
-@test pixels ≈ true_map
-@test baselines ≈ true_baselines
+results = destripe(pix_idx, tod + oofnoise, num_of_pixels, data_properties, rank, comm)
+@test results.best_sky_map ≈ true_map
+@test results.best_baselines ≈ true_baselines
 
 
 #check divergences
@@ -52,9 +52,9 @@ true_baselines = repeat([1,-2, 1], 1000)
 
 data_properties = [TodNoiseProperties(pol = 1, rms = 1., baselines = baseline_len)]
 
-(pixels, baselines) = destripe(pix_idx, skytod + ooftod, num_of_pixels, data_properties, rank, comm)
-@test pixels ≈ true_map
-@test baselines ≈ true_baselines
+results = destripe(pix_idx, skytod + ooftod, num_of_pixels, data_properties, rank, comm)
+@test results.best_sky_map ≈ true_map
+@test results.best_baselines ≈ true_baselines
 
 # Test covariance matrix of baselines computation
 
@@ -112,7 +112,9 @@ for i in 1:2  #loop on detectors
 end
 
 noise_tod = generate_noise_mpi(chunks, baselines_per_process, baseline_length_s, total_time, fsamp_hz, slope, sigma_k, fknee_hz, rank, comm, 1234)
-(destr_map, a) = destripe(pix_idx, noise_tod, num_of_pixels, data_properties, rank, comm; threshold = 1e-9, max_iter = 1000)
+results = destripe(pix_idx, noise_tod, num_of_pixels, data_properties, rank, comm; threshold = 1e-9, max_iter = 1000)
+destr_map = results.best_sky_map
+a = results.best_baselines
 
 # 1 polarimeter
 num_of_polarimeters = 1
@@ -142,7 +144,9 @@ end
 
 noise_tod = generate_noise_mpi(chunks, baselines_per_process, baseline_length_s, total_time, fsamp_hz, slope, sigma_k, fknee_hz, rank, comm, 1234)
 
-(destr_map_sigma1, a_1) = destripe(pix_idx, noise_tod, num_of_pixels, data_properties, rank, comm; threshold = 1e-9, max_iter = 1000)
+results = destripe(pix_idx, noise_tod, num_of_pixels, data_properties, rank, comm; threshold = 1e-9, max_iter = 1000)
+destr_map_sigma1 = results.best_sky_map
+a_1 = results.best_baselines
 
 diff = destr_map[isfinite.(destr_map)] - destr_map_sigma1[isfinite.(destr_map_sigma1)]
 @test sum(diff .- mean(diff)) ≈ 0. atol = 1e-10
