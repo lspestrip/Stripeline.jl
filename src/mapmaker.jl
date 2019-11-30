@@ -84,19 +84,20 @@ end
 
 
 @doc raw"""
-    tod2map(pix_idx, tod, num_of_pixels, comm) -> binned_map
-    tod2map(pix_idx, tod, num_of_pixels, data_properties, comm) -> binned_map
+    tod2map(pix_idx, tod, num_of_pixels; comm = nothing) -> binned_map
+    tod2map(pix_idx, tod, num_of_pixels, data_properties; comm = nothing) -> binned_map
 
 This function creates a binned map from the time-ordered data kept in
 the array `tod`, assuming that each sample is observing the pixel
 whose index is in `pix_idx`. The parameter `num_of_pixels` contains
 the number of pixels in the Healpix map, and it is used as an upper
 bound for the values in `pix_idx`. The parameter `comm` must be a MPI
-communicator, or `missing` if you are not using MPI.
+communicator, or `nothing` if you are not using MPI.
 
-This is a MPI-based function: each MPI process computes a map from its
-available data.  All partial maps are then combined together with
-`MPI.allreduce`. The function returns an array containing the binned map.
+If `comm` is not `nothing`, the function is parallelized using MPI, and
+each process computes a map from its available data.  All partial maps
+are then combined together with `MPI.allreduce`. The function returns
+an array containing the binned map.
 
 If Array of structures `TodNoiseProperties`is passed to the function, the
 output binned map will be a weighted binned map. Each sample is weighted
@@ -108,10 +109,7 @@ estimation of the map.
 - The length of the arrays `pix_idx` and `tod` must be the same
 
 """
-tod2map_mpi
-
-
-function tod2map_mpi(pix_idx, tod, num_of_pixels, comm; unseen = NaN)
+function tod2map_mpi(pix_idx, tod, num_of_pixels; comm = nothing, unseen = NaN)
     @assert length(pix_idx) == length(tod)
 
     T = eltype(tod)
@@ -127,7 +125,7 @@ function tod2map_mpi(pix_idx, tod, num_of_pixels, comm; unseen = NaN)
         partial_hits[pix_idx[i]] += 1
     end
 
-    if(!ismissing(comm))
+    if comm != nothing
         binned_map = MPI.allreduce(partial_map, MPI.SUM, comm)
         hits = MPI.allreduce(partial_hits, MPI.SUM, comm)
     else
@@ -146,7 +144,7 @@ function tod2map_mpi(pix_idx, tod, num_of_pixels, comm; unseen = NaN)
     binned_map
 end
 
-function tod2map_mpi(pix_idx, tod, num_of_pixels, data_properties, comm; unseen = NaN)
+function tod2map_mpi(pix_idx, tod, num_of_pixels, data_properties; comm = nothing, unseen = NaN)
     @assert length(pix_idx) == length(tod)
 
     T = eltype(tod)
@@ -167,7 +165,7 @@ function tod2map_mpi(pix_idx, tod, num_of_pixels, data_properties, comm; unseen 
         start_idx += data_properties[j].number_of_samples
     end
 
-    if(!ismissing(comm))
+    if comm != nothing
         binned_map = MPI.allreduce(partial_map, MPI.SUM, comm)
         hits = MPI.allreduce(partial_hits, MPI.SUM, comm)
     else
@@ -187,8 +185,8 @@ function tod2map_mpi(pix_idx, tod, num_of_pixels, data_properties, comm; unseen 
 end
 
 @doc raw"""
-    baseline2map_mpi(pix_idx, baselines, baseline_lengths, num_of_pixels, comm)-> noise_map
-    baseline2map_mpi(pix_idx, baselines, num_of_pixels, data_properties, comm) -> noise_map
+    baseline2map_mpi(pix_idx, baselines, baseline_lengths, num_of_pixels; comm = nothing)-> noise_map
+    baseline2map_mpi(pix_idx, baselines, num_of_pixels, data_properties; comm = nothing) -> noise_map
 
 This is a MPI based function: each MPI process computes a map from its
 available data.  All partial maps are then combined together with
@@ -206,7 +204,7 @@ In this way, the less noisy polarimeters will count more in the estimation of th
 baseline2map_mpi
 
 
-function baseline2map_mpi(pix_idx, baselines, baseline_lengths, num_of_pixels, comm;
+function baseline2map_mpi(pix_idx, baselines, baseline_lengths, num_of_pixels; comm = nothing,
                           unseen = NaN)
 
     T = eltype(baselines)
@@ -229,7 +227,7 @@ function baseline2map_mpi(pix_idx, baselines, baseline_lengths, num_of_pixels, c
         startidx += baseline_lengths[i]
     end
 
-    if(!ismissing(comm))
+    if comm != nothing
         noise_map = MPI.allreduce(partial_map, MPI.SUM, comm)
         hits = MPI.allreduce(partial_hits, MPI.SUM, comm)
     else
@@ -249,7 +247,7 @@ function baseline2map_mpi(pix_idx, baselines, baseline_lengths, num_of_pixels, c
     noise_map
 end
 
-function baseline2map_mpi(pix_idx, baselines, num_of_pixels, data_properties, num_of_baselines, comm; unseen = NaN)
+function baseline2map_mpi(pix_idx, baselines, num_of_pixels, data_properties, num_of_baselines; comm = nothing, unseen = NaN)
 
     T = eltype(baselines)
 
@@ -274,7 +272,7 @@ function baseline2map_mpi(pix_idx, baselines, num_of_pixels, data_properties, nu
         end
     end
 
-    if(!ismissing(comm))
+    if comm != nothing
         noise_map = MPI.allreduce(partial_map, MPI.SUM, comm)
         hits = MPI.allreduce(partial_hits, MPI.SUM, comm)
     else
@@ -295,7 +293,7 @@ function baseline2map_mpi(pix_idx, baselines, num_of_pixels, data_properties, nu
 end
 
 
-function applyz_and_sum(pix_idx, tod, num_of_pixels, data_properties, num_of_baselines, comm; unseen = NaN)
+function applyz_and_sum(pix_idx, tod, num_of_pixels, data_properties, num_of_baselines; comm = nothing, unseen = NaN)
 
     @assert length(tod) == length(pix_idx)
 
@@ -305,7 +303,7 @@ function applyz_and_sum(pix_idx, tod, num_of_pixels, data_properties, num_of_bas
         tod,
         num_of_pixels,
         data_properties,
-        comm,
+        comm = comm,
         unseen = unseen)
 
     baseline_idx = 1
@@ -327,7 +325,7 @@ function applyz_and_sum(pix_idx, tod, num_of_pixels, data_properties, num_of_bas
 end
 
 
-function applya(baselines, pix_idx, num_of_baselines, num_of_pixels, data_properties, comm; unseen = NaN)
+function applya(baselines, pix_idx, num_of_baselines, num_of_pixels, data_properties; comm = nothing, unseen = NaN)
     @assert length(baselines) == num_of_baselines
 
     baselines_sum = zeros(eltype(baselines), num_of_baselines)
@@ -338,7 +336,7 @@ function applya(baselines, pix_idx, num_of_baselines, num_of_pixels, data_proper
         num_of_pixels,
         data_properties,
         num_of_baselines,
-        comm;
+        comm = comm,
         unseen = unseen)
 
     startidx = 1
@@ -359,7 +357,7 @@ function applya(baselines, pix_idx, num_of_baselines, num_of_pixels, data_proper
 
     #needed to assure that sum(baselines)==0
 
-    if(!ismissing(comm))
+    if comm != nothing
         total_sum = MPI.allreduce([sum(baselines)], MPI.SUM, comm)[1]
     else
         total_sum = sum(baselines)
@@ -369,13 +367,13 @@ function applya(baselines, pix_idx, num_of_baselines, num_of_pixels, data_proper
 end
 
 
-function mpi_dot_prod(x, y, comm)
+function mpi_dot_prod(x, y; comm = nothing)
 
     @assert eltype(x) == eltype(y)
     result = zero(eltype(x))
     local_sum::eltype(x) = dot(x, y)
 
-    if(!ismissing(comm))
+    if comm != nothing
         result = MPI.allreduce([local_sum], MPI.SUM, comm)[1]
     else
         result = local_sum
@@ -406,7 +404,7 @@ end
 function conj_grad(results::DestripingResults,
     baselines_sum, pix_idx, tod,
     num_of_pixels, data_properties,
-    num_of_baselines, rank, comm;
+    num_of_baselines, rank; comm = nothing,
     save_baseline_history = false)
 
     T = eltype(tod)
@@ -427,9 +425,9 @@ function conj_grad(results::DestripingResults,
     best_baselines = zeros(T, num_of_baselines)
     results.best_iteration = 0
 
-    r = baselines_sum - applya(baselines, pix_idx, num_of_baselines, num_of_pixels, data_properties, comm)  #residual
+    r = baselines_sum - applya(baselines, pix_idx, num_of_baselines, num_of_pixels, data_properties, comm = comm)  #residual
     p .= r
-    rdotr = mpi_dot_prod(r, r, comm)
+    rdotr = mpi_dot_prod(r, r, comm = comm)
     best_convergence_parameter = sqrt(rdotr)
 
     results.baseline_history = save_baseline_history ? [] : nothing
@@ -441,17 +439,17 @@ function conj_grad(results::DestripingResults,
     results.convergence_param_list = Float64[]
     iter_idx = 0
     while true
-        Ap = applya(p, pix_idx,  num_of_baselines, num_of_pixels, data_properties, comm)
+        Ap = applya(p, pix_idx,  num_of_baselines, num_of_pixels, data_properties, comm = comm)
 
-        rdotr = mpi_dot_prod(r, r, comm)
-        pdotAp = mpi_dot_prod(p, Ap, comm)
+        rdotr = mpi_dot_prod(r, r, comm = comm)
+        pdotAp = mpi_dot_prod(p, Ap, comm = comm)
 
         alpha = rdotr / pdotAp
         @. baselines += alpha * p
         save_baseline_history && push!(results.baseline_history, copy(baselines))
 
         @. r_next = r - alpha * Ap
-        rdotr_next = mpi_dot_prod(r_next, r_next, comm)
+        rdotr_next = mpi_dot_prod(r_next, r_next, comm = comm)
         convergence_parameter = sqrt(rdotr_next)
         push!(results.convergence_param_list, convergence_parameter)
 
@@ -472,14 +470,14 @@ function conj_grad(results::DestripingResults,
 end
 
 
-function destriped_map(baselines, pix_idx, tod, data_properties, num_of_pixels, num_of_baselines, comm; unseen = NaN)
+function destriped_map(baselines, pix_idx, tod, data_properties, num_of_pixels, num_of_baselines; comm = nothing, unseen = NaN)
     @assert length(tod) == length(pix_idx)
-    tod2map_mpi(pix_idx, tod, num_of_pixels, data_properties, comm) - baseline2map_mpi(pix_idx, baselines, num_of_pixels, data_properties, num_of_baselines, comm)
+    tod2map_mpi(pix_idx, tod, num_of_pixels, data_properties, comm = comm) - baseline2map_mpi(pix_idx, baselines, num_of_pixels, data_properties, num_of_baselines, comm = comm)
 end
 
 
 @doc raw"""
-    destripe(pix_idx, tod, num_of_pixels, data_properties, rank, comm; threshold = 1e-9, max_iter = 10000) -> (pixels, baselines)
+    destripe(pix_idx, tod, num_of_pixels, data_properties, rank; comm = nothing, threshold = 1e-9, max_iter = 10000, save_baseline_history = false) -> DestripingResults
 
 This MPI based function creates a map from a TOD and removes both 1/f
 and white noise, using the destriping technique.
@@ -515,21 +513,22 @@ The following arguments are optional:
    having reached the convergence threshold (see the `threshold`
    keyword above).
 
-The function returns a 2-tuple containing the destriped map itself
-(`Array{T,1}`, where `T` is the base type used for the TOD in the
-argument`tod`) and an array containing the baselines.
-Since it is not granted that the sequence of convergence parameters of
-the conjugate gradient is monotonically decreasing, the code keeps the
-lowest value of them and the corresponding array of baselines.  If the
-loop ends because the maximum number of iterations has been reached,
-this is the configuration that will be returned to the caller.
+- If `save_baseline_history` is `true`, the return value will contain the
+  sequence of baselines tested by the CG algorithm. Each MPI process will
+  hold its own baselines.
+
+The function returns a `DestripingResults` object containings the destriped
+map, the sequence of baselines, and other information describing the
+convergence of the CG algorithm.
 
 # Remarks
 - The length of the arrays `pix_idx` and `tod` must be the same;
-- If you are not using MPI, pass `missing` to the `comm` parameter.
+- If you do not specify `comm`, no MPI will be used
 """
-function destripe(pix_idx, tod, num_of_pixels, data_properties, rank, comm;
+function destripe(pix_idx, tod, num_of_pixels, data_properties, rank; comm = nothing,
                  threshold = 1e-9, max_iter = 10000, save_baseline_history = false, unseen = NaN)
+
+    @assert length(pix_idx) == length(tod)
 
     num_of_baselines = 0
     for i in 1:length(data_properties)
@@ -541,7 +540,7 @@ function destripe(pix_idx, tod, num_of_pixels, data_properties, rank, comm;
         num_of_pixels,
         data_properties,
         num_of_baselines,
-        comm,
+        comm = comm,
         unseen = unseen,
     )
 
@@ -557,7 +556,7 @@ function destripe(pix_idx, tod, num_of_pixels, data_properties, rank, comm;
         data_properties,
         num_of_baselines,
         rank,
-        comm;
+        comm = comm,
         save_baseline_history = save_baseline_history)
 
     # once we have an estimate of the baselines, we can build the destriped map
@@ -567,7 +566,7 @@ function destripe(pix_idx, tod, num_of_pixels, data_properties, rank, comm;
         data_properties,
         num_of_pixels,
         num_of_baselines,
-        comm,
+        comm = comm,
         unseen = unseen,
     )
 

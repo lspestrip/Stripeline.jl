@@ -2,7 +2,7 @@ using Test
 using Healpix
 using Statistics 
 
-comm = missing
+comm = nothing
 rank = 0
 
 # Index of the pixels: this fixes the length of the TOD as well
@@ -24,20 +24,20 @@ oofnoise = [1., 1., 1., -2., -2., -2., 1., 1., 1., 1.]
 data_properties = [TodNoiseProperties(pol = 1, rms = 1., baselines = baseline_len)]
 
 # Signal only
-@test tod2map_mpi(pix_idx, tod, num_of_pixels, data_properties, comm) ≈ true_map
-results = destripe(pix_idx, tod, num_of_pixels, data_properties, rank, comm)
+@test tod2map_mpi(pix_idx, tod, num_of_pixels, data_properties, comm = comm) ≈ true_map
+results = destripe(pix_idx, tod, num_of_pixels, data_properties, rank, comm = comm)
 @test results.best_sky_map ≈ true_map
 @test results.best_baselines ≈ zeros(length(baseline_len))
 
 # Signal only, but with an unseen pixel (the last one)
-@test tod2map_mpi(pix_idx, tod, num_of_pixels + 1, data_properties, comm, unseen = -1) ≈ [true_map; -1]
+@test tod2map_mpi(pix_idx, tod, num_of_pixels + 1, data_properties, comm = comm, unseen = -1) ≈ [true_map; -1]
 
 # Signal + noise
 # This map only contains 1/f noise
-@test tod2map_mpi(pix_idx, tod + oofnoise, num_of_pixels, data_properties, comm) ≈ [4.25, 20.0, 10.0]
+@test tod2map_mpi(pix_idx, tod + oofnoise, num_of_pixels, data_properties, comm = comm) ≈ [4.25, 20.0, 10.0]
 
 # Full process (destriping + map making)
-results = destripe(pix_idx, tod + oofnoise, num_of_pixels, data_properties, rank, comm)
+results = destripe(pix_idx, tod + oofnoise, num_of_pixels, data_properties, rank, comm = comm)
 @test results.best_sky_map ≈ true_map
 @test results.best_baselines ≈ true_baselines
 
@@ -52,7 +52,7 @@ true_baselines = repeat([1,-2, 1], 1000)
 
 data_properties = [TodNoiseProperties(pol = 1, rms = 1., baselines = baseline_len)]
 
-results = destripe(pix_idx, skytod + ooftod, num_of_pixels, data_properties, rank, comm)
+results = destripe(pix_idx, skytod + ooftod, num_of_pixels, data_properties, rank, comm = comm)
 @test results.best_sky_map ≈ true_map
 @test results.best_baselines ≈ true_baselines
 
@@ -76,7 +76,7 @@ covmat = baselines_covmat(polarimeters, sigma_k, baseline_length_s, fsamp_hz, to
 
 # Test weighting destriper
 
-comm = missing
+comm = nothing
 commsize = 1
 rank = 0
 total_time = 60
@@ -111,8 +111,29 @@ for i in 1:2  #loop on detectors
     global pix_idx = append!(pix_idx, partial_pix_idx)
 end
 
-noise_tod = generate_noise_mpi(chunks, baselines_per_process, baseline_length_s, total_time, fsamp_hz, slope, sigma_k, fknee_hz, rank, comm, 1234)
-results = destripe(pix_idx, noise_tod, num_of_pixels, data_properties, rank, comm; threshold = 1e-9, max_iter = 1000)
+noise_tod = generate_noise_mpi(
+    chunks,
+    baselines_per_process,
+    baseline_length_s,
+    total_time,
+    fsamp_hz,
+    slope,
+    sigma_k,
+    fknee_hz,
+    rank = rank,
+    comm = comm,
+    input_seed = 1234,
+)
+results = destripe(
+    pix_idx,
+    noise_tod,
+    num_of_pixels,
+    data_properties,
+    rank,
+    comm = comm,
+    threshold = 1e-9,
+    max_iter = 1000,
+)
 destr_map = results.best_sky_map
 a = results.best_baselines
 
@@ -142,9 +163,30 @@ for i in 1:1  #loop on detectors
 
 end
 
-noise_tod = generate_noise_mpi(chunks, baselines_per_process, baseline_length_s, total_time, fsamp_hz, slope, sigma_k, fknee_hz, rank, comm, 1234)
+noise_tod = generate_noise_mpi(
+    chunks,
+    baselines_per_process,
+    baseline_length_s,
+    total_time,
+    fsamp_hz,
+    slope,
+    sigma_k,
+    fknee_hz,
+    rank = rank,
+    comm = comm,
+    input_seed = 1234,
+)
 
-results = destripe(pix_idx, noise_tod, num_of_pixels, data_properties, rank, comm; threshold = 1e-9, max_iter = 1000)
+results = destripe(
+    pix_idx,
+    noise_tod,
+    num_of_pixels,
+    data_properties,
+    rank,
+    comm = comm,
+    threshold = 1e-9,
+    max_iter = 1000,
+)
 destr_map_sigma1 = results.best_sky_map
 a_1 = results.best_baselines
 
