@@ -2,12 +2,16 @@
 
 - (**Breaking change**) Turn `rank` and `comm` parameters into
   keywords for `generate_noise_mpi`
+  [#39](https://github.com/lspestrip/Stripeline.jl/pull/39)
 - (**Breaking change**) Use `nothing` instead of `missing` for MPI
   communicators
+  [#39](https://github.com/lspestrip/Stripeline.jl/pull/39)
 - Ensure that `generate_noise_mpi` produces different seeds for each
   polarimeter
+  [#39](https://github.com/lspestrip/Stripeline.jl/pull/39)
 - (**Breaking change**) Make `destripe` return a `DestripingResults`
   structure instead of a tuple
+  [#39](https://github.com/lspestrip/Stripeline.jl/pull/39)
 - Remove the dependency on `Quaternions.jl` [#38](https://github.com/lspestrip/Stripeline.jl/pull/38)
 - Update the instrument database with the number of the polarizer for each horn [#37](https://github.com/lspestrip/Stripeline.jl/pull/37)
 - Make the 1/f slope always in the range 0..2 [#34](https://github.com/lspestrip/Stripeline.jl/pull/34)
