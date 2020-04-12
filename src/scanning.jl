@@ -206,9 +206,12 @@ end
     polarizationangle(northdir, eastdir, poldir)
 
 Calculate the polarization angle projected in the sky in IAU
-conventions.  The parameter `northdir` must be a versor that points
-the North and `poldir` must be a versor that identify the polarization
-direction projected in the sky.  The return value is in radians.
+conventions. The parameters `northdir` and `eastdir` must be versors
+that point towards the North and East, respectively; `poldir` must be
+a versor that identify the polarization direction projected in the
+sky. The return value is in radians, and it is zero if the
+polarization angles points toward East, π/2 if it points toward North,
+etc.
 
 # Examples
 ```jldoctest
