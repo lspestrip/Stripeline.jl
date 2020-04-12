@@ -241,11 +241,19 @@ eastdir(θ, ϕ) = StaticArrays.@SArray [cos(ϕ), -sin(ϕ), 0.0]
 """
     northdir(θ, ϕ)
     eastdir(θ, ϕ)
+<<<<<<< HEAD
 
 Compute the North/East versor for a vector. The North for a vector v
 is -dv/dθ, as θ is the colatitude and moves along the meridian, and
 the East is dv/dϕ.
 
+=======
+
+Compute the North/East versor for a vector. The North for a vector v
+is -dv/dθ, as θ is the colatitude and moves along the meridian, and
+the East is dv/dϕ.
+
+>>>>>>> master
 # Examples
 ```jldoctest
 julia> northdir(π/2, 0) ≈ [0, 0, 1]
