@@ -305,11 +305,35 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
+    "location": "scanning/#Stripeline.northdir",
+    "page": "Scanning strategy",
+    "title": "Stripeline.northdir",
+    "category": "function",
+    "text": "northdir(θ, ϕ)\neastdir(θ, ϕ)\n\nCompute the North/East versor for a vector. The North for a vector v is -dv/dθ, as θ is the colatitude and moves along the meridian, and the East is dv/dϕ.\n\nExamples\n\njulia> northdir(π/2, 0) ≈ [0, 0, 1]\ntrue\njulia> eastdir(π/2, 0) ≈ [1, 0, 0]\ntrue\n\n\n\n\n\n"
+},
+
+{
+    "location": "scanning/#Stripeline.eastdir",
+    "page": "Scanning strategy",
+    "title": "Stripeline.eastdir",
+    "category": "function",
+    "text": "northdir(θ, ϕ)\neastdir(θ, ϕ)\n\nCompute the North/East versor for a vector. The North for a vector v is -dv/dθ, as θ is the colatitude and moves along the meridian, and the East is dv/dϕ.\n\nExamples\n\njulia> northdir(π/2, 0) ≈ [0, 0, 1]\ntrue\njulia> eastdir(π/2, 0) ≈ [1, 0, 0]\ntrue\n\n\n\n\n\n"
+},
+
+{
+    "location": "scanning/#Stripeline.polarizationangle",
+    "page": "Scanning strategy",
+    "title": "Stripeline.polarizationangle",
+    "category": "function",
+    "text": "polarizationangle(northdir, eastdir, poldir)\n\nCalculate the polarization angle projected in the sky in IAU conventions. The parameters northdir and eastdir must be versors that point towards the North and East, respectively; poldir must be a versor that identify the polarization direction projected in the sky. The return value is in radians, and it is zero if the polarization angles points toward East, π/2 if it points toward North, etc.\n\nExamples\n\njulia> polarizationangle([0, 0, 1], [0, 1, 0], [0, 1, 0])\n0.0\njulia> polarizationangle([0, 0, 1], [0, 1, 0], [0, 0, 1]) |> rad2deg\n90.0\njulia> polarizationangle([0, 0, 1], [0, 1, 0], [0, 0, -1]) |> rad2deg\n-90.0\n\n\n\n\n\n"
+},
+
+{
     "location": "scanning/#Simulating-the-scanning-strategy-1",
     "page": "Scanning strategy",
     "title": "Simulating the scanning strategy",
     "category": "section",
-    "text": "telescopetoground\ngroundtoearth\ngenpointings\ntimetorotang"
+    "text": "telescopetoground\ngroundtoearth\ngenpointings\ntimetorotang\nnorthdir\neastdir\npolarizationangle"
 },
 
 {
