@@ -305,7 +305,6 @@ function genpointings!(wheelanglesfn,
         groundq = telescopetoground(wheelanglesfn, time_s)
         # This converts the MCS into the celestial reference frame
         quat = groundtoearth(groundq, time_s, latitude_deg; day_duration_s = day_duration_s)
-
         θ, ϕ, curpsi = quat_to_angles(beam_dir, polaxis, quat)
         (dirs[idx, 1], dirs[idx, 2]) = (θ, ϕ)
 
@@ -360,8 +359,8 @@ function genpointings!(wheelanglesfn,
                        skypsi;
                        polaxis = Float64[1.0, 0.0, 0.0],
                        latitude_deg = TENERIFE_LATITUDE_DEG,
-                       longitude_deg = 0.0,
-                       height_m = 0,
+                       longitude_deg = TENERIFE_LONGITUDE_DEG,
+                       height_m = TENERIFE_HEIGHT_M,
                        precession = true,
                        nutation = true,
                        aberration = true,
@@ -422,6 +421,7 @@ function genpointings(wheelanglesfn,
         skypsi,
         polaxis = polaxis,
         latitude_deg = latitude_deg,
+        longitude_deg = longitude_deg,
         height_m = height_m,
         precession = precession,
         nutation = nutation,
