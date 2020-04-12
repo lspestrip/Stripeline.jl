@@ -176,7 +176,11 @@ Initialize a BandshapeInfo object with all values set to zero.
 BandshapeInfo() = BandshapeInfo(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, Float64[], 0, 0)
 
 function bandshape(bandinfo::BandshapeInfo)
-    ν = range(bandinfo.lowest_frequency_hz, bandinfo.highest_frequency_hz, length = bandinfo.num_of_frequencies)
+    ν = range(
+        bandinfo.lowest_frequency_hz,
+        stop = bandinfo.highest_frequency_hz,
+        length = bandinfo.num_of_frequencies,
+    )
 
     @assert length(ν) == length(bandinfo.bandshape)
     (ν, bandinfo.bandshape, bandinfo.bandshape_error)
