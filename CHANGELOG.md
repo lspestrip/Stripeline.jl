@@ -1,5 +1,13 @@
 # HEAD
 
+- (**Breaking change**) Drop support for Julia 1.0, 1.1, and 1.2
+- (**Breaking change**) Several changes to `genpointings`
+  ([#44](https://github.com/lspestrip/Stripeline.jl/pull/44)):
+  - In `genpointings`, rename `refract` keyword into `refraction`, for
+    consistency with `precession`, `nutation`, and `aberration`.
+  - Fix bug [#42](https://github.com/lspestrip/Stripeline.jl/issues/42)
+  - Add function `genpointings!`
+  - Update the coordinates of the site in Tenerife
 - (**Breaking change**) Turn `rank` and `comm` parameters into
   keywords for `generate_noise_mpi`
   [#39](https://github.com/lspestrip/Stripeline.jl/pull/39)
