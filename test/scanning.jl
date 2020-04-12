@@ -4,6 +4,12 @@ using Dates
 using Healpix
 const Sl = Stripeline
 
+# These are the old values that were used by @fincardona to test
+# against the reference position for the Crab Nebula
+const TEST_TENERIFE_LATITUDE_DEG = 28.3
+const TEST_TENERIFE_LONGITUDE_DEG = -16.509722
+const TEST_TENERIFE_HEIGHT_M = 2390
+
 eps = 3e-4 # Corresponds to pointing precision of 1.08 arcseconds
 
 t_start = DateTime(2018, 01, 01, 0, 0, 0)
@@ -28,9 +34,9 @@ dir = inv(rotmatr) * vector
                                dir, 
                                [0],
                                t_start, 
-                               latitude_deg = TENERIFE_LATITUDE_DEG,
-                               longitude_deg = TENERIFE_LONGITUDE_DEG,
-                               height_m = TENERIFE_HEIGHT_M,
+                               latitude_deg = TEST_TENERIFE_LATITUDE_DEG,
+                               longitude_deg = TEST_TENERIFE_LONGITUDE_DEG,
+                               height_m = TEST_TENERIFE_HEIGHT_M,
                                precession = true,
                                nutation = true,
                                aberration = true,
@@ -64,9 +70,9 @@ for (idx, day) in enumerate(days)
                                          dir, 
                                          [0], 
                                          day, 
-                                         latitude_deg = TENERIFE_LATITUDE_DEG,
-                                         longitude_deg = TENERIFE_LONGITUDE_DEG,
-                                         height_m = TENERIFE_HEIGHT_M,
+                                         latitude_deg = TEST_TENERIFE_LATITUDE_DEG,
+                                         longitude_deg = TEST_TENERIFE_LONGITUDE_DEG,
+                                         height_m = TEST_TENERIFE_HEIGHT_M,
                                          precession = true,
                                          nutation = true,
                                          aberration = true,
@@ -100,7 +106,7 @@ times = 0:τ_s:time_duration
 
 (dirs, ψ) = genpointings(db.focalplane["I0"].orientation, 
                          times; 
-                         latitude_deg = TENERIFE_LATITUDE_DEG) do time_s
+                         latitude_deg = TEST_TENERIFE_LATITUDE_DEG) do time_s
     (0, deg2rad(20.0), Sl.timetorotang(time_s, spin_velocity))
 end
 
@@ -111,7 +117,7 @@ expected_nsamples = convert(Int, time_duration * sampling_rate + 1)
 (dirs, ψ) = genpointings(db.focalplane["I0"].orientation, 
                          times;
                          ground = true,
-                         latitude_deg = TENERIFE_LATITUDE_DEG) do time_s
+                         latitude_deg = TEST_TENERIFE_LATITUDE_DEG) do time_s
     (0, deg2rad(20.0), Sl.timetorotang(time_s, spin_velocity))
 end
 
@@ -137,8 +143,18 @@ let defaultdb = InstrumentDB()
     G0_vec = defaultdb.focalplane["G0"].orientation
     V0_vec = defaultdb.focalplane["V0"].orientation
     
-    dirG0, psiG0 = Stripeline.genpointings(wheelfn, G0_vec, timerange)
-    dirV0, psiV0 = Stripeline.genpointings(wheelfn, V0_vec, timerange)
+    dirG0, psiG0 = Stripeline.genpointings(
+        wheelfn,
+        G0_vec,
+        timerange,
+        latitude_deg = TEST_TENERIFE_LATITUDE_DEG,
+    )
+    dirV0, psiV0 = Stripeline.genpointings(
+        wheelfn,
+        V0_vec,
+        timerange,
+        latitude_deg = TEST_TENERIFE_LATITUDE_DEG,
+    )
 
     # We expect G0 to draw larger circles in the sky
     @test minimum(dirG0[:, 1]) < minimum(dirV0[:, 1])
