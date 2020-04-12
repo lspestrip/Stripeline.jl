@@ -80,7 +80,7 @@ import Dates
 
 export TENERIFE_LATITUDE_DEG, TENERIFE_LONGITUDE_DEG, TENERIFE_HEIGHT_M
 export timetorotang, telescopetoground, groundtoearth
-export genpointings, polarizationangle
+export genpointings, northdir, eastdir, polarizationangle
 
 const TENERIFE_LATITUDE_DEG = 28.3
 const TENERIFE_LONGITUDE_DEG = -16.509722
@@ -203,29 +203,50 @@ end
 
 
 """
-    polarizationangle(northdir, poldir)
+    polarizationangle(northdir, eastdir, poldir)
 
 Calculate the polarization angle projected in the sky in IAU
 conventions.  The parameter `northdir` must be a versor that points
 the North and `poldir` must be a versor that identify the polarization
 direction projected in the sky.  The return value is in radians.
+
+# Examples
+```jldoctest
+julia> polarizationangle([0, 0, 1], [0, 1, 0], [0, 1, 0])
+0.0
+julia> polarizationangle([0, 0, 1], [0, 1, 0], [0, 0, 1]) |> rad2deg
+90.0
+julia> polarizationangle([0, 0, 1], [0, 1, 0], [0, 0, -1]) |> rad2deg
+-90.0
+```
 """
-function polarizationangle(northdir, poldir)
-    cosψ = clamp(dot(northdir, poldir), -1, 1)
-    crosspr = northdir × poldir
-    sinψ = clamp(sqrt(dot(crosspr, crosspr)), -1, 1)
-    ψ = atan(sinψ, cosψ)
-    ψ
+function polarizationangle(northdir, eastdir, poldir)
+    cosψ = clamp(dot(eastdir, poldir), -1, 1)
+    sinψ = clamp(dot(northdir, poldir), -1, 1)
+    atan(sinψ, cosψ)
 end
 
 
-"""
-    get_northdir(θ, ϕ)
+northdir(θ, ϕ) = StaticArrays.@SArray [-cos(θ) * cos(ϕ), -cos(θ) * sin(ϕ), sin(θ)]
+eastdir(θ, ϕ) = StaticArrays.@SArray [cos(ϕ), -sin(ϕ), 0.0]
 
-Compute the North of a vector. The North for a vector v is -dv/dθ, as
-θ is the colatitude and moves along the meridian.
 """
-get_northdir(θ, ϕ) = StaticArrays.@SArray [-cos(θ) * cos(ϕ), -cos(θ) * sin(ϕ), sin(θ)]
+    northdir(θ, ϕ)
+    eastdir(θ, ϕ)
+
+Compute the North/East versor for a vector. The North for a vector v
+is -dv/dθ, as θ is the colatitude and moves along the meridian, and
+the East is dv/dϕ.
+
+# Examples
+```jldoctest
+julia> northdir(π/2, 0) ≈ [0, 0, 1]
+true
+julia> eastdir(π/2, 0) ≈ [1, 0, 0]
+true
+```
+"""
+northdir, eastdir
 
 
 """
@@ -245,8 +266,9 @@ function quat_to_angles(boreaxis, polaxis, quat)
 
     (θ, ϕ) = Healpix.vec2ang(boresight...)
 
-    northdir = get_northdir(θ, ϕ)
-    (θ, ϕ, polarizationangle(northdir, poldir))
+    north = northdir(θ, ϕ)
+    east = eastdir(θ, ϕ)
+    (θ, ϕ, polarizationangle(north, east, poldir))
 end
 
 
@@ -324,11 +346,12 @@ function genpointings(wheelanglesfn,
                                             refract)
 
         poldir = rotmatr * polaxis
-        northdir = get_northdir(π / 2 - Dec_rad, Ra_rad)
+        north = northdir(π / 2 - Dec_rad, Ra_rad)
+        east = eastdir(π / 2 - Dec_rad, Ra_rad)
         
         skydirs[idx, 1] = Dec_rad
         skydirs[idx, 2] = Ra_rad
-        skyψ[idx] = polarizationangle(northdir, poldir)
+        skyψ[idx] = polarizationangle(north, east, poldir)
     end
 
     (skydirs, skyψ)
