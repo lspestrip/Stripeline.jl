@@ -18,19 +18,23 @@ crab_dec_astropy_rad = 0.3842255081802917
 crab_position = sqrt(crab_ra_astropy_rad^2 + crab_dec_astropy_rad^2)
 
 # Invert Crab coordinates into telescope pointing directions
-groundq = telescopetoground(_->(0, deg2rad(20), 0), 0)
+groundq = telescopetoground(_ -> (0, deg2rad(20), 0), 0)
 rotmatr = rotationmatrix_normalized(groundq)
 vector = Healpix.ang2vec(dirs...)
 dir = inv(rotmatr) * vector
 
 # Compute skydirs
-(skydirs, skyψ) = genpointings(_->(0, deg2rad(20), 0),
+(skydirs, skyψ) = genpointings(_ -> (0, deg2rad(20), 0),
                                dir, 
                                [0],
                                t_start, 
                                latitude_deg = TENERIFE_LATITUDE_DEG,
                                longitude_deg = TENERIFE_LONGITUDE_DEG,
-                               height_m = TENERIFE_HEIGHT_M)
+                               height_m = TENERIFE_HEIGHT_M,
+                               precession = true,
+                               nutation = true,
+                               aberration = true,
+                               refraction = true)
 crab_position_skydirs = sqrt(skydirs[1]^2 + skydirs[2]^2)
 @test skydirs[1] ≈ crab_dec_astropy_rad atol = eps
 @test skydirs[2] ≈ crab_ra_astropy_rad atol = eps
@@ -56,13 +60,17 @@ for (idx, day) in enumerate(days)
     vector = Healpix.ang2vec(dirs[idx, 1], dirs[idx, 2])
     dir = inv(rotmatr) * vector
 
-    (skydirections, skyψ) = genpointings(_->(0, deg2rad(20), 0),
+    (skydirections, skyψ) = genpointings(_ -> (0, deg2rad(20), 0),
                                          dir, 
                                          [0], 
                                          day, 
                                          latitude_deg = TENERIFE_LATITUDE_DEG,
                                          longitude_deg = TENERIFE_LONGITUDE_DEG,
-                                         height_m = TENERIFE_HEIGHT_M)
+                                         height_m = TENERIFE_HEIGHT_M,
+                                         precession = true,
+                                         nutation = true,
+                                         aberration = true,
+                                         refraction = true)
 
     skydirs[idx, 1] = skydirections[1]
     skydirs[idx, 2] = skydirections[2]
@@ -93,9 +101,7 @@ times = 0:τ_s:time_duration
 (dirs, ψ) = genpointings(db.focalplane["I0"].orientation, 
                          times; 
                          latitude_deg = TENERIFE_LATITUDE_DEG) do time_s
-    (0,
-                              deg2rad(20.0),
-                              Sl.timetorotang(time_s, spin_velocity))
+    (0, deg2rad(20.0), Sl.timetorotang(time_s, spin_velocity))
 end
 
 expected_nsamples = convert(Int, time_duration * sampling_rate + 1)
@@ -106,9 +112,7 @@ expected_nsamples = convert(Int, time_duration * sampling_rate + 1)
                          times;
                          ground = true,
                          latitude_deg = TENERIFE_LATITUDE_DEG) do time_s
-    (0,
-                              deg2rad(20.0),
-                              Sl.timetorotang(time_s, spin_velocity))
+    (0, deg2rad(20.0), Sl.timetorotang(time_s, spin_velocity))
 end
 
 expected_nsamples = convert(Int, time_duration * sampling_rate + 1)
@@ -118,7 +122,7 @@ expected_nsamples = convert(Int, time_duration * sampling_rate + 1)
 # Check that all the values in the 3rd column are the same
 @test dirs[1:end - 1, 3] ≈ dirs[2:end, 3]
 
-# We strieve for an accuracy of a few arcseconds
+# We strive for an accuracy of a few arcseconds
 @test rad2deg(dirs[1, 3]) ≈ 20.0 atol = 1e-3
 
 ################################################################################
