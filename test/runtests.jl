@@ -1,5 +1,11 @@
 using Test
 using Stripeline
+using Documenter
+
+@testset "Doctests" begin
+    DocMeta.setdocmeta!(Stripeline, :DocTestSetup, :(using Stripeline); recursive=true)
+    doctest(Stripeline, manual = false)
+end
 
 @testset "Instrument database" begin
     include("instrumentdb_tests.jl")
