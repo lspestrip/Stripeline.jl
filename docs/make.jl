@@ -6,6 +6,8 @@ push!(LOAD_PATH, joinpath("..", "src"))
 
 using Documenter, Stripeline
 
+DocMeta.setdocmeta!(Stripeline, :DocTestSetup, :(using Stripeline); recursive=true)
+
 makedocs(
     modules = [Stripeline],
     format = Documenter.HTML(
