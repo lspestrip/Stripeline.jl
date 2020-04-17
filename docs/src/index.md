@@ -12,7 +12,7 @@ LSPE/STRIP instrument.
 To install Stripeline, start Julia and type the following command:
 ```julia
 using Pkg
-Pkg.add("https://github.com/lspestrip/Stripeline")
+Pkg.add(PackageSpec(url="https://github.com/lspestrip/Stripeline"))
 ```
 
 To run the test suite, type the following command:

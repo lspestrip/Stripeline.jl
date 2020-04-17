@@ -20,8 +20,8 @@ functions:
    [`deltatrj_to_deltat`](@ref)
 
 The function [`sensitivity_tant`](@ref) computes the overall
-sensitivity of a set of polarimeters, using information from the
-[Instrument database](@ref).
+sensitivity of a set of polarimeters, using information from [The
+Strip Instrument Database](@ref).
 
 ```@docs
 sensitivity_tant
