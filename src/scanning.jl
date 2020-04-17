@@ -176,7 +176,7 @@ end
 
 
 """
-    vector2equatorial(dir, jd, latitude_deg, longitude_deg, height_m; 
+    vector2equatorial(dir, jd, latitude_deg, longitude_deg, height_m;
                       prec=true, nut=true, aber=true)
 
 Transform the Healpix coordinates of a vector into equatorial coordinates.
@@ -185,7 +185,7 @@ paramters `latitude_deg`, `longitude_deg` and `height_m` should contain the
 latitude (in degrees, N is positive), the longitude (in degrees, counterclockwise
 is positive) and the height (in meters) of the location where the observation is
 made. The parameters `prec`, `nut` and `aber` allow to consider secondary effects
-respectively of precession, nutation and aberration. 
+respectively of precession, nutation and aberration.
 """
 function vector2equatorial(vector, jd, latitude_deg, longitude_deg, height_m,
                            prec, nut, aber, ref)
@@ -220,7 +220,6 @@ etc.
 
 # Examples
 ```jldoctest
-julia> using Stripeline
 julia> polarizationangle([0, 0, 1], [0, 1, 0], [0, 1, 0])
 0.0
 julia> polarizationangle([0, 0, 1], [0, 1, 0], [0, 0, 1]) |> rad2deg
@@ -249,7 +248,6 @@ the meridian, and the East is along dv/dϕ.
 
 # Examples
 ```jldoctest
-julia> using Stripeline
 julia> northdir(π/2, 0) ≈ [0, 0, 1]
 true
 julia> eastdir(π/2, 0) ≈ [0, 1, 0]
@@ -361,7 +359,7 @@ end
 function genpointings!(wheelanglesfn,
                        beam_dir,
                        timerange_s,
-                       t_start,
+                       t_start::Dates.DateTime,
                        skydirs,
                        skypsi;
                        polaxis = Float64[1.0, 0.0, 0.0],
@@ -396,25 +394,35 @@ function genpointings!(wheelanglesfn,
         poldir = rotmatr * polaxis
         north = northdir(π / 2 - Dec_rad, Ra_rad)
         east = eastdir(π / 2 - Dec_rad, Ra_rad)
-        
+
         skydirs[idx, 1] = Dec_rad
         skydirs[idx, 2] = Ra_rad
         skypsi[idx] = polarizationangle(north, east, poldir)
     end
 end
 
+function genpointings!(wheelanglesfn,
+                       beam_dir,
+                       timerange_s,
+                       t_start::Number,
+                       skydirs,
+                       skypsi;
+                       kwargs...)
+    genpointings!(
+        wheelanglesfn,
+        beam_dir,
+        timerange_s,
+        AstroLib.daycnv(t_start)::Dates.DateTime,
+        skydirs,
+        skypsi,
+        kwargs...)
+end
+
 function genpointings(wheelanglesfn,
                       beam_dir,
                       timerange_s,
-                      t_start;
-                      polaxis = Float64[1.0, 0.0, 0.0],
-                      latitude_deg = TENERIFE_LATITUDE_DEG,
-                      longitude_deg = TENERIFE_LONGITUDE_DEG,
-                      height_m = TENERIFE_HEIGHT_M,
-                      precession = true,
-                      nutation = true,
-                      aberration = true,
-                      refraction = false)
+                      t_start::Dates.DateTime;
+                      kwargs...)
 
     skydirs = Array{Float64}(undef, length(timerange_s), 2)
     skypsi = Array{Float64}(undef, length(timerange_s))
@@ -425,47 +433,52 @@ function genpointings(wheelanglesfn,
         timerange_s,
         t_start,
         skydirs,
-        skypsi,
-        polaxis = polaxis,
-        latitude_deg = latitude_deg,
-        longitude_deg = longitude_deg,
-        height_m = height_m,
-        precession = precession,
-        nutation = nutation,
-        aberration = aberration,
-        refraction = refraction,
-    )
+        skypsi;
+        kwargs...)
 
     (skydirs, skypsi)
 end
 
+function genpointings(wheelanglesfn,
+                       beam_dir,
+                       timerange_s,
+                       t_start::Number;
+                       kwargs...)
+    genpointings(
+        wheelanglesfn,
+        beam_dir,
+        timerange_s,
+        AstroLib.daycnv(t_start)::Dates.DateTime;
+        kwargs...)
+end
+
 
 @doc raw"""
-    genpointings!(wheelanglesfn, beam_dir, timerange_s, dirs, psi; 
+    genpointings!(wheelanglesfn, beam_dir, timerange_s, dirs, psi;
                   polaxis = Float64[1.0, 0.0, 0.0],
-                  latitude_deg = TENERIFE_LATITUDE_DEG, 
+                  latitude_deg = TENERIFE_LATITUDE_DEG,
                   ground = false)
-    genpointings(wheelanglesfn, beam_dir, timerange_s; 
+    genpointings(wheelanglesfn, beam_dir, timerange_s;
                  polaxis = Float64[1.0, 0.0, 0.0],
                  latitude_deg = TENERIFE_LATITUDE_DEG,
                  ground = false)
     genpointings!(wheelanglesfn, beam_dir, timerange_s, t_start, dirs, psi;
                   polaxis = Float64[1.0, 0.0, 0.0],
-                  latitude_deg = TENERIFE_LATITUDE_DEG, 
+                  latitude_deg = TENERIFE_LATITUDE_DEG,
                   longitude_deg = TENERIFE_LONGITUDE_DEG,
                   height_m = TENERIFE_HEIGHT_M,
                   precession = true,
-                  nutation = true, 
-                  aberration = true, 
+                  nutation = true,
+                  aberration = true,
                   refraction = true)
     genpointings(wheelanglesfn, beam_dir, timerange_s, t_start;
                  polaxis=Float64[1.0, 0.0, 0.0],
-                 latitude_deg=TENERIFE_LATITUDE_DEG, 
+                 latitude_deg=TENERIFE_LATITUDE_DEG,
                  longitude_deg=TENERIFE_LONGITUDE_DEG,
                  height_m=TENERIFE_HEIGHT_M,
                  precession = true,
-                 nutation = true, 
-                 aberration = true, 
+                 nutation = true,
+                 aberration = true,
                  refraction = true)
 
 Generate a set of pointing directions for a STRIP detector. Each
@@ -495,16 +508,24 @@ The meaning of the parameters/keywords is the following:
 - `timerange_s` is an enumerable type that specifies at which times
   (in seconds) pointings must be computed.
 
-- `t_start` is a DateTime which tells the exact UTC date and time of the 
-  observation.
+- `t_start` is a DateTime object or a Julian date, which specifies the
+  UTC date and time when the observation starts
 
 - `latitude_deg` is the latitude of the location where the observation
-  is made (in degrees, North is positive).
+  is made (in degrees, North is positive). The default value is
+  [`TENERIFE_LATITUDE_DEG`](@ref).
 
-- `ground` is a Boolean: if `true`, the function will return a 4-tuple
-  containing the colatitude and longitude measured in Equatorial
-  coordinates (columns 1 and 2) and in ground coordinates (columns 3
-  and 4). If false, only the Equatorial coordinates are computed.
+- `longitude_deg` is the longitude of the location where the
+  observation is made. The default value is
+  [`TENERIFE_LONGITUDE_DEG`](@ref).
+
+- `height_m` is the elevation of the location where the observation is
+  made (in meters). The default value is [`TENERIFE_HEIGHT_M`](@ref).
+
+- If `ground` is `true`, the function will return a 4-tuple containing
+  the colatitude and longitude measured in Equatorial coordinates
+  (columns 1 and 2) and in ground coordinates (columns 3 and 4). If
+  `ground` is `false`, only the Equatorial coordinates are computed.
 
 - `polaxis` is the polarization axis; it must be normalized.
 
