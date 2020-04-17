@@ -4,23 +4,22 @@
 [![](https://img.shields.io/badge/docs-latest-blue.svg)](https://lspestrip.github.io/Stripeline.jl/latest)
 [![Coverage Status](https://img.shields.io/coveralls/lspestrip/Stripeline.jl.svg)](https://coveralls.io/r/lspestrip/Stripeline.jl?branch=master)
 
-Next generation of the STRIP pipeline, written in [Julia](https://julialang.org)
-(see [here](https://github.com/lspestrip/stipelinepy) for the previous version,
-written in Python).
+This repository contains the LSPE/Strip simulation pipeline. LSPE/Strip is
+a CMB microwave telescope to be installed at the Teide Observatory in
+Tenerife. Stripeline is an instrument simulator that models the scanning
+strategy of the telecope and the response of the detectors, up to the creation
+of frequency maps.
 
-Early in 2018, we decided to rewrite the STRIP simulation pipeline in Julia
-because of the following issues with the old version:
+Stripeline is written in [Julia](https://julialang.org). The current version
+requires Julia 1.3 or higher.
 
-1. Significant amount of memory was required
-2. Code was quite verbose
-3. In order to improve the execution speed, we had to implement a few
-   routines in Fortran: this meant that the code was harder to read,
-   as knowledge of two languages (Fortran+Python) was required.
+## Installation and usage
 
-This new version of the pipeline should require less memory and perform somewhat
-faster, although full-scale benchmarks have yet to be done. It is far more
-advanced than the older pipeline, as the instrument database is updated and a
-destriper is already implemented.
+See the [documentation](https://lspestrip.github.io/Stripeline.jl/latest).
+
+## License
+
+Stripeline is released under the MIT license.
 
 ## How to contribute
 
