@@ -220,6 +220,7 @@ etc.
 
 # Examples
 ```jldoctest
+julia> using Stripeline
 julia> polarizationangle([0, 0, 1], [0, 1, 0], [0, 1, 0])
 0.0
 julia> polarizationangle([0, 0, 1], [0, 1, 0], [0, 0, 1]) |> rad2deg
@@ -236,21 +237,22 @@ end
 
 
 northdir(θ, ϕ) = StaticArrays.@SArray [-cos(θ) * cos(ϕ), -cos(θ) * sin(ϕ), sin(θ)]
-eastdir(θ, ϕ) = StaticArrays.@SArray [cos(ϕ), -sin(ϕ), 0.0]
+eastdir(θ, ϕ) = StaticArrays.@SArray [-sin(ϕ), cos(ϕ), 0.0]
 
 """
     northdir(θ, ϕ)
     eastdir(θ, ϕ)
 
 Compute the North/East versor for a vector. The North for a vector v
-is -dv/dθ, as θ is the colatitude and moves along the meridian, and
-the East is dv/dϕ.
+is along the direction -dv/dθ, as θ is the colatitude and moves along
+the meridian, and the East is along dv/dϕ.
 
 # Examples
 ```jldoctest
+julia> using Stripeline
 julia> northdir(π/2, 0) ≈ [0, 0, 1]
 true
-julia> eastdir(π/2, 0) ≈ [1, 0, 0]
+julia> eastdir(π/2, 0) ≈ [0, 1, 0]
 true
 ```
 """
@@ -264,6 +266,11 @@ Transform the boresight direction `dir` and the polarization direction
 `poldir` according to quaternion `quat`. Return the 3-tuple (θ, ϕ, ψ)
 representing the colatitude, longitude, and polarization angle
 (calculated northward).
+
+*Warning:* the definition of polarization angle does not work if the
+observer is at the North or South Pole of the coordinate system. This
+means that the polarization angle is not valid if the quaternion is
+expressed in the ground reference system.
 
 This function is used internally by [`genpointings`](@ref).
 """
