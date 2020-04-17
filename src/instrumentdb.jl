@@ -145,7 +145,7 @@ end
 
 RecipesBase.@recipe function plot(band::BandshapeInfo; show_error = true, show_centerfreq = false)
     seriestype --> :path
-    xlabel --> "Frequency [GHz]"
+    xguide --> "Frequency [GHz]"
 
     if show_centerfreq
         RecipesBase.@series begin

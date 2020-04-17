@@ -1,5 +1,7 @@
 # HEAD
 
+- Allow Julian Dates in `genpointings`
+  ([45](https://github.com/lspestrip/Stripeline.jl/pull/45))
 - (**Breaking change**) Drop support for Julia 1.0, 1.1, and 1.2
 - (**Breaking change**) Several changes to `genpointings`
   ([#44](https://github.com/lspestrip/Stripeline.jl/pull/44)):
