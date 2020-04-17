@@ -9,18 +9,26 @@ using Documenter, Stripeline
 makedocs(
     modules = [Stripeline],
     format = Documenter.HTML(
-        prettyurls = get(ENV, "CI", nothing) == "true"
+        assets = [
+            Documenter.asset("https://threejs.org/build/three.js"),
+            #joinpath("assets", "three.min.js"),
+            joinpath("assets", "OrbitControls.js"),
+        ],
+        prettyurls = get(ENV, "CI", nothing) == "true",
     ),
     sitename = "Stripeline.jl",
     pages = [
         "Introduction" => "index.md",
+        "Tutorial" => "tutorial.md",
         "Basic functions" => "basic.md",
         "Instrument database" => "instrumentdb.md",
         "Scanning strategy" => "scanning.md",
         "Data acquisition" => "acquisition.md",
         "Map making" => "mapmaking.md",
-	    "Simulation tutorial" => "simulation_tutorial.md",
-    ])
+	"Full-scale simulation tutorial" => "simulation_tutorial.md",
+    ],
+    debug = true,
+)
 
 deploydocs(
     repo = "github.com/lspestrip/Stripeline.jl.git",
