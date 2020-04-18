@@ -288,7 +288,7 @@ To specify times, you can use the functions `jdcnv` and `daycnv` from
 ```@example scanningstrategy
 using AstroLib, Dates
 
-# Convert the date January, 1st 2022, 15:00:00 to a Julian date
+# Assume that the simulation starts on January, 1st 2022, 15:00:00
 start_day = DateTime(2022, 1, 1, 15, 0, 0))
 
 println("The simulation starts from JD $start_day")
