@@ -2,18 +2,18 @@ if Base.HOME_PROJECT[] !== nothing
     Base.HOME_PROJECT[] = abspath(Base.HOME_PROJECT[])
 end
 
-push!(LOAD_PATH, joinpath("..", "src"))
+library_path = joinpath("..", "src")
+(library_path in LOAD_PATH) || push!(LOAD_PATH, library_path)
 
 using Documenter, Stripeline
+
+DocMeta.setdocmeta!(Stripeline, :DocTestSetup, :(using Stripeline); recursive=true)
+
+ENV["GKSwstype"] = "100"  # Disable display of plots
 
 makedocs(
     modules = [Stripeline],
     format = Documenter.HTML(
-        assets = [
-            Documenter.asset("https://threejs.org/build/three.js"),
-            #joinpath("assets", "three.min.js"),
-            joinpath("assets", "OrbitControls.js"),
-        ],
         prettyurls = get(ENV, "CI", nothing) == "true",
     ),
     sitename = "Stripeline.jl",

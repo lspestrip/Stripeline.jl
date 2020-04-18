@@ -246,8 +246,10 @@ end
 # Save the result into an animated GIF file, with 10 frames per second.
 # As one frame in our animation lasts one minute, this means that each
 # second in the animation corresponds to 10 minutes
-gif(anim, "scanning-animation.gif", fps = 10)
+gif(anim, "scanning-animation.gif", fps = 10);
 ```
+
+![](scanning-animation.gif)
 
 Note that most of the pixels are observed a few times, but those on
 the uppermost and lowermost part of the strip have a much higher hit
