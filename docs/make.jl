@@ -8,6 +8,8 @@ using Documenter, Stripeline
 
 DocMeta.setdocmeta!(Stripeline, :DocTestSetup, :(using Stripeline); recursive=true)
 
+ENV["GKSwstype"] = "100"  # Disable display of plots
+
 makedocs(
     modules = [Stripeline],
     format = Documenter.HTML(
