@@ -2,7 +2,8 @@ if Base.HOME_PROJECT[] !== nothing
     Base.HOME_PROJECT[] = abspath(Base.HOME_PROJECT[])
 end
 
-push!(LOAD_PATH, joinpath("..", "src"))
+library_path = joinpath("..", "src")
+(library_path in LOAD_PATH) || push!(LOAD_PATH, library_path)
 
 using Documenter, Stripeline
 
