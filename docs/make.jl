@@ -14,11 +14,6 @@ ENV["GKSwstype"] = "100"  # Disable display of plots
 makedocs(
     modules = [Stripeline],
     format = Documenter.HTML(
-        assets = [
-            Documenter.asset("https://threejs.org/build/three.js"),
-            #joinpath("assets", "three.min.js"),
-            joinpath("assets", "OrbitControls.js"),
-        ],
         prettyurls = get(ENV, "CI", nothing) == "true",
     ),
     sitename = "Stripeline.jl",
