@@ -8,5 +8,6 @@ include("tod_splitter.jl")
 include("DBforsimulation.jl")
 include("noisegeneration.jl")
 include("adc.jl")
+include("atmosphere.jl")
 
 end
