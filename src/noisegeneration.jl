@@ -52,8 +52,8 @@ function generate_noisechunks_to_send(chunks, baseline_length_s, fsamp_hz, total
             rank_it = i - 1
             for j in 1:length(chunks[i]) #loop on detectors per rank
                 if chunks[i][j].pol_number == pol_cur_rank #if cur_rank is going to produce noise for the "correct" polarimeter
-                    first_idx = (chunks[i][j].first_idx - 1) * baseline_length_s * fsamp_hz + 1
-                    last_idx = first_idx + chunks[i][j].num_of_elements * baseline_length_s * fsamp_hz - 1
+                    first_idx = round(Int64, (chunks[i][j].first_idx - 1) * baseline_length_s * fsamp_hz + 1)
+                    last_idx = round(Int64, first_idx + chunks[i][j].num_of_elements * baseline_length_s * fsamp_hz - 1)
                     dest_rank = rank_it
                     chunk = chunk_to_send(pol_cur_rank, first_idx, last_idx, dest_rank)
                     chunk_cur_rank = append!(chunk_cur_rank, [chunk])
@@ -115,7 +115,7 @@ The function behaves differently according to the number of processes used:
 N.B. if you want to use this function without MPI, remember to put rank = 0 and comm = nothing
 
 """
-function  generate_noise_mpi(
+function generate_noise_mpi(
     chunks,
     baselines_per_process,
     baseline_length_s,
@@ -160,7 +160,7 @@ function  generate_noise_mpi(
         ##### NOISE PRODUCTION #####
         pol_number = rank + 1 
         pol_noise = Float64[]
-        noise = Array{Float64}(undef, baselines_per_process[rank + 1] * baseline_length_s * fsamp_hz)    
+        noise = Array{Float64}(undef, round(Int, baselines_per_process[rank + 1] * baseline_length_s * fsamp_hz))
         
         if  0 <= rank < total_number_of_polarimeters  #if first "total_number_of_polarimeters" ranks
             rng = CorrNoise.OofRNG(Random.MersenneTwister(seeds[pol_number]), -abs(slope[pol_number]), 1.15e-5, fknee_hz[pol_number], fsamp_hz)

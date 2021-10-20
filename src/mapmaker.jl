@@ -72,12 +72,18 @@ It returns an array of `TodNoiseProperties`, of length equal to the number of po
 """
 function build_noise_properties(detector_list, rms_list, num_of_baselines, num_of_samples)
     @assert length(detector_list) == length(rms_list)
+    @assert length(detector_list) == length(num_of_baselines)
+    @assert length(detector_list) == length(num_of_samples)
 
     data_properties  = Array{TodNoiseProperties}(undef, length(detector_list))
     for i in 1:length(detector_list)
         # We use baselines of equal lengths
-        baseline_lengths  = repeat([Int64(num_of_samples[i] / num_of_baselines[i])], num_of_baselines[i])
-        data_properties[i] = TodNoiseProperties(detector_list[i], rms_list[detector_list[i]], num_of_samples[i], baseline_lengths)
+        baseline_lengths  = repeat([Int(num_of_samples[i] / num_of_baselines[i])], num_of_baselines[i])
+        data_properties[i] = TodNoiseProperties(
+            pol = detector_list[i],
+            rms = rms_list[detector_list[i]],
+            baselines = baseline_lengths,
+        )
     end
     data_properties
 end
@@ -96,7 +102,7 @@ communicator, or `nothing` if you are not using MPI.
 
 If `comm` is not `nothing`, the function is parallelized using MPI, and
 each process computes a map from its available data.  All partial maps
-are then combined together with `MPI.allreduce`. The function returns
+are then combined together with `MPI.Allreduce`. The function returns
 an array containing the binned map.
 
 If Array of structures `TodNoiseProperties`is passed to the function, the
@@ -126,8 +132,8 @@ function tod2map_mpi(pix_idx, tod, num_of_pixels; comm = nothing, unseen = NaN)
     end
 
     if comm != nothing
-        binned_map = MPI.allreduce(partial_map, MPI.SUM, comm)
-        hits = MPI.allreduce(partial_hits, MPI.SUM, comm)
+        binned_map = MPI.Allreduce(partial_map, MPI.SUM, comm)
+        hits = MPI.Allreduce(partial_hits, MPI.SUM, comm)
     else
         binned_map .= partial_map
         hits .= partial_hits
@@ -166,8 +172,8 @@ function tod2map_mpi(pix_idx, tod, num_of_pixels, data_properties; comm = nothin
     end
 
     if comm != nothing
-        binned_map = MPI.allreduce(partial_map, MPI.SUM, comm)
-        hits = MPI.allreduce(partial_hits, MPI.SUM, comm)
+        binned_map = MPI.Allreduce(partial_map, MPI.SUM, comm)
+        hits = MPI.Allreduce(partial_hits, MPI.SUM, comm)
     else
         binned_map .= partial_map
         hits .= partial_hits
@@ -190,7 +196,7 @@ end
 
 This is a MPI based function: each MPI process computes a map from its
 available data.  All partial maps are then combined together with
-MPI.allreduce.
+MPI.Allreduce.
 The function returns an array containing the binned map.
 
 If Array of structures `TodNoiseProperties`is passed to the function (instead of `baseline_lengths`) the output binned map will be a weighted binned map.
@@ -228,8 +234,8 @@ function baseline2map_mpi(pix_idx, baselines, baseline_lengths, num_of_pixels; c
     end
 
     if comm != nothing
-        noise_map = MPI.allreduce(partial_map, MPI.SUM, comm)
-        hits = MPI.allreduce(partial_hits, MPI.SUM, comm)
+        noise_map = MPI.Allreduce(partial_map, MPI.SUM, comm)
+        hits = MPI.Allreduce(partial_hits, MPI.SUM, comm)
     else
 
         noise_map .= partial_map
@@ -273,8 +279,8 @@ function baseline2map_mpi(pix_idx, baselines, num_of_pixels, data_properties, nu
     end
 
     if comm != nothing
-        noise_map = MPI.allreduce(partial_map, MPI.SUM, comm)
-        hits = MPI.allreduce(partial_hits, MPI.SUM, comm)
+        noise_map = MPI.Allreduce(partial_map, MPI.SUM, comm)
+        hits = MPI.Allreduce(partial_hits, MPI.SUM, comm)
     else
 
         noise_map .= partial_map
@@ -358,7 +364,7 @@ function applya(baselines, pix_idx, num_of_baselines, num_of_pixels, data_proper
     #needed to assure that sum(baselines)==0
 
     if comm != nothing
-        total_sum = MPI.allreduce([sum(baselines)], MPI.SUM, comm)[1]
+        total_sum = MPI.Allreduce([sum(baselines)], MPI.SUM, comm)[1]
     else
         total_sum = sum(baselines)
     end
@@ -374,7 +380,7 @@ function mpi_dot_prod(x, y; comm = nothing)
     local_sum::eltype(x) = dot(x, y)
 
     if comm != nothing
-        result = MPI.allreduce([local_sum], MPI.SUM, comm)[1]
+        result = MPI.Allreduce([local_sum], MPI.SUM, comm)[1]
     else
         result = local_sum
     end
@@ -391,7 +397,8 @@ mutable struct DestripingResults
     best_sky_map::Any
     baseline_history::Any
 
-    DestripingResults() = new(1e-9,
+    DestripingResults() = new(
+        1e-9,
         1000,
         Float64[],
         -1,
@@ -401,11 +408,20 @@ mutable struct DestripingResults
     )
 end
 
-function conj_grad(results::DestripingResults,
-    baselines_sum, pix_idx, tod,
-    num_of_pixels, data_properties,
-    num_of_baselines, rank; comm = nothing,
-    save_baseline_history = false)
+
+function conj_grad(
+    results::DestripingResults,
+    baselines_sum,
+    pix_idx,
+    tod,
+    num_of_pixels,
+    data_properties,
+    num_of_baselines,
+    rank;
+    comm = nothing,
+    save_baseline_history = false,
+    callback = nothing,
+)
 
     T = eltype(tod)
     N = eltype(pix_idx)
@@ -459,7 +475,14 @@ function conj_grad(results::DestripingResults,
             results.best_iteration = iter_idx
         end
 
-        (convergence_parameter < results.threshold) || (iter_idx > results.max_iter) && break
+        isnothing(callback) || callback(
+            iter_idx = iter_idx,
+            max_iter = results.max_iter,
+            convergence_parameter = convergence_parameter,
+            convergence_threshold = results.threshold,
+        )
+        
+        ((convergence_parameter < results.threshold) || (iter_idx > results.max_iter)) && break
 
         beta = rdotr_next / rdotr
 
@@ -525,8 +548,19 @@ convergence of the CG algorithm.
 - The length of the arrays `pix_idx` and `tod` must be the same;
 - If you do not specify `comm`, no MPI will be used
 """
-function destripe(pix_idx, tod, num_of_pixels, data_properties, rank; comm = nothing,
-                 threshold = 1e-9, max_iter = 10000, save_baseline_history = false, unseen = NaN)
+function destripe(
+    pix_idx,
+    tod,
+    num_of_pixels,
+    data_properties,
+    rank;
+    comm = nothing,
+    threshold = 1e-9,
+    max_iter = 1_000,
+    save_baseline_history = false,
+    unseen = NaN,
+    callback = nothing,
+)
 
     @assert length(pix_idx) == length(tod)
 
@@ -548,7 +582,8 @@ function destripe(pix_idx, tod, num_of_pixels, data_properties, rank; comm = not
     results.threshold = threshold
     results.max_iter = max_iter
 
-    conj_grad(results,
+    conj_grad(
+        results,
         baselines_sum,
         pix_idx,
         tod,
@@ -557,7 +592,9 @@ function destripe(pix_idx, tod, num_of_pixels, data_properties, rank; comm = not
         num_of_baselines,
         rank,
         comm = comm,
-        save_baseline_history = save_baseline_history)
+        save_baseline_history = save_baseline_history,
+        callback = callback,
+    )
 
     # once we have an estimate of the baselines, we can build the destriped map
     results.best_sky_map = destriped_map(results.best_baselines,
