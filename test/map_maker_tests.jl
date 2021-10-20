@@ -103,11 +103,11 @@ data_properties = [
 pix_idx = Int64[]
 
 for i in 1:2  #loop on detectors
-    times = 0.0:tau_s:total_time - tau_s
-    (dirs, ψ) = genpointings([0.,0.,1.], times; latitude_deg = 28.29) do time_s
+    local times = 0.0:tau_s:total_time - tau_s
+    local (dirs, ψ) = genpointings([0.,0.,1.], times; latitude_deg = 28.29) do time_s
         return (0.0, deg2rad(20.0), timetorotang(time_s, 1.))
     end
-    partial_pix_idx = Healpix.ang2pixRing.(Ref(Healpix.Resolution(NSIDE)), dirs[:, 1], dirs[:, 2])
+    local partial_pix_idx = Healpix.ang2pixRing.(Ref(Healpix.Resolution(NSIDE)), dirs[:, 1], dirs[:, 2])
     global pix_idx = append!(pix_idx, partial_pix_idx)
 end
 
@@ -152,13 +152,13 @@ data_properties = [
 pix_idx = Int64[]
 
 for i in 1:1  #loop on detectors
-    times = 0.0:tau_s:total_time - tau_s
+    local times = 0.0:tau_s:total_time - tau_s
 
-    (dirs, ψ) = genpointings([0.,0.,1.], times; latitude_deg = 28.29) do time_s
+    local (dirs, ψ) = genpointings([0.,0.,1.], times; latitude_deg = 28.29) do time_s
         return (0.0, deg2rad(20.0), timetorotang(time_s, 1.))
     end
 
-    partial_pix_idx = Healpix.ang2pixRing.(Ref(Healpix.Resolution(NSIDE)), dirs[:, 1], dirs[:, 2])
+    local partial_pix_idx = Healpix.ang2pixRing.(Ref(Healpix.Resolution(NSIDE)), dirs[:, 1], dirs[:, 2])
     global pix_idx = append!(pix_idx, partial_pix_idx)
 
 end
