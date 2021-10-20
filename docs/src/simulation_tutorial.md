@@ -1,8 +1,12 @@
 # Simulation tutorial
 
-This aim of this tutorial is to describe how you can use the functions
-of Stripeline repository to perform a complete simulation of the
+The aim of this tutorial is to describe how you can use the functions
+provided by Stripeline to perform a complete simulation of the
 LSPE/STRIP experiment.
+
+**Caution**: this page contains some syntax that has been superseded.
+Refer to the file `examples/e2e_simulation.jl` for an updated version
+of this example that runs under Julia 1.6.
 
 So far, the simulation includes:
 
