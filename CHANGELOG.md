@@ -1,5 +1,6 @@
 # HEAD
 
+-   Make the destriper more robust against numeric types ([#49](https://github.com/lspestrip/Stripeline.jl/pull/49))
 -   Move from Travis to GitHub Actions ([#48](https://github.com/lspestrip/Stripeline.jl/pull/48))
 
 # Version 0.5.0
