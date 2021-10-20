@@ -27,7 +27,7 @@ crab_position = sqrt(crab_ra_astropy_rad^2 + crab_dec_astropy_rad^2)
 # Invert Crab coordinates into telescope pointing directions
 groundq = telescopetoground(_ -> (0, deg2rad(20), 0), 0)
 rotmatr = rotationmatrix_normalized(groundq)
-vector = Healpix.ang2vec(dirs...)
+vector = Float64[Healpix.ang2vec(dirs...)...]
 dir = inv(rotmatr) * vector
 
 # Compute skydirs
@@ -80,20 +80,22 @@ crab_position = sqrt(crab_ra_astropy_rad^2 + crab_dec_astropy_rad^2)
 # Invert crab coordinates into telescope pointing directions
 skydirs = Array{Float64}(undef, 3, 2)
 for (idx, day) in enumerate(days)
-    vector = Healpix.ang2vec(dirs[idx, 1], dirs[idx, 2])
-    dir = inv(rotmatr) * vector
+    local vector = Float64[Healpix.ang2vec(dirs[idx, 1], dirs[idx, 2])...]
+    local dir = inv(rotmatr) * vector
 
-    (skydirections, skyψ) = genpointings(_ -> (0, deg2rad(20), 0),
-                                         dir,
-                                         [0],
-                                         day,
-                                         latitude_deg = TEST_TENERIFE_LATITUDE_DEG,
-                                         longitude_deg = TEST_TENERIFE_LONGITUDE_DEG,
-                                         height_m = TEST_TENERIFE_HEIGHT_M,
-                                         precession = true,
-                                         nutation = true,
-                                         aberration = true,
-                                         refraction = true)
+    local (skydirections, skyψ) = genpointings(
+        _ -> (0, deg2rad(20), 0),
+        dir,
+        [0],
+        day,
+        latitude_deg = TEST_TENERIFE_LATITUDE_DEG,
+        longitude_deg = TEST_TENERIFE_LONGITUDE_DEG,
+        height_m = TEST_TENERIFE_HEIGHT_M,
+        precession = true,
+        nutation = true,
+        aberration = true,
+        refraction = true,
+    )
 
     skydirs[idx, 1] = skydirections[1]
     skydirs[idx, 2] = skydirections[2]
