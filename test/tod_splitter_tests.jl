@@ -1,8 +1,6 @@
 using Test
 using Statistics
 
-@test split_into_n(20, 3)  == [6, 7, 7]
-
 num_of_polarimeters = 4
 num_of_MPI_proc = 3
 total_time = 50

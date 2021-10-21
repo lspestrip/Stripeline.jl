@@ -2,8 +2,8 @@ export TimeChunk, splittime
 
 struct TimeChunk
     starttime
-    idx0
-    nsamples
+    idx0::Int64
+    nsamples::Int64
 end
 
 """
@@ -22,7 +22,7 @@ julia> splittime(10, 3, 2)
  TimeChunk(0.0, 1, 7)     
  TimeChunk(3.33333, 8, 6) 
  TimeChunk(6.66667, 14, 7)
- julia> splittime(10, 3, 2, 100) # Same as above, but time0=100
+julia> splittime(10, 3, 2, 100) # Same as above, but time0=100
  3-element Array{TimeChunk,1}:
  TimeChunk(100.0, 1, 7)     
  TimeChunk(103.333, 8, 6) 

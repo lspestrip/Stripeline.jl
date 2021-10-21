@@ -10,7 +10,11 @@ end
 @testset "Instrument database" begin
     include("instrumentdb_tests.jl")
 end
-    
+
+@testset "Time-oriented data" begin
+    include("tod_tests.jl")
+end
+
 @testset "Scanning strategy" begin
     include("scanning.jl")
 end
