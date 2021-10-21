@@ -552,7 +552,7 @@ the values in the last two parameters `dirs` and `psi`.
 
 If `t_start` is provided, the function `genpointings` returns a
 2-tuple (4-tuple) containing the directions (a N×2 or Nx4 array
-containing the colatitude and the longitude) and the polarization
+containing the declination and the right ascension) and the polarization
 angles at each time step; `genpointings!` works as above.
 
 
