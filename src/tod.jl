@@ -51,7 +51,7 @@ The fields of this structure are the following:
 - `time_range`: a range representing the time of each sample in the
   TOD.
 
-- `samples`: a N×3×m matrix, where N is the number of samples in the
+- `samples`: a N×8×m matrix, where N is the number of samples in the
   timeline, and m is the number of polarimeters. The middle dimension
   spans the three Stokes parameters `I`, `Q`, and `U` (in this order).
   The value `N` is equal to `length(time_range)`
