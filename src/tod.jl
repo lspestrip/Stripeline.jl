@@ -5,7 +5,10 @@ export PWR_Q1_RANK, PWR_Q2_RANK, PWR_U1_RANK, PWR_U2_RANK
 export DEM_Q1_RANK, DEM_Q2_RANK, DEM_U1_RANK, DEM_U2_RANK
 
 import Printf: @printf
+import Random: AbstractRNG
+
 using AstroTime
+using RandomNumbers.PCG
 
 """
     split_into_n(length, num_of_segments)
@@ -56,11 +59,17 @@ The fields of this structure are the following:
   spans the three Stokes parameters `I`, `Q`, and `U` (in this order).
   The value `N` is equal to `length(time_range)`
 
+- `rng`: a pseudo-random number generator to be used for this TOD. It
+  is guaranteed that the generator is uncorrelated with any other
+  generator used for other `StripTod` objects created by the same call
+  to `allocate_tod`.
+
 """
-struct StripTod{T <: Real, S}
+struct StripTod{T <: Real, S, R <: AbstractRNG}
     polarimeters::Any
     time_range::AbstractRange{S}
     samples::Array{T,3}
+    rng::R
 end
 
 function Base.show(io::IO, tod::StripTod{T, S}) where {T, S}
@@ -173,6 +182,7 @@ function allocate_tod(
     mpi_rank = 0,
     mpi_size = 1,
     zero_tod = true,
+    rng_seed = 12345,
 ) where {S, V, R <: AbstractRange, T <: Real}
 
     rank_idx = mpi_rank + 1 # Same as rank, but it starts from 1
@@ -188,10 +198,23 @@ function allocate_tod(
 
     # Size of the field `samples`
     matrix_size = (length(cur_range), 8, length(polarimeters))
+
+    master_rng = PCGStateOneseq(UInt64, rng_seed)
+    # Move the RNG seed to the position of this MPI rank
+    advance!(master_rng, rank_idx)
+
+    # Get the pseudorandom seed for this TOD
+    cur_rng_seed = rand(master_rng, UInt64)
+    rng = PCGStateSetseq(
+        UInt64,
+        PCG_XSH_RR,
+        (cur_rng_seed, UInt64(rank_idx)),
+    )
     
     StripTod(
         polarimeters,
         cur_range,
         zero_tod ? zeros(T, matrix_size) : Array{T}(undef, matrix_size),
+        rng,
     )
 end

@@ -25,6 +25,7 @@ function test_allocate_tod(time_range)
         polarimeters,
         mpi_rank = rank,
         mpi_size = mpi_size,
+        rng_seed = 12345,
     ) for rank in 0:(mpi_size - 1)]
 
     # Have the N TODs been really allocated?
@@ -49,6 +50,12 @@ function test_allocate_tod(time_range)
         @test cur_shape[2] == 8
         @test cur_shape[3] == length(polarimeters)
     end
+
+    # Check that the random number generator generates a different
+    # sequence across the MPI processes
+    @test rand(tods[1].rng, Int8) == 67
+    @test rand(tods[2].rng, Int8) == -109
+    @test rand(tods[3].rng, Int8) == 47
 end
 
 test_split_into_n()
