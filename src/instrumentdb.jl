@@ -464,6 +464,7 @@ show(stdout, MIME("text/markdown"), db)
 The table can be converted to other formats (HTML, LaTeX, Microsoft
 Word, …) using commonly-available tools, e.g.,
 [Pandoc](https://pandoc.org/).
+
 """
 struct InstrumentDB
     focalplane::Dict{String,Horn}
@@ -527,11 +528,13 @@ end
 @doc raw"""
     parsefpdict(fpdict)
 
-Return a dictionary associating an horn name (e.g., `I0`) to a `Horn` object
-containing information about some horn in the STRIP focal plane. The information
-are parsed from `fpdict`, which should be a dictionary loaded from a YAML file.
-The default YAML file to be used is located in the folder returned by
-[`defaultdbfolder`](@ref) and is usually named `strip_focal_plane.yaml`
+Return a dictionary associating an horn name (e.g., `I0`) to a `Horn`
+object containing information about some horn in the STRIP focal
+plane. The information are parsed from `fpdict`, which should be a
+dictionary loaded from a YAML file. The default YAML file to be used
+is located in the folder returned by [`defaultdbfolder`](@ref) and is
+usually named `strip_focal_plane.yaml`
+
 """
 function parsefpdict(fpdict::Dict{Any,Any})
     focalplane = Dict{String,Horn}()
@@ -611,12 +614,13 @@ end
 @doc raw"""
     parsedetdict(detdict)
 
-Return a dictionary associating an integer number to a `Detector` object
-containing information about the STRIP detector with the corresponding number.
-The information are parsed from `detdict`, which should be a dictionary loaded
-from a YAML file. The default YAML file to be used is located in the folder
-returned by [`defaultdbfolder`](@ref) and is usually named
-`strip_detectors.yaml`
+Return a dictionary associating an integer number to a `Detector`
+object containing information about the STRIP detector with the
+corresponding number. The information are parsed from `detdict`, which
+should be a dictionary loaded from a YAML file. The default YAML file
+to be used is located in the folder returned by
+[`defaultdbfolder`](@ref) and is usually named `strip_detectors.yaml`
+
 """
 function parsedetdict(detdict)
     detectors = Dict{Int,Detector}()
@@ -641,8 +645,9 @@ end
 @doc raw"""
     InstrumentDB(dbpath::AbstractString)
 
-Load the STRIP instrument database from the specified path.
-Return an instance of a InstrumentDB object.
+Load the STRIP instrument database from the specified path. Return an
+instance of a InstrumentDB object.
+
 """
 function InstrumentDB(dbpath::AbstractString)
     focalplanedict = open(joinpath(dbpath, "strip_focal_plane.yaml")) do f
@@ -659,8 +664,9 @@ end
 @doc raw"""
     defaultdbfolder()
 
-Return a string containing the (local) full path to the YAML files containing
-the reference instrument DB.
+Return a string containing the (local) full path to the YAML files
+containing the reference instrument DB.
+
 """
 defaultdbfolder() = joinpath(dirname(pathof(Stripeline)), "..", "instrumentdb")
 
@@ -681,10 +687,11 @@ detector(db::InstrumentDB, horn_name::AbstractString) = detector(db, db.focalpla
     detector(db::InstrumentDB, polid::Integer) -> Detector
     detector(db::InstrumentDB, horn_name::AbstractString) -> Detector
 
-Return a [`Detector`](@ref) structure, taken from the instrument database. If
-the form with `polid` is used, `polid` is the progressive number of the
-polarimeter; e.g., for `STRIP02`, `polid == 2`. In the second form, you pass the
-string identifying the horn on the focal plane, e.g., `I0`, `W3`, etc.
+Return a [`Detector`](@ref) structure, taken from the instrument
+database. If the form with `polid` is used, `polid` is the progressive
+number of the polarimeter; e.g., for `STRIP02`, `polid == 2`. In the
+second form, you pass the string identifying the horn on the focal
+plane, e.g., `I0`, `W3`, etc.
 
 ```julia
 db = InstrumentDB()
@@ -706,13 +713,14 @@ bandpass(db::InstrumentDB, horn_name::AbstractString) = bandpass(db, db.focalpla
     bandpass(db::InstrumentDB, polid::Integer) -> BandshapeInfo
     bandpass(db::InstrumentDB, horn_name::AbstractString) -> BandshapeInfo
 
-Return a pair `(ν_hz, B)` containing the bandpass `B` for the horn with the
-specified ID (`polid`) or associated to some horn (`horn_name`). To understand
-how `polid` and `horn_name` work, see the documentation for [`detector`](@ref).
+Return a pair `(ν_hz, B)` containing the bandpass `B` for the horn
+with the specified ID (`polid`) or associated to some horn
+(`horn_name`). To understand how `polid` and `horn_name` work, see the
+documentation for [`detector`](@ref).
 
-The two elements of the tuple `(ν_hz, B)` are two arrays of the same length
-containing the frequencies (in Hz) and the bandpass response at the same
-frequency (pure number).
+The two elements of the tuple `(ν_hz, B)` are two arrays of the same
+length containing the frequencies (in Hz) and the bandpass response at
+the same frequency (pure number).
 
 ```julia
 db = InstrumentDB()
@@ -732,9 +740,9 @@ spectrum(db::InstrumentDB, horn_name::AbstractString) = spectrum(db, db.focalpla
     spectrum(db::InstrumentDB, polid::Integer) -> SpectrumInfo
     spectrum(db::InstrumentDB, horn_name::AbstractString) -> SpectrumInfo
 
-Return a [`SpectrumInfo`](@ref) object, taken from the instrument database. The
-meaning of the parameters `polid` and `horn_name` is explained in the
-documentation for [`detector`](@ref).
+Return a [`SpectrumInfo`](@ref) object, taken from the instrument
+database. The meaning of the parameters `polid` and `horn_name` is
+explained in the documentation for [`detector`](@ref).
 
 """
 spectrum
@@ -746,9 +754,9 @@ tnoise(db::InstrumentDB, horn_name::AbstractString) = tnoise(db, db.focalplane[h
     tnoise(db::InstrumentDB, polid::Integer) -> NoiseTemperatureInfo
     tnoise(db::InstrumentDB, horn_name::AbstractString) -> NoiseTemperatureInfo
 
-Return a [`NoiseTemperatureInfo`](@ref) object, taken from the instrument
-database. The meaning of the parameters `polid` and `horn_name` is explained in
-the documentation for [`detector`](@ref).
+Return a [`NoiseTemperatureInfo`](@ref) object, taken from the
+instrument database. The meaning of the parameters `polid` and
+`horn_name` is explained in the documentation for [`detector`](@ref).
 
 """
 tnoise
@@ -770,21 +778,25 @@ function fknee_hz(db::InstrumentDB, polid::Integer; tsys_k = missing)
         specinfo.fknee_u_hz * load_ratio^(1 / α_u),)
 end
 
-fknee_hz(db::InstrumentDB, horn_name::AbstractString; tsys_k = missing) = fknee_hz(db, db.focalplane[horn_name].polid; tsys_k = tsys_k)
+fknee_hz(
+    db::InstrumentDB,
+    horn_name::AbstractString;
+    tsys_k = missing,
+) = fknee_hz(db, db.focalplane[horn_name].polid; tsys_k = tsys_k)
 
 @doc raw"""
     fknee_hz(db::InstrumentDB, polid::Integer; tsys_k = missing) -> Tuple{Float64, Float64, Float64}
     fknee_hz(db::InstrumentDB, horn_name::AbstractString; tsys_k = missing) -> Tuple{Float64, Float64, Float64}
 
-Return the knee frequency for the selected detector, taken from the instrument
-database. The meaning of the parameters `polid` and `horn_name` is explained in
-the documentation for [`detector`](@ref).
+Return the knee frequency for the selected detector, taken from the
+instrument database. The meaning of the parameters `polid` and
+`horn_name` is explained in the documentation for [`detector`](@ref).
 
-If `tsys_k` is specified, the system temperature is rescaled to the desired
-temperature of the load feeding the polarimeter, so that the 1/f component of
-the noise remains unchanged but the white noise plateau raises/lowers by an
-appropriate amount. Otherwise, the function returns the raw frequency taken from
-the instrument database.
+If `tsys_k` is specified, the system temperature is rescaled to the
+desired temperature of the load feeding the polarimeter, so that the
+1/f component of the noise remains unchanged but the white noise
+plateau raises/lowers by an appropriate amount. Otherwise, the
+function returns the raw frequency taken from the instrument database.
 
 """
 fknee_hz
@@ -794,19 +806,20 @@ fknee_hz
 @doc raw"""
     sensitivity_tant(db::InstrumentDB, load_tant; modules = Set([0, 1, 2, 3, 4, 5, 6]))
 
-Calculate the white-noise sensitivity of an array of detectors, measured in
-K⋅√s, given some antenna temperature for the load. The result takes in account
-only those horns belonging to the modules listed in the keyword `modules` (the
-W-band horns belong to module `-1`). By default, only the Q-band modules are
-considered.
+Calculate the white-noise sensitivity of an array of detectors,
+measured in K⋅√s, given some antenna temperature for the load. The
+result takes in account only those horns belonging to the modules
+listed in the keyword `modules` (the W-band horns belong to module
+`-1`). By default, only the Q-band modules are considered.
 
-The result assumes the radiometer equation: ``σ⋅√τ = \frac{T_{sys}}{√2β}``,
-where `T_{sys}` is the system temperature, `β` is the bandwidth, and `τ` is the
-acquisition time. The factor 2 comes from the way Strip polarimeters operate.
-The system temperature is assumed to be the noise temperature of each detector,
-plus the term `load_tant`, which should take into account all the other sources
-of power entering the system (e.g., telescope, atmosphere, etc.). The term
-`load_tant` should be expressed as an antenna temperature.
+The result assumes the radiometer equation: ``σ⋅√τ =
+\frac{T_{sys}}{√2β}``, where `T_{sys}` is the system temperature, `β`
+is the bandwidth, and `τ` is the acquisition time. The factor 2 comes
+from the way Strip polarimeters operate. The system temperature is
+assumed to be the noise temperature of each detector, plus the term
+`load_tant`, which should take into account all the other sources of
+power entering the system (e.g., telescope, atmosphere, etc.). The
+term `load_tant` should be expressed as an antenna temperature.
 
 """
 function sensitivity_tant(db::InstrumentDB, load_tant; modules = Set([0, 1, 2, 3, 4, 5, 6]))

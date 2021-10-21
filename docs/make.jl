@@ -22,6 +22,7 @@ makedocs(
         "Tutorial" => "tutorial.md",
         "Basic functions" => "basic.md",
         "Instrument database" => "instrumentdb.md",
+        "Time-ordered data" => "tod.md",
         "Scanning strategy" => "scanning.md",
         "Data acquisition" => "acquisition.md",
         "Map making" => "mapmaking.md",
