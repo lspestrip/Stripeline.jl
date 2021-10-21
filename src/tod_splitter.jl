@@ -1,5 +1,5 @@
 export datachunk
-export split_into_n, split_tod_mpi, get_chunk_properties
+export split_tod_mpi, get_chunk_properties
 
 import Healpix
 import CorrNoise
@@ -37,32 +37,6 @@ struct datachunk
     last_idx::Int
     num_of_elements::Int
 end 
-
-
-"""
-    function split_into_n(length, num_of_segments)
-        Given the `length` of the array, it convenientely 
-        splits it into `num_of_segments` sections of as similar length as possible.
-        It returns an array containing the number of elements of each section.
-
-        # Example
-        julia> split_into_n(20, 3)
-        3-element Array{Int64,1}:
-        6
-        7
-        7
-"""
-function split_into_n(length, num_of_segments)
-    @assert num_of_segments >0
-    @assert length >= num_of_segments
-    start_pos = zeros(Int, num_of_segments+1)
-    
-    for i in 1:num_of_segments+1
-        start_pos[i] =  floor(((i-1)*length/num_of_segments))
-    end
-   
-    return start_pos[2:end]-start_pos[1:end-1]    
-end
 
 
 """
