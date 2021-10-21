@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/lspestrip/Stripeline.jl.svg?branch=master)](https://travis-ci.org/lspestrip/Stripeline.jl)
 [![](https://img.shields.io/badge/docs-latest-blue.svg)](https://lspestrip.github.io/Stripeline.jl/latest)
-[![Coverage Status](https://img.shields.io/coveralls/lspestrip/Stripeline.jl.svg)](https://coveralls.io/r/lspestrip/Stripeline.jl?branch=master)
+[![codecov](https://codecov.io/gh/lspestrip/Stripeline.jl/branch/master/graph/badge.svg?token=KMLSA7VRW6)](https://codecov.io/gh/lspestrip/Stripeline.jl)
 
 This repository contains the LSPE/Strip simulation pipeline. LSPE/Strip is
 a CMB microwave telescope to be installed at the Teide Observatory in
