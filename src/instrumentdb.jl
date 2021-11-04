@@ -1,7 +1,7 @@
 export Horn, Detector, InstrumentDB, BandshapeInfo, SpectrumInfo, NoiseTemperatureInfo
 export InstrumentDB, defaultdbfolder, parsefpdict, parsedetdict
 export sensitivity_tant, t_to_trj, trj_to_t, deltat_to_deltatrj, deltatrj_to_deltat
-export detector, bandpass, bandshape, spectrum, fknee_hz, tnoise
+export detector, bandpass, bandshape, spectrum, fknee_hz, tnoise, noise_k2_hz
 
 import YAML
 import Stripeline
@@ -216,29 +216,32 @@ bandshape
 
 Information about the noise spectrum of the output of a polarimeter.
 
-Field                | Type     | Meaning
-:------------------- |:-------- |:-------------------------------------------------------
-`slope_i`            | Float64  | The slope ($\alpha$) of the 1/f component of the noise in the I signal
-`slope_i_err`        | Float64  | Error associated with the value of `slope_i`
-`slope_q`            | Float64  | Same as `slope_i`, but for the Q signal
-`slope_q_err`        | Float64  | Error associated with the value of `slope_q`
-`slope_u`            | Float64  | Same as `slope_i`, but for the U signal
-`slope_u_err`        | Float64  | Error associated with the value of `slope_u`
-`fknee_i_hz`         | Float64  | Knee frequency of the I signal, in Hz
-`fknee_i_err_hz`     | Float64  | Error associated with the value of `fknee_i_hz`
-`fknee_q_hz`         | Float64  | Knee frequency of the Q signal, in Hz
-`fknee_q_err_hz`     | Float64  | Error associated with the value of `fknee_q_hz`
-`fknee_u_hz`         | Float64  | Knee frequency of the U signal, in Hz
-`fknee_u_err_hz`     | Float64  | Error associated with the value of `fknee_u_hz`
-`wn_i_k2_hz`         | Float64  | White noise level for the I signal, in K^2 Hz
-`wn_i_err_k2_hz`     | Float64  | Error associated with the value of `wn_i_k2_hz`
-`wn_q_k2_hz`         | Float64  | White noise level for the Q signal, in K^2 Hz
-`wn_q_err_k2_hz`     | Float64  | Error associated with the value of `wn_q_k2_hz`
-`wn_u_k2_hz`         | Float64  | White noise level for the U signal, in K^2 Hz
-`wn_u_err_k2_hz`     | Float64  | Error associated with the value of `wn_u_k2_hz`
-`load_temperature_k` | Float64  | System brightness temperature used during the tests (in K)
-`test_id`            | Int      | ID of the unit-level test used to characterize the bandshape
-`analysis_id`        | Int      | ID of the unit-level analysis used to characterize the bandshape
+Field                    | Type            | Meaning
+:----------------------- |:--------------- |:-------------------------------------------------------
+`slope_i`                | Float64         | The slope ($\alpha$) of the 1/f component of the noise in the I signal
+`slope_i_err`            | Float64         | Error associated with the value of `slope_i`
+`slope_q`                | Float64         | Same as `slope_i`, but for the Q signal
+`slope_q_err`            | Float64         | Error associated with the value of `slope_q`
+`slope_u`                | Float64         | Same as `slope_i`, but for the U signal
+`slope_u_err`            | Float64         | Error associated with the value of `slope_u`
+`fknee_i_hz`             | Float64         | Knee frequency of the I signal, in Hz
+`fknee_i_err_hz`         | Float64         | Error associated with the value of `fknee_i_hz`
+`fknee_q_hz`             | Float64         | Knee frequency of the Q signal, in Hz
+`fknee_q_err_hz`         | Float64         | Error associated with the value of `fknee_q_hz`
+`fknee_u_hz`             | Float64         | Knee frequency of the U signal, in Hz
+`fknee_u_err_hz`         | Float64         | Error associated with the value of `fknee_u_hz`
+`wn_i_k2_hz`             | Float64         | White noise level for the I signal, in K^2 Hz
+`wn_i_err_k2_hz`         | Float64         | Error associated with the value of `wn_i_k2_hz`
+`wn_q_k2_hz`             | Float64         | White noise level for the Q signal, in K^2 Hz
+`wn_q_err_k2_hz`         | Float64         | Error associated with the value of `wn_q_k2_hz`
+`wn_u_k2_hz`             | Float64         | White noise level for the U signal, in K^2 Hz
+`wn_u_err_k2_hz`         | Float64         | Error associated with the value of `wn_u_k2_hz`
+`i_fit_parameters_k2_hz` | Vector{Float64} | Fit coefficients for the I spectrum in K²/Hz, or `nothing`
+`q_fit_parameters_k2_hz` | Vector{Float64} | Fit coefficients for the Q spectrum in K²/Hz, or `nothing`
+`u_fit_parameters_k2_hz` | Vector{Float64} | Fit coefficients for the U spectrum in K²/Hz, or `nothing`
+`load_temperature_k`     | Float64         | System brightness temperature used during the tests (in K)
+`test_id`                | Int             | ID of the unit-level test used to characterize the bandshape
+`analysis_id`            | Int             | ID of the unit-level analysis used to characterize the bandshape
 
 You can quickly plot the theoretical shape of the noise power spectrum
 using `plot` on a `SpectrumInfo` object.
@@ -263,6 +266,9 @@ struct SpectrumInfo
     wn_i_err_k2_hz::Float64
     wn_q_err_k2_hz::Float64
     wn_u_err_k2_hz::Float64
+    i_fit_parameters_k2_hz::Union{Vector{Float64}, Nothing}
+    q_fit_parameters_k2_hz::Union{Vector{Float64}, Nothing}
+    u_fit_parameters_k2_hz::Union{Vector{Float64}, Nothing}
     load_temperature_k::Float64
     test_id::Int
     analysis_id::Int
@@ -328,7 +334,7 @@ end
 
 Initialize a SpectrumInfo object with all values set to zero.
 """
-SpectrumInfo() = SpectrumInfo(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, 0)
+SpectrumInfo() = SpectrumInfo(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, Float64[0, 0, 0], Float64[0, 0, 0], Float64[0, 0, 0], 0.0, 0, 0)
 
 @doc raw"""
     NoiseTemperatureInfo
@@ -579,6 +585,11 @@ function parsebandshape(banddict::Dict{Any,Any})
         get(banddict, "analysis_id", 0))
 end
 
+function get_fit_coeffs(specdict, key)
+    coeffs = get(specdict, key, nothing)
+    (coeffs != Float64[0, 0, 0]) ? coeffs : nothing
+end
+
 function parsespectrum(specdict::Dict{Any,Any})
     SpectrumInfo(get(specdict, "I_slope", 0.0),
         get(specdict, "Q_slope", 0.0),
@@ -598,6 +609,9 @@ function parsespectrum(specdict::Dict{Any,Any})
         get(specdict, "I_wn_level_err_k2_hz", 0.0),
         get(specdict, "Q_wn_level_err_k2_hz", 0.0),
         get(specdict, "U_wn_level_err_k2_hz", 0.0),
+        get_fit_coeffs(specdict, "I_fit_parameters_k2_hz"),
+        get_fit_coeffs(specdict, "Q_fit_parameters_k2_hz"),
+        get_fit_coeffs(specdict, "U_fit_parameters_k2_hz"),
         get(specdict, "load_average_temperature_k", 20.0),
         get(specdict, "test_id", 0),
         get(specdict, "analysis_id", 0))
@@ -609,6 +623,13 @@ function parsetnoise(tnoisedict::Dict{Any,Any})
         get(tnoisedict, "tnoise_test_ids", Int[]),
         get(tnoisedict, "analysis_ids", Int[]),
         get(tnoisedict, "values_k", Float64[]))
+end
+
+function noise_k2_hz(fit_coeffs::Union{Vector{Float64}, Nothing}, nu)
+    isnothing(fit_coeffs) && return 0.0
+    
+    a, b, c = fit_coeffs
+    nu^a * exp(b) + exp(c)
 end
 
 @doc raw"""

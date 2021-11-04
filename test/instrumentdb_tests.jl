@@ -38,6 +38,8 @@ f2_i, f2_q, f2_u = Sl.fknee_hz(defaultdb, 10, tsys_k = 1000.0)
 @test f2_q < f1_q
 @test f2_u < f1_u
 
+@test noise_k2_hz(Float64[1.0, 2.0, 3.0], 0.3) ≈ 22.302253752866864
+
 # Just a few basic checks, to verify that the function does not crash
 (sensitivity, num) = Sl.sensitivity_tant(defaultdb, 10.0)
 @test sensitivity > 0.0
