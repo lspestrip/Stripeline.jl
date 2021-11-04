@@ -1,7 +1,8 @@
 export Horn, Detector, InstrumentDB, BandshapeInfo, SpectrumInfo, NoiseTemperatureInfo
 export InstrumentDB, defaultdbfolder, parsefpdict, parsedetdict
 export sensitivity_tant, t_to_trj, trj_to_t, deltat_to_deltatrj, deltatrj_to_deltat
-export detector, bandpass, bandshape, spectrum, fknee_hz, tnoise, noise_k2_hz
+export detector, bandpass, bandshape, spectrum, fknee_hz, tnoise
+export oof_noise_k2_hz, white_noise_k2_hz, noise_k2_hz
 
 import YAML
 import Stripeline
@@ -625,11 +626,64 @@ function parsetnoise(tnoisedict::Dict{Any,Any})
         get(tnoisedict, "values_k", Float64[]))
 end
 
-function noise_k2_hz(fit_coeffs::Union{Vector{Float64}, Nothing}, nu)
+@doc raw"""
+    oof_noise_k2_hz(fit_coeffs::Union{Vector{Float64}, Nothing}, nu)
+
+Compute the amount of power (in K²/Hz) associated with 1/f noise,
+given a set of fitting coefficients for the function ``f(\nu) = \nu^a
+e^b + e^c``. This is the same as [`noise_k2_hz`](@ref), but it returns
+the 1/f part only.
+
+The fitting coefficients are usually taken from a [`Spectrum`](@ref)
+structure, namely in the three fields `i_fit_parameters_k2_hz`,
+`q_fit_parameters_k2_hz`, and `u_fit_parameters_k2_hz`.
+
+"""
+function oof_noise_k2_hz(fit_coeffs::Union{Vector{Float64}, Nothing}, nu)
     isnothing(fit_coeffs) && return 0.0
     
-    a, b, c = fit_coeffs
-    nu^a * exp(b) + exp(c)
+    a, b, _ = fit_coeffs
+    nu^a * exp(b)
+end
+
+@doc raw"""
+    white_noise_k2_hz(fit_coeffs::Union{Vector{Float64}, Nothing}, nu)
+
+Compute the amount of power (in K²/Hz) associated with white noise,
+given a set of fitting coefficients for the function ``f(\nu) = \nu^a
+e^b + e^c``. This is the same as [`noise_k2_hz`](@ref), but it returns
+the white noise part only.
+
+The fitting coefficients are usually taken from a [`Spectrum`](@ref)
+structure, namely in the three fields `i_fit_parameters_k2_hz`,
+`q_fit_parameters_k2_hz`, and `u_fit_parameters_k2_hz`.
+
+"""
+function white_noise_k2_hz(fit_coeffs::Union{Vector{Float64}, Nothing}, nu)
+    isnothing(fit_coeffs) && return 0.0
+    
+    _, _, c = fit_coeffs
+    exp(c)
+end
+
+@doc raw"""
+    noise_k2_hz(fit_coeffs::Union{Vector{Float64}, Nothing}, nu)
+
+Compute the amount of power (in K²/Hz) associated with 1/f plus white
+noise, given a set of fitting coefficients for the function ``f(\nu) =
+\nu^a e^b + e^c``. This is the kind of function fitted by the code
+that analyzed the unit-test data.
+
+The fitting coefficients are usually taken from a [`Spectrum`](@ref)
+structure, namely in the three fields `i_fit_parameters_k2_hz`,
+`q_fit_parameters_k2_hz`, and `u_fit_parameters_k2_hz`.
+
+To compute the 1/f and white noise parts separately, you can use
+[`oof_noise_k2_hz`](@ref) and [`white_noise_k2_hz`](@ref).
+
+"""
+function noise_k2_hz(fit_coeffs::Union{Vector{Float64}, Nothing}, nu)
+    oof_noise_k2_hz(fit_coeffs, nu) + white_noise_k2_hz(fit_coeffs, nu)
 end
 
 @doc raw"""
