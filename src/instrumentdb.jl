@@ -9,6 +9,7 @@ import Stripeline
 import Base: show
 import RecipesBase
 using StaticArrays
+using LinearAlgebra
 
 using Printf
 
@@ -214,12 +215,12 @@ object.
 bandshape
 
 @doc raw"""
-    NoiseFitParams = SVector{3, Float64}
+    NoiseFitParams = SVector{3, Float32}
 
 An array of three parameters describing the PSD of the noise for some
 output.
 """
-NoiseFitParams = Union{SVector{3, Float64}, Nothing}
+NoiseFitParams = Union{SVector{3, Float32}, Nothing}
 
 @doc raw"""
     SpectrumInfo
@@ -246,12 +247,12 @@ Field                    | Type            | Meaning
 `wn_q_err_k2_hz`         | Float64         | Error associated with the value of `wn_q_k2_hz`
 `wn_u_k2_hz`             | Float64         | White noise level for the U signal, in K^2 Hz
 `wn_u_err_k2_hz`         | Float64         | Error associated with the value of `wn_u_k2_hz`
-`i_fit_parameters_k2_hz` | Vector{Float64} | Fit coefficients for the I spectrum in K²/Hz, or `nothing`
-`q_fit_parameters_k2_hz` | Vector{Float64} | Fit coefficients for the Q spectrum in K²/Hz, or `nothing`
-`u_fit_parameters_k2_hz` | Vector{Float64} | Fit coefficients for the U spectrum in K²/Hz, or `nothing`
-`pwr_cov_matrix_k2`      | SMatrix{4, 4}   | Covariance matrix of the signals Q1, Q2, U1, U2 (PWR) in K² or `nothing`
-`dem_cov_matrix_k2`      | SMatrix{4, 4}   | Covariance matrix of the signals Q1, Q2, U1, U2 (DEM) in K² or `nothing`
-`iqu_cov_matrix_k2`      | SMatrix{3, 3}   | Covariance matrix of I = ∑PWR / 4, Q = (Q1 + Q2) / 2, U = (U1 + U2) / 2
+`i_fit_parameters_k2_hz` | Vector{Float32} | Fit coefficients for the I spectrum in K²/Hz, or `nothing`
+`q_fit_parameters_k2_hz` | Vector{Float32} | Fit coefficients for the Q spectrum in K²/Hz, or `nothing`
+`u_fit_parameters_k2_hz` | Vector{Float32} | Fit coefficients for the U spectrum in K²/Hz, or `nothing`
+`pwr_cov_matrix_k2`      | Symmetric{4}    | Covariance matrix of the signals Q1, Q2, U1, U2 (PWR) in K² or `nothing`
+`dem_cov_matrix_k2`      | Symmetric{4}    | Covariance matrix of the signals Q1, Q2, U1, U2 (DEM) in K² or `nothing`
+`iqu_cov_matrix_k2`      | Symmetric{3}    | Covariance matrix of I = ∑PWR / 4, Q = (Q1 + Q2) / 2, U = (U1 + U2) / 2
 `load_temperature_k`     | Float64         | System brightness temperature used during the tests (in K)
 `test_id`                | Int             | ID of the unit-level test used to characterize the bandshape
 `analysis_id`            | Int             | ID of the unit-level analysis used to characterize the bandshape
@@ -290,9 +291,9 @@ struct SpectrumInfo
     i_fit_parameters_k2_hz::Union{NoiseFitParams, Nothing}
     q_fit_parameters_k2_hz::Union{NoiseFitParams, Nothing}
     u_fit_parameters_k2_hz::Union{NoiseFitParams, Nothing}
-    pwr_cov_matrix_k2::Union{SMatrix{4, 4}, Nothing}
-    dem_cov_matrix_k2::Union{SMatrix{4, 4}, Nothing}
-    iqu_cov_matrix_k2::Union{SMatrix{3, 3}, Nothing}
+    pwr_cov_matrix_k2::Union{Symmetric{Float32, AbstractMatrix{Float32}}, Nothing}
+    dem_cov_matrix_k2::Union{Symmetric{Float32, AbstractMatrix{Float32}}, Nothing}
+    iqu_cov_matrix_k2::Union{Symmetric{Float32, AbstractMatrix{Float32}}, Nothing}
     load_temperature_k::Float64
     test_id::Int
     analysis_id::Int
@@ -630,17 +631,18 @@ function get_cov_matrix(specdict, key, size)
     isnothing(entry) && return nothing
 
     labels = entry["labels"]
-    cov = SMatrix{size, size}(hcat(entry["coefficients"]...))
+    cov = Symmetric(SMatrix{size, size, Float32}(hcat(entry["coefficients"]...)))
     if ((labels == ["PWR0/Q1", "PWR1/U1", "PWR2/U2", "PWR3/Q2"]) ||
         (labels == ["DEM0/Q1", "DEM1/U1", "DEM2/U2", "DEM3/Q2"]))
         # We need to reorder the columns/rows, as the order saved in
         # the instrument DB matches the nomenclature used in Bicocca,
         # which is good for electronics but terrible for data
         # analysis!
-        return SMatrix{4, 4}([cov[1, 1] cov[1, 4] cov[1, 2] cov[1, 3];
-                              cov[4, 1] cov[4, 4] cov[4, 2] cov[4, 3];
-                              cov[2, 1] cov[2, 4] cov[2, 2] cov[2, 3];
-                              cov[3, 1] cov[3, 4] cov[3, 2] cov[3, 3]])
+        return Symmetric(
+            SMatrix{4, 4}([cov[1, 1] cov[1, 4] cov[1, 2] cov[1, 3];
+                           cov[4, 1] cov[4, 4] cov[4, 2] cov[4, 3];
+                           cov[2, 1] cov[2, 4] cov[2, 2] cov[2, 3];
+                           cov[3, 1] cov[3, 4] cov[3, 2] cov[3, 3]]))
     else
         return cov
     end
