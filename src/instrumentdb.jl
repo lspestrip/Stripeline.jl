@@ -8,6 +8,7 @@ import YAML
 import Stripeline
 import Base: show
 import RecipesBase
+using StaticArrays
 
 using Printf
 
@@ -213,6 +214,14 @@ object.
 bandshape
 
 @doc raw"""
+    NoiseFitParams = SVector{3, Float64}
+
+An array of three parameters describing the PSD of the noise for some
+output.
+"""
+NoiseFitParams = Union{SVector{3, Float64}, Nothing}
+
+@doc raw"""
     SpectrumInfo
 
 Information about the noise spectrum of the output of a polarimeter.
@@ -240,6 +249,9 @@ Field                    | Type            | Meaning
 `i_fit_parameters_k2_hz` | Vector{Float64} | Fit coefficients for the I spectrum in K²/Hz, or `nothing`
 `q_fit_parameters_k2_hz` | Vector{Float64} | Fit coefficients for the Q spectrum in K²/Hz, or `nothing`
 `u_fit_parameters_k2_hz` | Vector{Float64} | Fit coefficients for the U spectrum in K²/Hz, or `nothing`
+`pwr_cov_matrix_k2`      | SMatrix{4, 4}   | Covariance matrix of the signals Q1, Q2, U1, U2 (PWR) in K² or `nothing`
+`dem_cov_matrix_k2`      | SMatrix{4, 4}   | Covariance matrix of the signals Q1, Q2, U1, U2 (DEM) in K² or `nothing`
+`iqu_cov_matrix_k2`      | SMatrix{3, 3}   | Covariance matrix of I = ∑PWR / 4, Q = (Q1 + Q2) / 2, U = (U1 + U2) / 2
 `load_temperature_k`     | Float64         | System brightness temperature used during the tests (in K)
 `test_id`                | Int             | ID of the unit-level test used to characterize the bandshape
 `analysis_id`            | Int             | ID of the unit-level analysis used to characterize the bandshape
@@ -267,9 +279,20 @@ struct SpectrumInfo
     wn_i_err_k2_hz::Float64
     wn_q_err_k2_hz::Float64
     wn_u_err_k2_hz::Float64
-    i_fit_parameters_k2_hz::Union{Vector{Float64}, Nothing}
-    q_fit_parameters_k2_hz::Union{Vector{Float64}, Nothing}
-    u_fit_parameters_k2_hz::Union{Vector{Float64}, Nothing}
+    pwrq1_fit_parameters_k2_hz::Union{NoiseFitParams, Nothing}
+    pwrq2_fit_parameters_k2_hz::Union{NoiseFitParams, Nothing}
+    pwru1_fit_parameters_k2_hz::Union{NoiseFitParams, Nothing}
+    pwru2_fit_parameters_k2_hz::Union{NoiseFitParams, Nothing}
+    demq1_fit_parameters_k2_hz::Union{NoiseFitParams, Nothing}
+    demq2_fit_parameters_k2_hz::Union{NoiseFitParams, Nothing}
+    demu1_fit_parameters_k2_hz::Union{NoiseFitParams, Nothing}
+    demu2_fit_parameters_k2_hz::Union{NoiseFitParams, Nothing}
+    i_fit_parameters_k2_hz::Union{NoiseFitParams, Nothing}
+    q_fit_parameters_k2_hz::Union{NoiseFitParams, Nothing}
+    u_fit_parameters_k2_hz::Union{NoiseFitParams, Nothing}
+    pwr_cov_matrix_k2::Union{SMatrix{4, 4}, Nothing}
+    dem_cov_matrix_k2::Union{SMatrix{4, 4}, Nothing}
+    iqu_cov_matrix_k2::Union{SMatrix{3, 3}, Nothing}
     load_temperature_k::Float64
     test_id::Int
     analysis_id::Int
@@ -335,7 +358,15 @@ end
 
 Initialize a SpectrumInfo object with all values set to zero.
 """
-SpectrumInfo() = SpectrumInfo(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, Float64[0, 0, 0], Float64[0, 0, 0], Float64[0, 0, 0], 0.0, 0, 0)
+
+SpectrumInfo() = SpectrumInfo(
+    0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+    nothing, nothing, nothing, nothing, # PWR fit coefficients
+    nothing, nothing, nothing, nothing, # DEM fit coefficients
+    nothing, nothing, nothing,          # IQU fit coefficients
+    nothing, nothing, nothing,          # PWR, DEM, IQU covariance matrices
+    0.0, 0, 0,
+)
 
 @doc raw"""
     NoiseTemperatureInfo
@@ -588,11 +619,36 @@ end
 
 function get_fit_coeffs(specdict, key)
     coeffs = get(specdict, key, nothing)
-    (coeffs != Float64[0, 0, 0]) ? coeffs : nothing
+    isnothing(coeffs) && return nothing
+
+    coeffs = SVector{3, Float64}(coeffs)
+    (coeffs != SVector{3, Float64}(0, 0, 0)) ? coeffs : nothing
+end
+
+function get_cov_matrix(specdict, key, size)
+    entry = get(specdict, key, nothing)
+    isnothing(entry) && return nothing
+
+    labels = entry["labels"]
+    cov = SMatrix{size, size}(hcat(entry["coefficients"]...))
+    if ((labels == ["PWR0/Q1", "PWR1/U1", "PWR2/U2", "PWR3/Q2"]) ||
+        (labels == ["DEM0/Q1", "DEM1/U1", "DEM2/U2", "DEM3/Q2"]))
+        # We need to reorder the columns/rows, as the order saved in
+        # the instrument DB matches the nomenclature used in Bicocca,
+        # which is good for electronics but terrible for data
+        # analysis!
+        return SMatrix{4, 4}([cov[1, 1] cov[1, 4] cov[1, 2] cov[1, 3];
+                              cov[4, 1] cov[4, 4] cov[4, 2] cov[4, 3];
+                              cov[2, 1] cov[2, 4] cov[2, 2] cov[2, 3];
+                              cov[3, 1] cov[3, 4] cov[3, 2] cov[3, 3]])
+    else
+        return cov
+    end
 end
 
 function parsespectrum(specdict::Dict{Any,Any})
-    SpectrumInfo(get(specdict, "I_slope", 0.0),
+    SpectrumInfo(
+        get(specdict, "I_slope", 0.0),
         get(specdict, "Q_slope", 0.0),
         get(specdict, "U_slope", 0.0),
         get(specdict, "I_slope_err", 0.0),
@@ -610,12 +666,24 @@ function parsespectrum(specdict::Dict{Any,Any})
         get(specdict, "I_wn_level_err_k2_hz", 0.0),
         get(specdict, "Q_wn_level_err_k2_hz", 0.0),
         get(specdict, "U_wn_level_err_k2_hz", 0.0),
+        get_fit_coeffs(specdict, "PWRQ1_fit_parameters_k2_hz"),
+        get_fit_coeffs(specdict, "PWRQ2_fit_parameters_k2_hz"),
+        get_fit_coeffs(specdict, "PWRU1_fit_parameters_k2_hz"),
+        get_fit_coeffs(specdict, "PWRU2_fit_parameters_k2_hz"),
+        get_fit_coeffs(specdict, "DEMQ1_fit_parameters_k2_hz"),
+        get_fit_coeffs(specdict, "DEMQ2_fit_parameters_k2_hz"),
+        get_fit_coeffs(specdict, "DEMU1_fit_parameters_k2_hz"),
+        get_fit_coeffs(specdict, "DEMU2_fit_parameters_k2_hz"),
         get_fit_coeffs(specdict, "I_fit_parameters_k2_hz"),
         get_fit_coeffs(specdict, "Q_fit_parameters_k2_hz"),
         get_fit_coeffs(specdict, "U_fit_parameters_k2_hz"),
+        get_cov_matrix(specdict, "PWR_cov_matrix_k2", 4),
+        get_cov_matrix(specdict, "DEM_cov_matrix_k2", 4),
+        get_cov_matrix(specdict, "IQU_cov_matrix_k2", 3),
         get(specdict, "load_average_temperature_k", 20.0),
         get(specdict, "test_id", 0),
-        get(specdict, "analysis_id", 0))
+        get(specdict, "analysis_id", 0),
+    )
 end
 
 function parsetnoise(tnoisedict::Dict{Any,Any})
