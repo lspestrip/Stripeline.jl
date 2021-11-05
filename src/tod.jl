@@ -3,9 +3,12 @@ export pwrq1, pwrq2, pwru1, pwru2
 export demq1, demq2, demu1, demu2
 export PWR_Q1_RANK, PWR_Q2_RANK, PWR_U1_RANK, PWR_U2_RANK
 export DEM_Q1_RANK, DEM_Q2_RANK, DEM_U1_RANK, DEM_U2_RANK
+export fillnoise!
 
 import Printf: @printf
 import Random: AbstractRNG
+import FFTW: fft, ifft, fftfreq
+import LinearAlgebra: rmul!
 
 using AstroTime
 using RandomNumbers.PCG
@@ -65,7 +68,7 @@ The fields of this structure are the following:
   to `allocate_tod`.
 
 """
-struct StripTod{T <: Real, S, R <: AbstractRNG}
+struct StripTod{T <: Number, S, R <: AbstractRNG}
     polarimeters::Any
     time_range::AbstractRange{S}
     samples::Array{T,3}
@@ -217,4 +220,52 @@ function allocate_tod(
         zero_tod ? zeros(T, matrix_size) : Array{T}(undef, matrix_size),
         rng,
     )
+end
+
+
+@doc raw"""
+
+    fillnoise!(covfn_k2, tod::StripTod)
+
+Overwrite all the samples in the TOD with white noise so that the
+covariance matrix of the PWR and DEM signals for each polarimeter
+is determined by the result of a call to `covfn_k2` like the following:
+
+    (pwr_cov, dem_cov) = covfn_k2(polarimeter)
+
+where `polarimeter` is one of the values in `tod.polarimeters`.
+The two variables `pwr_cov` and `dem_cov` must be 4×4 covariance
+matrices that express the covariance in K² (**not** in ADU!).
+
+A typical call to `fillnoise!` will use the instrument database to
+retrieve the covariance matrices; for instance:
+
+    db = Sl.InstrumentDB()
+    tod = Sl.allocate_tod(Float32, 0.0:0.1:10000.0, ["I3"])
+    Tmp.fillnoise!(tod) do polname
+        spec = Sl.spectrum(db, polname)
+        (spec.pwr_cov_matrix_k2, spec.dem_cov_matrix_k2)
+    end
+
+No 1/f noise is simulated in this function.
+
+"""
+function fillnoise!(covfn_k2, tod::StripTod{T, S, R}) where {T, S, R}
+    # Generate white noise
+    for i in eachindex(tod.samples)
+        tod.samples[i] = randn(tod.rng)
+    end
+
+    # Correlate the noise and scale it
+    for (polidx, pol) in enumerate(tod.polarimeters)
+        pwr_cov, dem_cov = covfn_k2(pol)
+
+        pwr_chol = cholesky(Matrix(pwr_cov))
+        pwr_samples = @view tod.samples[:, PWR_Q1_RANK:PWR_U2_RANK, polidx]
+        rmul!(pwr_samples, pwr_chol.U)
+        
+        dem_chol = cholesky(Matrix(dem_cov))
+        dem_samples = @view tod.samples[:, DEM_Q1_RANK:DEM_U2_RANK, polidx]
+        rmul!(dem_samples, dem_chol.U)
+    end
 end

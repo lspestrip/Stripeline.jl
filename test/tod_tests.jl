@@ -1,6 +1,7 @@
 using AstroTime
 import Stripeline
 const Sl = Stripeline
+import Statistics: cov
 
 function test_split_into_n()
     @test split_into_n(20, 3)  == [6, 7, 7]
@@ -58,6 +59,29 @@ function test_allocate_tod(time_range)
     @test rand(tods[3].rng, Int8) == 47
 end
 
+function test_fillnoise()
+
+    db = Sl.InstrumentDB()
+    tod = Sl.allocate_tod(Float32, 0.0:0.1:10000.0, ["I3"])
+    Sl.fillnoise!(tod) do polname
+        s = Sl.spectrum(db, polname)
+        (s.pwr_cov_matrix_k2, s.dem_cov_matrix_k2)
+    end
+
+    expected = Sl.spectrum(db, tod.polarimeters[1]).pwr_cov_matrix_k2
+    computed = cov(tod.samples[:, Sl.PWR_Q1_RANK:Sl.PWR_U2_RANK, 1])
+
+    # PWR series have a higher covariance
+    @test all(@. expected - computed < 1e-1)
+
+    expected = Sl.spectrum(db, tod.polarimeters[1]).dem_cov_matrix_k2
+    computed = cov(tod.samples[:, Sl.DEM_Q1_RANK:Sl.DEM_U2_RANK, 1])
+
+    # DEM series have a lower covariance
+    @test all(@. expected - computed < 1e-5)
+    
+end
+
 test_split_into_n()
 
 # Run tests using a simple floating-point range
@@ -79,3 +103,4 @@ begin
     test_allocate_tod(time_range)
 end
 
+test_fillnoise()
