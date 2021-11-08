@@ -21,6 +21,7 @@ function test_allocate_tod(time_range)
 
     # Allocate all the TODs in memory, assuming we are running `mpi_size` processes
     tods = [allocate_tod(
+        StripTod,
         Float32,
         time_range,
         polarimeters,
@@ -59,10 +60,38 @@ function test_allocate_tod(time_range)
     @test rand(tods[3].rng, Int8) == 47
 end
 
+
+function test_stokes()
+    # Three fake polarimeters
+    polarimeters = 1:3
+    
+    mpi_size = 10  # Number of fake MPI processes
+
+    # Allocate all the TODs in memory, assuming we are running `mpi_size` processes
+    tods = [allocate_tod(
+        StripTod,
+        Float32,
+        0.0:0.1:10.0,
+        polarimeters,
+        mpi_rank = rank,
+        mpi_size = mpi_size,
+        rng_seed = 12345,
+    ) for rank in 0:(mpi_size - 1)]
+
+    stokestods = [stokes(tod) for tod in tods]
+
+    for (tod, stokestod) in zip(tods, stokestods)
+        @assert size(stokestod.samples)[1] == size(tod.samples)[1]
+        @assert size(stokestod.samples)[2] == 3
+        @assert size(stokestod.samples)[3] == size(tod.samples)[3]
+    end
+end
+
+
 function test_fillnoise()
 
     db = Sl.InstrumentDB()
-    tod = Sl.allocate_tod(Float32, 0.0:0.1:10000.0, ["I3"])
+    tod = Sl.allocate_tod(StripTod, Float32, 0.0:0.1:10000.0, ["I3"])
     Sl.fillnoise!(tod) do polname
         s = Sl.spectrum(db, polname)
         (s.pwr_cov_matrix_k2, s.dem_cov_matrix_k2)
@@ -102,5 +131,7 @@ begin
     
     test_allocate_tod(time_range)
 end
+
+test_stokes()
 
 test_fillnoise()
