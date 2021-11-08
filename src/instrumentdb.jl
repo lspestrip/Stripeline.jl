@@ -61,14 +61,14 @@ function Base.show(io::IO, horn::Horn)
         print(io, "Horn $(horn.name), module $(horn.moduleid) ($(horn.color))")
     else
         @printf(io, """
-            Horn %s, module %d (%s):
+            Horn %s, module %d (%s), STRIP%02d:
                 Orientation: [%.4f, %.4f, %.4f]
                 FWHM (X/Y): %.4f × %.4f °
                 Spillover: %f (main), %f (sub)
                 Cross-polarization: %.2f dB
                 Directivity: %.2f dBi
                 Ellipticity: %.4f""",
-            horn.name, horn.moduleid, horn.color,
+            horn.name, horn.moduleid, horn.color, horn.polid,
             horn.orientation[1], horn.orientation[2], horn.orientation[3],
             horn.fwhm_x_deg, horn.fwhm_y_deg, 
             horn.main_spillover, horn.sub_spillover,
