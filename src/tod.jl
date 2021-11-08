@@ -76,7 +76,7 @@ struct StripTod{T <: Number, S, R <: AbstractRNG}
 end
 
 function Base.show(io::IO, tod::StripTod{T, S}) where {T, S}
-    println(io, string(
+    print(io, string(
         "TOD($(length(tod.polarimeters)) polarimeters, ",
         "$(length(tod.time_range)) samples/polarimeter, ",
         "time range from $(minimum(tod.time_range)) to ",
