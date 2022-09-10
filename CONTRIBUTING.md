@@ -13,21 +13,16 @@ be planned and discussed with the lead developers.
 
 ## Branches
 
-In general, you should never commit to the `master` branch. The
-`devel` branch is the place where all the real stuff happens. To
-implement significant changes to the codebase (e.g., API breakage, the
-addition of significant features, etc.), you are expected to submit a
-pull request (PR) to the `devel` branch. Once in a while, the main
-developers take a look at all the features implemented in `devel`,
-merge them to `master` and release a new version.
+You should create a separate branch for each feature you want to
+implement in the code, and then create a pull request (see below).
 
 ## How to use PRs (pull requests)
 
-Start by creating a new branch under `devel` with `git checkout
+Start by creating a new branch under `master` with `git checkout
 -b`. In this example, we name the branch `my-awesome-feature` and make
 it visible on GitHub:
 
-    git checkout devel
+    git checkout master
     git checkout -b my-awesome-feature
     git push --set-upstream origin my-awesome-feature
     
@@ -47,7 +42,8 @@ request» on the right.
 
 ## Things to do before making a PR
 
-- Check that your branch forked from `devel` and not from `master`
+- Check that your branch forked from `master` and not from some other
+  random branch
 - Update `CHANGELOG.md` with a short description of your new features
   under the name `HEAD`.
   
