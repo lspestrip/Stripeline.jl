@@ -11,7 +11,7 @@ on:
 jobs:
   test:
     name: Julia ${{ matrix.julia-version }} - ${{ matrix.os }} - ${{ matrix.arch }}
-    timeout-minutes: 15
+    timeout-minutes: 25
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
