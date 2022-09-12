@@ -99,6 +99,7 @@ Detector
 BandshapeInfo
 bandshape
 SpectrumInfo
+NoiseFitParams
 NoiseTemperatureInfo
 oof_noise_k2_hz
 white_noise_k2_hz

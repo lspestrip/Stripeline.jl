@@ -151,7 +151,7 @@ call to `project_to_map`, and plotting the result:
 ```@example scanningstrategy
 # We create a Healpix map that represents the whole sky sphere,
 # tessellated up to some resolution NSIDE=128
-map = Healpix.Map{Float64, RingOrder}(128)
+map = Healpix.HealpixMap{Float64, RingOrder}(128)
 
 # Set the sampling time, the number of seconds used to create one
 # measurement. The real value is 0.01, but we use a larger
@@ -289,7 +289,7 @@ To specify times, you can use the functions `jdcnv` and `daycnv` from
 using AstroLib, Dates
 
 # Assume that the simulation starts on January, 1st 2022, 15:00:00
-start_day = DateTime(2022, 1, 1, 15, 0, 0))
+start_day = DateTime(2022, 1, 1, 15, 0, 0)
 
 println("The simulation starts from JD $start_day")
 

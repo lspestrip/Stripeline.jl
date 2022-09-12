@@ -1,4 +1,5 @@
-export Horn, Detector, InstrumentDB, BandshapeInfo, SpectrumInfo, NoiseTemperatureInfo
+export Horn, Detector, InstrumentDB, BandshapeInfo, SpectrumInfo
+export NoiseFitParams, NoiseTemperatureInfo
 export InstrumentDB, defaultdbfolder, parsefpdict, parsedetdict
 export sensitivity_tant, t_to_trj, trj_to_t, deltat_to_deltatrj, deltatrj_to_deltat
 export detector, bandpass, bandshape, spectrum, fknee_hz, tnoise
@@ -704,9 +705,10 @@ given a set of fitting coefficients for the function ``f(\nu) = \nu^a
 e^b + e^c``. This is the same as [`noise_k2_hz`](@ref), but it returns
 the 1/f part only.
 
-The fitting coefficients are usually taken from a [`Spectrum`](@ref)
-structure, namely in the three fields `i_fit_parameters_k2_hz`,
-`q_fit_parameters_k2_hz`, and `u_fit_parameters_k2_hz`.
+The fitting coefficients are usually taken from a
+[`SpectrumInfo`](@ref) structure, namely in the three fields
+`i_fit_parameters_k2_hz`, `q_fit_parameters_k2_hz`, and
+`u_fit_parameters_k2_hz`.
 
 """
 function oof_noise_k2_hz(fit_coeffs::Union{Vector{Float64}, Nothing}, nu)
@@ -724,9 +726,10 @@ given a set of fitting coefficients for the function ``f(\nu) = \nu^a
 e^b + e^c``. This is the same as [`noise_k2_hz`](@ref), but it returns
 the white noise part only.
 
-The fitting coefficients are usually taken from a [`Spectrum`](@ref)
-structure, namely in the three fields `i_fit_parameters_k2_hz`,
-`q_fit_parameters_k2_hz`, and `u_fit_parameters_k2_hz`.
+The fitting coefficients are usually taken from a
+[`SpectrumInfo`](@ref) structure, namely in the three fields
+`i_fit_parameters_k2_hz`, `q_fit_parameters_k2_hz`, and
+`u_fit_parameters_k2_hz`.
 
 """
 function white_noise_k2_hz(fit_coeffs::Union{Vector{Float64}, Nothing}, nu)
@@ -744,9 +747,10 @@ noise, given a set of fitting coefficients for the function ``f(\nu) =
 \nu^a e^b + e^c``. This is the kind of function fitted by the code
 that analyzed the unit-test data.
 
-The fitting coefficients are usually taken from a [`Spectrum`](@ref)
-structure, namely in the three fields `i_fit_parameters_k2_hz`,
-`q_fit_parameters_k2_hz`, and `u_fit_parameters_k2_hz`.
+The fitting coefficients are usually taken from a
+[`SpectrumInfo`](@ref) structure, namely in the three fields
+`i_fit_parameters_k2_hz`, `q_fit_parameters_k2_hz`, and
+`u_fit_parameters_k2_hz`.
 
 To compute the 1/f and white noise parts separately, you can use
 [`oof_noise_k2_hz`](@ref) and [`white_noise_k2_hz`](@ref).

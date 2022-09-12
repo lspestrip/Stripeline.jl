@@ -19,7 +19,7 @@ they output *eight* series:
 -   Four series are called *`DEM` series*: `DEM_Q1`,
     `DEM_Q2`, `DEM_U1`, and `DEM_U2`.
     
-Each of these series is sampled at 100 Hz and contains scientific data
+Each of these series is sampled at 50 Hz and contains scientific data
 (in the preliminary unit tests done in 2017, the sampling frequency
 was 25 Hz; keep this in mind if you happen to replicate some returns
 of those ancient tests!); the raw instrument represents them as
@@ -35,7 +35,7 @@ contains the following fields:
     polarimeters) or a list of strings, e.g., `["I0", "I3", "V2"]`.
 -   `time_range`: a range representing the time of each sample in the
     TOD. Very common choices for this are floating-point ranges like
-    `0.0:(1 / 100):100.0` (100 s sampled at 100 Hz) and ranges of
+    `0.0:(1 / 100):50.0` (100 s sampled at 50 Hz) and ranges of
     astronomical times, created using the
     [AstroTime](https://juliaastro.github.io/AstroTime.jl/stable/)
     package.
@@ -53,8 +53,8 @@ Allocating the TOD is a matter of calling the function
 ```@example tods
 using Stripeline
 
-# One minute of data, 10 polarimeters
-tod = allocate_tod(StripTod, Float32, 0.0:(1.0 / 100.0):60.0, 1:10)
+# One minute of data sampled at 50 Hz, 10 polarimeters
+tod = allocate_tod(StripTod, Float32, 0.0:(1.0 / 50.0):60.0, 1:10)
 ```
 
 In a MPI environment, you can pass the keywords `mpi_rank` and
@@ -143,7 +143,7 @@ eight. To allocate it, you can use [`allocate_tod`](@ref) again,
 passing a [`StokesTod`](@ref) parameter:
 
 ```@example tods
-stokestod = allocate_tod(StokesTod, Float32, 0.0:(1.0 / 100.0):60.0, 1:10)
+stokestod = allocate_tod(StokesTod, Float32, 0.0:(1.0 / 50.0):60.0, 1:10)
 ```
 
 Or you can compute it starting from a [`StokesTod`](@ref) variable:

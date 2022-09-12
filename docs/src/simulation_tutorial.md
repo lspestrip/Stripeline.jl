@@ -199,7 +199,7 @@ The output of the destriper are:
 ```
 #save file 
 
-mapfile = Healpix.Map{Float64,Healpix.RingOrder}(NSIDE)
+mapfile = Healpix.HealpixMap{Float64,Healpix.RingOrder}(NSIDE)
 mapfile.pixels = destr_map
 
 Healpix.saveToFITS(mapfile, "destriped_map.fits", typechar = "D")
@@ -396,7 +396,7 @@ baseline_len = repeat([baseline_length_s*fsamp_hz], baselines_per_process[rank+1
 #save file 
 
 if(rank==0)
-    mapfile = Healpix.Map{Float64,Healpix.RingOrder}(NSIDE)
+    mapfile = Healpix.HealpixMap{Float64,Healpix.RingOrder}(NSIDE)
     mapfile.pixels = destr_map
     Healpix.saveToFITS(mapfile, "destriped_map.fits", typechar = "D")
 end
