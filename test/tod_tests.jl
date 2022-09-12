@@ -10,13 +10,13 @@ end
 function test_allocate_tod(time_range)
     t0 = minimum(time_range)
     t1 = maximum(time_range)
-    
+
     # Number of samples acquired during the observation (this is usually huge!)
     nsamples = length(time_range)
 
     # Three fake polarimeters
     polarimeters = 1:3
-    
+
     mpi_size = 10  # Number of fake MPI processes
 
     # Allocate all the TODs in memory, assuming we are running `mpi_size` processes
@@ -64,7 +64,7 @@ end
 function test_stokes()
     # Three fake polarimeters
     polarimeters = 1:3
-    
+
     mpi_size = 10  # Number of fake MPI processes
 
     # Allocate all the TODs in memory, assuming we are running `mpi_size` processes
@@ -108,7 +108,7 @@ function test_fillnoise()
 
     # DEM series have a lower covariance
     @test all(@. expected - computed < 1e-5)
-    
+
 end
 
 test_split_into_n()
