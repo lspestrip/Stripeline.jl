@@ -1,5 +1,6 @@
 # HEAD
 
+-   Implement a faster way to inject noise in TODs ([#52](https://github.com/lspestrip/Stripeline.jl/pull/52))
 -   Implement a new structure for TOD (`StripTod`) and a new function (`allocate_tod`) to allocate them efficiently even when using MPI ([#50](https://github.com/lspestrip/Stripeline.jl/pull/50))
 -   Make the destriper more robust against numeric types ([#49](https://github.com/lspestrip/Stripeline.jl/pull/49))
 -   Move from Travis to GitHub Actions ([#48](https://github.com/lspestrip/Stripeline.jl/pull/48))
