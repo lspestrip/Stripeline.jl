@@ -117,18 +117,12 @@ test_split_into_n()
 test_allocate_tod(0.0:0.01:1000.0)
 
 # Re-run `test_allocate_tod` using an AstroTime range
-begin
-    fsamp_hz = 100.0
-    τ_s = 1 / fsamp_hz  # Integration time for a sample
+let fsamp_hz = 100.0,
+    τ_s = 1 / fsamp_hz,                       # Integration time for a sample
+    t0 = TAIEpoch(2022, 1, 1, 12, 0, 0.0),    # Fake date when the observation starts
+    t1 = t0 + 1hours,                         # End of the observation
+    time_range = t0 : (τ_s * seconds) : t1    # Range covering all the samples
 
-    # Fake date when the observation starts
-    t0 = TAIEpoch(2022, 1, 1, 12, 0, 0.0)
-    # End of the observation
-    t1 = t0 + 1hours
-
-    # This is a range that covers *all* the samples during the observation
-    time_range = t0 : (τ_s * seconds) : t1
-    
     test_allocate_tod(time_range)
 end
 
