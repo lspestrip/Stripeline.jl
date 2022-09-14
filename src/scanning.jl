@@ -93,6 +93,17 @@ const TENERIFE_HEIGHT_M = 2390
 
 include("quaternions.jl")
 
+
+Base.@kwdef struct PR_angles
+    wheel1ang_0 :: Float64
+    wheel2ang_0 :: Float64
+    wheel3ang_0 :: Float64
+    forkang :: Float64
+    omegavaxang :: Float64
+    zvaxang :: Float64
+end
+
+
 """
     timetorotang(time, rpm)
 
