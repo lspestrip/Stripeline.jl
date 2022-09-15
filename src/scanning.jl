@@ -79,6 +79,7 @@ import AstroLib
 import Dates
 
 export TENERIFE_LATITUDE_DEG, TENERIFE_LONGITUDE_DEG, TENERIFE_HEIGHT_M
+export configuration_angles
 export timetorotang, telescopetoground, groundtoearth
 export genpointings!, genpointings, northdir, eastdir, polarizationangle
 
@@ -93,14 +94,15 @@ const TENERIFE_HEIGHT_M = 2390
 
 include("quaternions.jl")
 
+# angles are measured in radians
 
-Base.@kwdef struct PR_angles
-    wheel1ang_0 :: Float64
-    wheel2ang_0 :: Float64
-    wheel3ang_0 :: Float64
-    forkang :: Float64
-    omegavaxang :: Float64
-    zvaxang :: Float64
+Base.@kwdef struct configuration_angles
+    wheel1ang_0 :: Float64 = 0
+    wheel2ang_0 :: Float64 = 0
+    wheel3ang_0 :: Float64 = 0
+    forkang :: Float64 = 0
+    omegaVAXang :: Float64 = 0
+    zVAXang :: Float64 = 0
 end
 
 
@@ -161,6 +163,23 @@ function telescopetoground(wheelanglesfn, time_s)
     qwheel3 = qrotation_z(-wheel3ang)
 
     qwheel3 * (qwheel2 * qwheel1)
+end
+
+function telescopetoground(wheelanglesfn, time_s, config_ang::configuration_angles)
+    (wheel1ang, wheel2ang, wheel3ang) = wheelanglesfn(time_s)
+
+    qwheel1 = qrotation_z(wheel1ang - config_ang.wheel1ang_0)
+    qwheel2 = qrotation_y(wheel2ang - config_ang.wheel2ang_0)
+
+    # The minus sign here takes into account the fact that the azimuth
+    # motor requires positive angles to turn North into East
+    qwheel3 = qrotation_z(-wheel3ang + config_ang.wheel3ang_0)
+
+    qfork = qrotation_x(config_ang.forkang)
+    qomegaVAX = qrotation_z(config_ang.omegaVAXang)
+    qzVAX = qrotation_x(config_ang.zVAXang)    
+
+    qzVAX * qomegaVAX * (qwheel3 * (qwheel2 * qfork * qwheel1))
 end
 
 

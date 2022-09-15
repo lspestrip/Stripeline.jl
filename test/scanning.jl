@@ -181,3 +181,17 @@ let defaultdb = InstrumentDB()
     @test maximum(dirG0[:, 1]) > maximum(dirV0[:, 1])
     @test maximum(dirG0[:, 2]) > maximum(dirV0[:, 2])
 end
+
+#############################################################
+
+# Test the PRM with non idealities
+# Can't test wheel3ang_0 (the boresight motor zero point) because PyPRM doesn't support it, a solution must be found!
+
+function angletomatrix(wheelanglesfn, time_s, config_ang::configuration_angles)
+    quaternion = telescopetoground(wheelanglesfn, time_s, config_ang)
+    rotationmatrix_normalized(quaternion)    
+end
+
+# All the angles set to 0 and no "non idealities" simply test to see if angletomatrix and configuration_angles declaration work well
+config = configuration_angles()
+@test angletomatrix(_ -> (0, 0, 0), 0, config) == [1.0 0 0; 0 1.0 0; 0 0 1.0]
