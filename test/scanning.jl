@@ -188,7 +188,7 @@ end
 # Can't test wheel1ang_0 (the boresight motor zero point) because PyPRM doesn't support it, a solution must be found!
 
 function angletomatrix(wheelanglesfn, time_s, config_ang::configuration_angles)
-    quaternion = telescopetoground(wheelanglesfn, time_s)#, config_ang)
+    quaternion = telescopetoground(wheelanglesfn, time_s, config_ang)
     rotationmatrix_normalized(quaternion)    
 end
 
@@ -197,7 +197,7 @@ config = configuration_angles()
 @test angletomatrix(_ -> (0, 0, 0), 0, config) == [1.0 0 0; 0 1.0 0; 0 0 1.0]
 
 # Ideal
-@test angletomatrix(_ -> (0.0, 20.0, 0.0), 0, config) == [0.9396926207859084 0.0 -0.3420201433256687; 0.0 1.0 0.0; 0.9396926207859084 1.0 0.9396926207859084]
+@test angletomatrix(_ -> (0.0, deg2rad(20.0), 0), 0, config) == [0.9396926207859084 0.0 0.3420201433256687; 0.0 1.0 0.0; -0.3420201433256687 0.0 0.9396926207859084]
 
 # tiltFork_10 deg
 # config = configuration_angles(forkang = deg2rad(10))
