@@ -185,13 +185,36 @@ end
 #############################################################
 
 # Test the PRM with non idealities
-# Can't test wheel3ang_0 (the boresight motor zero point) because PyPRM doesn't support it, a solution must be found!
+# Can't test wheel1ang_0 (the boresight motor zero point) because PyPRM doesn't support it, a solution must be found!
 
 function angletomatrix(wheelanglesfn, time_s, config_ang::configuration_angles)
-    quaternion = telescopetoground(wheelanglesfn, time_s, config_ang)
+    quaternion = telescopetoground(wheelanglesfn, time_s)#, config_ang)
     rotationmatrix_normalized(quaternion)    
 end
 
 # All the angles set to 0 and no "non idealities" simply test to see if angletomatrix and configuration_angles declaration work well
 config = configuration_angles()
 @test angletomatrix(_ -> (0, 0, 0), 0, config) == [1.0 0 0; 0 1.0 0; 0 0 1.0]
+
+# Ideal
+@test angletomatrix(_ -> (0.0, 20.0, 0.0), 0, config) == [0.9396926207859084 0.0 -0.3420201433256687; 0.0 1.0 0.0; 0.9396926207859084 1.0 0.9396926207859084]
+
+# tiltFork_10 deg
+config = configuration_angles(forkang = deg2rad(10))
+@test angletomatrix(_ -> (0.0, 20.0, 0), 0, config) == [0.9396926207859084 0.0593911746138847 -0.33682408883346515; 0.0 0.984807753012208 0.17364817766693033; 0.9396926207859084 0.984807753012208 0.9254165783983234]
+
+# ctheta0_10 deg
+config = configuration_angles(wheel2ang_0 = deg2rad(10))
+@test angletomatrix(_ -> (0.0, 20.0, 0), 0, config) == [0.984807753012208 0.0 -0.17364817766693033; 0.0 1.0 0.0; 0.984807753012208 1.0 0.984807753012208]
+
+# cphi0_10 deg
+config = configuration_angles(wheel3ang_0 = deg2rad(10))
+@test angletomatrix(_ -> (0.0, 20.0, 0), 0, config) == [0.9254165783983234 -0.16317591116653482 -0.3420201433256687; 0.17364817766693033 0.984807753012208 0.0; 0.9254165783983234 0.984807753012208 0.9396926207859084]
+
+# zVAX_10 deg
+config = configuration_angles(zVAXang = deg2rad(10))
+@test angletomatrix(_ -> (0.0, 20.0, 0), 0, config) == [0.9396926207859084 0.0593911746138847 -0.33682408883346515; 0.0 0.984807753012208 0.17364817766693033; 0.9396926207859084 0.984807753012208 0.9254165783983234]
+
+# omegaVAX_10 deg
+config = configuration_angles(omegaVAXang = deg2rad(10))
+@test angletomatrix(_ -> (0.0, 20.0, 0), 0, config) == [0.9254165783983234 0.16317591116653482 -0.3420201433256687; -0.17364817766693033 0.984807753012208 0.0; 0.9254165783983234 0.984807753012208 0.9396926207859084]

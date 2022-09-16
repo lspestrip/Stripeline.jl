@@ -179,7 +179,7 @@ function telescopetoground(wheelanglesfn, time_s, config_ang::configuration_angl
     qomegaVAX = qrotation_z(config_ang.omegaVAXang)
     qzVAX = qrotation_x(config_ang.zVAXang)    
 
-    qzVAX * qomegaVAX * (qwheel3 * (qwheel2 * qfork * qwheel1))
+    qzVAX * (qomegaVAX * (qwheel3 * (qfork * (qwheel2 * qwheel1))))
 end
 
 
