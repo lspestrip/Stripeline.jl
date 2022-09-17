@@ -194,7 +194,7 @@ function telescopetoground(wheelanglesfn, time_s, config_ang::configuration_angl
 
     # The minus sign here takes into account the fact that the azimuth
     # motor requires positive angles to turn North into East
-    qwheel3 = qrotation_z(-wheel3ang - config_ang.wheel3ang_0)
+    qwheel3 = qrotation_z(-wheel3ang + config_ang.wheel3ang_0)
 
     qfork = qrotation_x(config_ang.forkang)
     qomegaVAX = qrotation_z(config_ang.omegaVAXang)

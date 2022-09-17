@@ -203,7 +203,7 @@ end
                 [0.984807753012208 0.0 0.17364817766693033; 0.0 1.0 0.0; -0.17364817766693033 0.0 0.984807753012208])
 
 # cphi0_10 deg
-@test isapprox(angletomatrix(_ -> (0.0, deg2rad(20.0), 0), 0, configuration_angles(wheel3ang_0=deg2rad(10))), 
+@test isapprox(angletomatrix(_ -> (0.0, deg2rad(20.0), 0), 0, configuration_angles(wheel3ang_0=deg2rad(-10))), 
                 [0.9254165783983234 0.17364817766693033 0.33682408883346515; -0.16317591116653482 0.984807753012208 -0.0593911746138847; -0.3420201433256687 0.0 0.9396926207859084])
 
 # zVAX_10 deg
@@ -215,9 +215,9 @@ end
                 [0.9254165783983234 -0.17364817766693033 0.33682408883346515; 0.16317591116653482 0.984807753012208 0.0593911746138847; -0.3420201433256687 0.0 0.9396926207859084])
 
 # phi0_30__theta0_48 deg
-@test isapprox(angletomatrix(_ -> (0.0, deg2rad(20.0), 0), 0, configuration_angles(wheel2ang_0=deg2rad(48), wheel3ang_0=deg2rad(30))), 
+@test isapprox(angletomatrix(_ -> (0.0, deg2rad(20.0), 0), 0, configuration_angles(wheel2ang_0=deg2rad(48), wheel3ang_0=deg2rad(-30))), 
                 [0.7646550456261504 0.49999999999999994 -0.4065742997269626; -0.44147379642946344 0.8660254037844387 0.23473578139294538; 0.4694715627858908 0.0 0.882947592858927])
 
 # phi0_30__theta0_48__fork_52 deg
-@test isapprox(angletomatrix(_ -> (0.0, deg2rad(20.0), deg2rad(-30.0)), 0, configuration_angles(wheel2ang_0=deg2rad(48), wheel3ang_0=deg2rad(30), forkang=deg2rad(52))),
+@test isapprox(angletomatrix(_ -> (0.0, deg2rad(20.0), deg2rad(-30.0)), 0, configuration_angles(wheel2ang_0=deg2rad(48), wheel3ang_0=deg2rad(-30), forkang=deg2rad(52))),
 				[0.882947592858927 2.95973511123774e-17 -0.4694715627858908; -0.36994863998783545 0.6156614753256583 -0.6957721980440043; 0.28903555496820393 0.788010753606722 0.5435968176547656])
