@@ -94,8 +94,31 @@ const TENERIFE_HEIGHT_M = 2390
 
 include("quaternions.jl")
 
-# angles are measured in radians
+"""
+    configuration_angles(wheel1ang_0,
+                         wheel2ang_0,
+                         wheel3ang_0,
+                         forkang,
+                         omegaVAXang,
+                         zVAXang)
 
+Struct containing the configuration angles for the telescope ie the angles describing
+the non idealities in the telescope (all of these parameters are considered equal to 0 in 
+an ideal telescope):
+
+(wheel1ang_0, wheel2ang_0, wheel3ang_0): these are the zero points angles for the three motors
+                                         (respectively the boresight, the altitude and the ground
+                                         motor)
+
+(forkang): describe the deviation of orthogonality between the H-AXIS and the V-AXIS
+
+(omegaVAXang, zVAXang): wobble angles encoding the deviation of the V-AXIS from the local vertical;
+                        zVAXang is the displacement from the V-AXIS ie the colatitude,
+                        omegaVAXang is the azimuth of the ascending node defined as 
+                        omegaVAXang = 90° + A * zVAXang
+                        
+All of these angles must be expressed in RADIANS.
+"""
 Base.@kwdef struct configuration_angles
     wheel1ang_0 :: Float64 = 0
     wheel2ang_0 :: Float64 = 0
