@@ -3,7 +3,7 @@ using Stripeline
 using Dates
 using AstroLib
 using Healpix
-const Sl = Stripeline
+#const Sl = Stripeline
 
 # These are the old values that were used by @fincardona to test
 # against the reference position for the Crab Nebula
@@ -11,18 +11,18 @@ const TEST_TENERIFE_LATITUDE_DEG = 28.3
 const TEST_TENERIFE_LONGITUDE_DEG = -16.509722
 const TEST_TENERIFE_HEIGHT_M = 2390
 
-eps = 3e-4 # Corresponds to pointing precision of 1.08 arcseconds
+const eps = 3e-4 # Corresponds to pointing precision of 1.08 arcseconds
 
 t_start = DateTime(2018, 01, 01, 0, 0, 0)
 
-crab_az_stellarium_rad = 3.168070267969909
-crab_alt_stellarium_rad = 1.4612458881566615
+const crab_az_stellarium_rad = 3.168070267969909
+const crab_alt_stellarium_rad = 1.4612458881566615
 
 dirs = [π / 2 - crab_alt_stellarium_rad 2π - crab_az_stellarium_rad]
 
-crab_ra_astropy_rad = 1.4596726619436968
-crab_dec_astropy_rad = 0.3842255081802917
-crab_position = sqrt(crab_ra_astropy_rad^2 + crab_dec_astropy_rad^2)
+const crab_ra_astropy_rad = 1.4596726619436968
+const crab_dec_astropy_rad = 0.3842255081802917
+const crab_position = sqrt(crab_ra_astropy_rad^2 + crab_dec_astropy_rad^2)
 
 # Invert Crab coordinates into telescope pointing directions
 groundq = telescopetoground(_ -> (0, deg2rad(20), 0), 0)
@@ -72,10 +72,6 @@ days = [t_1, t_2, t_3]
 dirs = [π / 2 - 0.6174703397894518 2π - 4.852881197778698 ;
         π / 2 - 0.6024799007695448 2π - 4.859519751514131 ;
         π / 2 - 0.5875049757874335 2π - 4.866139397516001]
-
-crab_ra_astropy_rad = 1.4596726619436968
-crab_dec_astropy_rad = 0.3842255081802917
-crab_position = sqrt(crab_ra_astropy_rad^2 + crab_dec_astropy_rad^2)
 
 # Invert crab coordinates into telescope pointing directions
 skydirs = Array{Float64}(undef, 3, 2)
@@ -188,43 +184,32 @@ end
 # Can't test wheel1ang_0 (the boresight motor zero point) because PyPRM doesn't support it, a solution must be found!
 
 function angletomatrix(wheelanglesfn, time_s, config_ang::configuration_angles)
-    quaternion = telescopetoground(wheelanglesfn, time_s, config_ang)
-    rotationmatrix_normalized(quaternion)    
-end
-
-function is_close(m1, m2, eps)
-    all(isless.(abs.(m1 - m2), eps))
+    rotationmatrix_normalized(telescopetoground(wheelanglesfn, time_s, config_ang))    
 end
 
 # All the angles set to 0 and no "non idealities" simply test to see if angletomatrix and configuration_angles declaration work well
-config = configuration_angles()
-@test angletomatrix(_ -> (0, 0, 0), 0, config) == [1.0 0 0; 0 1.0 0; 0 0 1.0]
+@test angletomatrix(_ -> (0, 0, 0), 0, configuration_angles()) == [1.0 0 0; 0 1.0 0; 0 0 1.0]
 
 # Ideal
-m = [0.9396926207859084 0.0 0.3420201433256687; 0.0 1.0 0.0; -0.3420201433256687 0.0 0.9396926207859084]
-@test is_close(angletomatrix(_ -> (0.0, deg2rad(20.0), 0), 0, config), m, eps)
+@test isapprox(angletomatrix(_ -> (0.0, deg2rad(20.0), 0), 0, configuration_angles()), 
+                [0.9396926207859084 0.0 0.3420201433256687; 0.0 1.0 0.0; -0.3420201433256687 0.0 0.9396926207859084])
 
 # tiltFork_10 deg
-config = configuration_angles(forkang=deg2rad(10))
-m = [0.9396926207859084 0.0 0.3420201433256687; 0.0593911746138847 0.984807753012208 -0.16317591116653482; -0.33682408883346515 0.17364817766693033 0.9254165783983234]
-@test is_close(angletomatrix(_ -> (0.0, deg2rad(20.0), 0), 0, config), m, eps)
+@test isapprox(angletomatrix(_ -> (0.0, deg2rad(20.0), 0), 0, configuration_angles(forkang=deg2rad(10))),
+                [0.9396926207859084 0.0 0.3420201433256687; 0.0593911746138847 0.984807753012208 -0.16317591116653482; -0.33682408883346515 0.17364817766693033 0.9254165783983234])
 
 # ctheta0_10 deg
-config = configuration_angles(wheel2ang_0=deg2rad(10))
-m = [0.984807753012208 0.0 0.17364817766693033; 0.0 1.0 0.0; -0.17364817766693033 0.0 0.984807753012208]
-@test is_close(angletomatrix(_ -> (0.0, deg2rad(20.0), 0), 0, config), m, eps)
+@test isapprox(angletomatrix(_ -> (0.0, deg2rad(20.0), 0), 0, configuration_angles(wheel2ang_0=deg2rad(10))), 
+                [0.984807753012208 0.0 0.17364817766693033; 0.0 1.0 0.0; -0.17364817766693033 0.0 0.984807753012208])
 
 # cphi0_10 deg
-config = configuration_angles(wheel3ang_0=deg2rad(10))
-m = [0.9254165783983234 0.17364817766693033 0.33682408883346515; -0.16317591116653482 0.984807753012208 -0.0593911746138847; -0.3420201433256687 0.0 0.9396926207859084]
-@test is_close(angletomatrix(_ -> (0.0, deg2rad(20.0), 0), 0, config), m, eps)
+@test isapprox(angletomatrix(_ -> (0.0, deg2rad(20.0), 0), 0, configuration_angles(wheel3ang_0=deg2rad(10))), 
+                [0.9254165783983234 0.17364817766693033 0.33682408883346515; -0.16317591116653482 0.984807753012208 -0.0593911746138847; -0.3420201433256687 0.0 0.9396926207859084])
 
 # zVAX_10 deg
-config = configuration_angles(zVAXang=deg2rad(10))
-m = [0.9396926207859084 0.0 0.3420201433256687; 0.0593911746138847 0.984807753012208 -0.16317591116653482; -0.33682408883346515 0.17364817766693033 0.9254165783983234]
-@test is_close(angletomatrix(_ -> (0.0, deg2rad(20.0), 0), 0, config), m, eps)
+@test isapprox(angletomatrix(_ -> (0.0, deg2rad(20.0), 0), 0, configuration_angles(zVAXang=deg2rad(10))), 
+                [0.9396926207859084 0.0 0.3420201433256687; 0.0593911746138847 0.984807753012208 -0.16317591116653482; -0.33682408883346515 0.17364817766693033 0.9254165783983234])
 
 # omegaVAX_10 deg
-config = configuration_angles(omegaVAXang=deg2rad(10))
-m = [0.9254165783983234 -0.17364817766693033 0.33682408883346515; 0.16317591116653482 0.984807753012208 0.0593911746138847; -0.3420201433256687 0.0 0.9396926207859084]
-@test is_close(angletomatrix(_ -> (0.0, deg2rad(20.0), 0), 0, config), m, eps)
+@test isapprox(angletomatrix(_ -> (0.0, deg2rad(20.0), 0), 0, configuration_angles(omegaVAXang=deg2rad(10))), 
+                [0.9254165783983234 -0.17364817766693033 0.33682408883346515; 0.16317591116653482 0.984807753012208 0.0593911746138847; -0.3420201433256687 0.0 0.9396926207859084])

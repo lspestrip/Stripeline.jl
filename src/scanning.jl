@@ -135,9 +135,9 @@ Base.@kwdef struct configuration_angles_ST
     forkang :: Float64 = 0
     omegaVAXang :: Float64 = 0
     zVAXang :: Float64 = 0
-    roll :: Float64
-    pan :: Float64
-    tilt :: Float64
+    roll :: Float64 = 0
+    pan :: Float64 = 0
+    tilt :: Float64 = 0
 end
 
 """
