@@ -192,29 +192,39 @@ function angletomatrix(wheelanglesfn, time_s, config_ang::configuration_angles)
     rotationmatrix_normalized(quaternion)    
 end
 
+function is_close(m1, m2, eps)
+    all(isless.(abs.(m1 - m2), eps))
+end
+
 # All the angles set to 0 and no "non idealities" simply test to see if angletomatrix and configuration_angles declaration work well
 config = configuration_angles()
 @test angletomatrix(_ -> (0, 0, 0), 0, config) == [1.0 0 0; 0 1.0 0; 0 0 1.0]
 
 # Ideal
-@test angletomatrix(_ -> (0.0, deg2rad(20.0), 0), 0, config) == [0.9396926207859084 0.0 0.3420201433256687; 0.0 1.0 0.0; -0.3420201433256687 0.0 0.9396926207859084]
+m = [0.9396926207859084 0.0 0.3420201433256687; 0.0 1.0 0.0; -0.3420201433256687 0.0 0.9396926207859084]
+@test is_close(angletomatrix(_ -> (0.0, deg2rad(20.0), 0), 0, config), m, eps)
 
 # tiltFork_10 deg
-# config = configuration_angles(forkang = deg2rad(10))
-# @test angletomatrix(_ -> (0.0, 20.0, 0), 0, config) == [0.9396926207859084 0.0593911746138847 -0.33682408883346515; 0.0 0.984807753012208 0.17364817766693033; 0.9396926207859084 0.984807753012208 0.9254165783983234]
+config = configuration_angles(forkang=deg2rad(10))
+m = [0.9396926207859084 0.0 0.3420201433256687; 0.0593911746138847 0.984807753012208 -0.16317591116653482; -0.33682408883346515 0.17364817766693033 0.9254165783983234]
+@test is_close(angletomatrix(_ -> (0.0, deg2rad(20.0), 0), 0, config), m, eps)
 
 # ctheta0_10 deg
-# config = configuration_angles(wheel2ang_0 = deg2rad(10))
-# @test angletomatrix(_ -> (0.0, 20.0, 0), 0, config) == [0.984807753012208 0.0 -0.17364817766693033; 0.0 1.0 0.0; 0.984807753012208 1.0 0.984807753012208]
+config = configuration_angles(wheel2ang_0=deg2rad(10))
+m = [0.984807753012208 0.0 0.17364817766693033; 0.0 1.0 0.0; -0.17364817766693033 0.0 0.984807753012208]
+@test is_close(angletomatrix(_ -> (0.0, deg2rad(20.0), 0), 0, config), m, eps)
 
 # cphi0_10 deg
-# config = configuration_angles(wheel3ang_0 = deg2rad(10))
-# @test angletomatrix(_ -> (0.0, 20.0, 0), 0, config) == [0.9254165783983234 -0.16317591116653482 -0.3420201433256687; 0.17364817766693033 0.984807753012208 0.0; 0.9254165783983234 0.984807753012208 0.9396926207859084]
+config = configuration_angles(wheel3ang_0=deg2rad(10))
+m = [0.9254165783983234 0.17364817766693033 0.33682408883346515; -0.16317591116653482 0.984807753012208 -0.0593911746138847; -0.3420201433256687 0.0 0.9396926207859084]
+@test is_close(angletomatrix(_ -> (0.0, deg2rad(20.0), 0), 0, config), m, eps)
 
 # zVAX_10 deg
-# config = configuration_angles(zVAXang = deg2rad(10))
-# @test angletomatrix(_ -> (0.0, 20.0, 0), 0, config) == [0.9396926207859084 0.0593911746138847 -0.33682408883346515; 0.0 0.984807753012208 0.17364817766693033; 0.9396926207859084 0.984807753012208 0.9254165783983234]
+config = configuration_angles(zVAXang=deg2rad(10))
+m = [0.9396926207859084 0.0 0.3420201433256687; 0.0593911746138847 0.984807753012208 -0.16317591116653482; -0.33682408883346515 0.17364817766693033 0.9254165783983234]
+@test is_close(angletomatrix(_ -> (0.0, deg2rad(20.0), 0), 0, config), m, eps)
 
 # omegaVAX_10 deg
-# config = configuration_angles(omegaVAXang = deg2rad(10))
-# @test angletomatrix(_ -> (0.0, 20.0, 0), 0, config) == [0.9254165783983234 0.16317591116653482 -0.3420201433256687; -0.17364817766693033 0.984807753012208 0.0; 0.9254165783983234 0.984807753012208 0.9396926207859084]
+config = configuration_angles(omegaVAXang=deg2rad(10))
+m = [0.9254165783983234 -0.17364817766693033 0.33682408883346515; 0.16317591116653482 0.984807753012208 0.0593911746138847; -0.3420201433256687 0.0 0.9396926207859084]
+@test is_close(angletomatrix(_ -> (0.0, deg2rad(20.0), 0), 0, config), m, eps)
