@@ -79,7 +79,7 @@ import AstroLib
 import Dates
 
 export TENERIFE_LATITUDE_DEG, TENERIFE_LONGITUDE_DEG, TENERIFE_HEIGHT_M
-export configuration_angles
+export configuration_angles, configuration_angles_ST
 export timetorotang, telescopetoground, groundtoearth
 export genpointings!, genpointings, northdir, eastdir, polarizationangle
 
@@ -128,6 +128,17 @@ Base.@kwdef struct configuration_angles
     zVAXang :: Float64 = 0
 end
 
+Base.@kwdef struct configuration_angles_ST
+    wheel1ang_0 :: Float64 = 0
+    wheel2ang_0 :: Float64 = 0
+    wheel3ang_0 :: Float64 = 0
+    forkang :: Float64 = 0
+    omegaVAXang :: Float64 = 0
+    zVAXang :: Float64 = 0
+    roll :: Float64
+    pan :: Float64
+    tilt :: Float64
+end
 
 """
     timetorotang(time, rpm)
