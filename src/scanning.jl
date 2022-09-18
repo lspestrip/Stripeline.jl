@@ -199,6 +199,13 @@ function telescopetoground(wheelanglesfn, time_s)
     qwheel3 * (qwheel2 * qwheel1)
 end
 
+
+"""
+    telescopetoground(wheelanglesfn, time_s, config_ang::configuration_angles)
+
+
+
+"""
 function telescopetoground(wheelanglesfn, time_s, config_ang::configuration_angles = configuration_angles())
     (wheel1ang, wheel2ang, wheel3ang) = wheelanglesfn(time_s)
 
