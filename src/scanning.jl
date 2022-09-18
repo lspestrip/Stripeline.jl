@@ -128,18 +128,6 @@ Base.@kwdef struct configuration_angles
     zVAXang :: Float64 = 0
 end
 
-Base.@kwdef struct configuration_angles_ST
-    wheel1ang_0 :: Float64 = 0
-    wheel2ang_0 :: Float64 = 0
-    wheel3ang_0 :: Float64 = 0
-    forkang :: Float64 = 0
-    omegaVAXang :: Float64 = 0
-    zVAXang :: Float64 = 0
-    roll :: Float64 = 0
-    pan :: Float64 = 0
-    tilt :: Float64 = 0
-end
-
 """
     timetorotang(time, rpm)
 
@@ -201,9 +189,13 @@ end
 
 
 """
-    telescopetoground(wheelanglesfn, time_s, config_ang::configuration_angles)
+    telescopetoground(wheelanglesfn, time_s, config_ang)
 
-
+Return a quaternion of type `Quaternion{Float64}` representing the
+coordinate transform from the focal plane to the ground of the
+telescope. 
+The parameter `config_ang` must be a configuration_angles struct
+containing the angles describing the non idealities of the telescope.
 
 """
 function telescopetoground(wheelanglesfn, time_s, config_ang::configuration_angles = configuration_angles())
