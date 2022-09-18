@@ -186,6 +186,19 @@ telescopetoground(3600.0) do
 end
 `````
 """
+function telescopetoground(wheelanglesfn, time_s)
+    (wheel1ang, wheel2ang, wheel3ang) = wheelanglesfn(time_s)
+
+    qwheel1 = qrotation_z(wheel1ang)
+    qwheel2 = qrotation_y(wheel2ang)
+
+    # The minus sign here takes into account the fact that the azimuth
+    # motor requires positive angles to turn North into East
+    qwheel3 = qrotation_z(-wheel3ang)
+
+    qwheel3 * (qwheel2 * qwheel1)
+end
+
 function telescopetoground(wheelanglesfn, time_s, config_ang::configuration_angles = configuration_angles())
     (wheel1ang, wheel2ang, wheel3ang) = wheelanglesfn(time_s)
 
@@ -200,22 +213,8 @@ function telescopetoground(wheelanglesfn, time_s, config_ang::configuration_angl
     qomegaVAX = qrotation_z(config_ang.omegaVAXang)
     qzVAX = qrotation_x(config_ang.zVAXang)    
 
-    qzVAX * (qomegaVAX * (qwheel3 * (qfork * (qwheel2 * qwheel1))))
+    qomegaVAX * (qzVAX * (qwheel3 * (qfork * (qwheel2 * qwheel1))))
 end
-
-#= function telescopetoground(wheelanglesfn, time_s)
-    (wheel1ang, wheel2ang, wheel3ang) = wheelanglesfn(time_s)
-
-    qwheel1 = qrotation_z(wheel1ang)
-    qwheel2 = qrotation_y(wheel2ang)
-
-    # The minus sign here takes into account the fact that the azimuth
-    # motor requires positive angles to turn North into East
-    qwheel3 = qrotation_z(-wheel3ang)
-
-    qwheel3 * (qwheel2 * qwheel1)
-end =#
-
 
 """
     groundtoearth(groundq, time_s, latitude_deg; day_duration_s=86400.0)
