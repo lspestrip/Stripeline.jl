@@ -2,6 +2,7 @@ module Stripeline
 
 include("instrumentdb.jl")
 include("scanning.jl")
+include("scanning_st.jl")
 include("timesplit.jl")
 include("tod.jl")
 include("mapmaker.jl")

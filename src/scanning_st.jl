@@ -73,7 +73,8 @@
 #
 
 include("quaternions.jl")
-
+export configuration_angles_ST
+export camtoground
 
 """
     configuration_angles(wheel1ang_0,
@@ -135,9 +136,8 @@ function camtoground(wheelanglesfn,
     (wheel1ang, wheel2ang, wheel3ang) = wheelanglesfn(time_s)
 
     qroll = qrotation_z(config_st.rollang_rad)
-    qpan = qrotation_x(config_st.panang_rad)
-    qtilt = qrotation_y(config_st.tiltang_rad)
-    qcam =  qpan * (qtilt * qroll)
+    qpan = qrotation_y(config_st.panang_rad)
+    qtilt = qrotation_x(config_st.tiltang_rad)
 
     qwheel1 = qrotation_z(wheel1ang - config_st.wheel1ang_0_rad)
     qwheel2 = qrotation_y(wheel2ang - config_st.wheel2ang_0_rad)
@@ -149,5 +149,5 @@ function camtoground(wheelanglesfn,
     qomegaVAX = qrotation_z(config_st.omegaVAXang_rad)
     qzVAX = qrotation_x(config_st.zVAXang_rad)    
 
-    qomegaVAX * (qzVAX * (qwheel3 * (qfork * (qwheel2 * (qwheel1 * qcam)))))
+    qomegaVAX * (qzVAX * (qwheel3 * (qfork * (qwheel2 * (qwheel1 * ( qtilt * (qpan * qroll)))))))
 end
