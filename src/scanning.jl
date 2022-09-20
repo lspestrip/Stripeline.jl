@@ -95,37 +95,37 @@ const TENERIFE_HEIGHT_M = 2390
 include("quaternions.jl")
 
 """
-    configuration_angles(wheel1ang_0,
-                         wheel2ang_0,
-                         wheel3ang_0,
-                         forkang,
-                         omegaVAXang,
-                         zVAXang)
+    configuration_angles(wheel1ang_0_rad,
+                         wheel2ang_0_rad,
+                         wheel3ang_0_rad,
+                         forkang_rad,
+                         omegaVAXang_rad,
+                         zVAXang_rad)
 
 Struct containing the configuration angles for the telescope ie the angles describing
 the non idealities in the telescope (all of these parameters are considered equal to 0 in 
 an ideal telescope):
 
-(wheel1ang_0, wheel2ang_0, wheel3ang_0): these are the zero points angles for the three motors
+(wheel1ang_0_rad, wheel2ang_0_rad, wheel3ang_0_rad): these are the zero points angles for the three motors
                                          (respectively the boresight, the altitude and the ground
                                          motor)
 
-(forkang): describe the deviation of orthogonality between the H-AXIS and the V-AXIS
+(forkang_rad): describe the deviation of orthogonality between the H-AXIS and the V-AXIS
 
-(omegaVAXang, zVAXang): wobble angles encoding the deviation of the V-AXIS from the local vertical;
-                        zVAXang is the displacement from the V-AXIS ie the colatitude,
-                        omegaVAXang is the azimuth of the ascending node defined as 
-                        omegaVAXang = 90° + A * zVAXang
+(omegaVAXang_rad, zVAXang_rad): wobble angles encoding the deviation of the V-AXIS from the local vertical;
+                        zVAXang_rad is the displacement from the V-AXIS ie the colatitude,
+                        omegaVAXang_rad is the azimuth of the ascending node defined as 
+                        omegaVAXang_rad = 90° + A * zVAXang_rad
                         
 All of these angles must be expressed in RADIANS.
 """
 Base.@kwdef struct configuration_angles
-    wheel1ang_0 :: Float64 = 0
-    wheel2ang_0 :: Float64 = 0
-    wheel3ang_0 :: Float64 = 0
-    forkang :: Float64 = 0
-    omegaVAXang :: Float64 = 0
-    zVAXang :: Float64 = 0
+    wheel1ang_0_rad :: Float64 = 0
+    wheel2ang_0_rad :: Float64 = 0
+    wheel3ang_0_rad :: Float64 = 0
+    forkang_rad :: Float64 = 0
+    omegaVAXang_rad :: Float64 = 0
+    zVAXang_rad :: Float64 = 0
 end
 
 """
@@ -200,16 +200,16 @@ containing the angles describing the non idealities of the telescope.
 function telescopetoground(wheelanglesfn, time_s, config_ang::configuration_angles = configuration_angles())
     (wheel1ang, wheel2ang, wheel3ang) = wheelanglesfn(time_s)
 
-    qwheel1 = qrotation_z(wheel1ang - config_ang.wheel1ang_0)
-    qwheel2 = qrotation_y(wheel2ang - config_ang.wheel2ang_0)
+    qwheel1 = qrotation_z(wheel1ang - config_ang.wheel1ang_0_rad)
+    qwheel2 = qrotation_y(wheel2ang - config_ang.wheel2ang_0_rad)
 
     # The minus sign here takes into account the fact that the azimuth
     # motor requires positive angles to turn North into East
-    qwheel3 = qrotation_z(-wheel3ang + config_ang.wheel3ang_0)
+    qwheel3 = qrotation_z(-wheel3ang + config_ang.wheel3ang_0_rad)
 
-    qfork = qrotation_x(config_ang.forkang)
-    qomegaVAX = qrotation_z(config_ang.omegaVAXang)
-    qzVAX = qrotation_x(config_ang.zVAXang)    
+    qfork = qrotation_x(config_ang.forkang_rad)
+    qomegaVAX = qrotation_z(config_ang.omegaVAXang_rad)
+    qzVAX = qrotation_x(config_ang.zVAXang_rad)    
 
     qomegaVAX * (qzVAX * (qwheel3 * (qfork * (qwheel2 * qwheel1))))
 end

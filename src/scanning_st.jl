@@ -106,15 +106,15 @@ considered equal to 0 in an ideal case):
 All of these angles must be expressed in RADIANS.
 """
 Base.@kwdef struct configuration_angles_ST
-    wheel1ang_0 :: Float64 = 0
-    wheel2ang_0 :: Float64 = 0
-    wheel3ang_0 :: Float64 = 0
-    forkang :: Float64 = 0
-    omegaVAXang :: Float64 = 0
-    zVAXang :: Float64 = 0
-    rollang :: Float64 = 0
-    panang :: Float64 = 0
-    tiltang :: Float64 = 0
+    wheel1ang_0_rad :: Float64 = 0
+    wheel2ang_0_rad :: Float64 = 0
+    wheel3ang_0_rad :: Float64 = 0
+    forkang_rad :: Float64 = 0
+    omegaVAXang_rad :: Float64 = 0
+    zVAXang_rad :: Float64 = 0
+    rollang_rad :: Float64 = 0
+    panang_rad :: Float64 = 0
+    tiltang_rad :: Float64 = 0
 end
 
 """
@@ -134,20 +134,20 @@ function camtoground(wheelanglesfn,
                      config_st::configuration_angles_ST = configuration_angles_ST())
     (wheel1ang, wheel2ang, wheel3ang) = wheelanglesfn(time_s)
 
-    qroll = qrotation_z(config_st.rollang)
-    qpan = qrotation_x(config_st.panang)
-    qtilt = qrotation_y(config_st.tiltang)
+    qroll = qrotation_z(config_st.rollang_rad)
+    qpan = qrotation_x(config_st.panang_rad)
+    qtilt = qrotation_y(config_st.tiltang_rad)
     qcam =  qpan * (qtilt * qroll)
 
-    qwheel1 = qrotation_z(wheel1ang - config_st.wheel1ang_0)
-    qwheel2 = qrotation_y(wheel2ang - config_st.wheel2ang_0)
+    qwheel1 = qrotation_z(wheel1ang - config_st.wheel1ang_0_rad)
+    qwheel2 = qrotation_y(wheel2ang - config_st.wheel2ang_0_rad)
     # The minus sign here takes into account the fact that the azimuth
     # motor requires positive angles to turn North into East
-    qwheel3 = qrotation_z(-wheel3ang + config_st.wheel3ang_0)
+    qwheel3 = qrotation_z(-wheel3ang + config_st.wheel3ang_0_rad)
 
-    qfork = qrotation_x(config_st.forkang)
-    qomegaVAX = qrotation_z(config_st.omegaVAXang)
-    qzVAX = qrotation_x(config_st.zVAXang)    
+    qfork = qrotation_x(config_st.forkang_rad)
+    qomegaVAX = qrotation_z(config_st.omegaVAXang_rad)
+    qzVAX = qrotation_x(config_st.zVAXang_rad)    
 
     qomegaVAX * (qzVAX * (qwheel3 * (qfork * (qwheel2 * (qwheel1 * qcam)))))
 end
