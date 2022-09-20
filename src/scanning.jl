@@ -196,7 +196,6 @@ coordinate transform from the focal plane to the ground of the
 telescope. 
 The parameter `config_ang` must be a configuration_angles struct
 containing the angles describing the non idealities of the telescope.
-
 """
 function telescopetoground(wheelanglesfn, time_s, config_ang::configuration_angles = configuration_angles())
     (wheel1ang, wheel2ang, wheel3ang) = wheelanglesfn(time_s)

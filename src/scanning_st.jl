@@ -117,6 +117,18 @@ Base.@kwdef struct configuration_angles_ST
     tiltang :: Float64 = 0
 end
 
+"""
+    camtoground(wheelanglesfn,
+                time_s,
+                config_st)
+
+Return a quaternion of type `Quaternion{Float64}` representing the
+coordinate transformation for the star tracker, taking into account
+all the non idealities: the position of the camera in the telescope 
+reference frame and the configuration angles of the telescope.
+The parameter `config_st` must be a configuration_angles_ST struct
+containing the angles describing the non idealities of the telescope.
+"""
 function camtoground(wheelanglesfn, 
                      time_s,
                      config_st::configuration_angles_ST = configuration_angles_ST())
