@@ -90,11 +90,11 @@ Struct containing the configuration angles for the star tracker ie the angles de
 the non idealities in the telescope and in the camera reference frame(all of these parameters are ù
 considered equal to 0 in an ideal case):
 
-(rollang, panang, tiltang): 
+(rollang, panang, tiltang): Tait-Brian angles encoding the camera orientation in the telescope reference frame
 
 (wheel1ang_0, wheel2ang_0, wheel3ang_0): these are the zero points angles for the three motors
                                          (respectively the boresight, the altitude and the ground
-                                         motor)
+                                         motor) of the telescope
 
 (forkang): describe the deviation of orthogonality between the H-AXIS and the V-AXIS
 
@@ -115,4 +115,27 @@ Base.@kwdef struct configuration_angles_ST
     rollang :: Float64 = 0
     panang :: Float64 = 0
     tiltang :: Float64 = 0
+end
+
+function camtoground(wheelanglesfn, 
+                     time_s,
+                     config_st::configuration_angles_ST = configuration_angles_ST())
+    (wheel1ang, wheel2ang, wheel3ang) = wheelanglesfn(time_s)
+
+    qroll = qrotation_z(config_st.rollang)
+    qpan = qrotation_x(config_st.panang)
+    qtilt = qrotation_y(config_st.tiltang)
+    qcam =  qpan * (qtilt * qroll)
+
+    qwheel1 = qrotation_z(wheel1ang - config_st.wheel1ang_0)
+    qwheel2 = qrotation_y(wheel2ang - config_st.wheel2ang_0)
+    # The minus sign here takes into account the fact that the azimuth
+    # motor requires positive angles to turn North into East
+    qwheel3 = qrotation_z(-wheel3ang + config_st.wheel3ang_0)
+
+    qfork = qrotation_x(config_st.forkang)
+    qomegaVAX = qrotation_z(config_st.omegaVAXang)
+    qzVAX = qrotation_x(config_st.zVAXang)    
+
+    qomegaVAX * (qzVAX * (qwheel3 * (qfork * (qwheel2 * (qwheel1 * qcam)))))
 end
