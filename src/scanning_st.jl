@@ -72,20 +72,20 @@
 #           v  X axis (aligned with North, when applicable)
 #
 
-include("quaternions.jl")
 export configuration_angles_ST
 export camtoground
+export startrackerpointings, startrackerpointings!
 
 """
-    configuration_angles(wheel1ang_0,
-                         wheel2ang_0,
-                         wheel3ang_0,
-                         forkang,
-                         omegaVAXang,
-                         zVAXang,
-                         rollang,
-                         panang,
-                         tiltang)
+    configuration_angles(wheel1ang_0_rad,
+                         wheel2ang_0_rad,
+                         wheel3ang_0_rad,
+                         forkang_rad,
+                         omegaVAXang_rad,
+                         zVAXang_rad,
+                         rollang_rad,
+                         panang_rad,
+                         tiltang_rad)
 
 Struct containing the configuration angles for the star tracker ie the angles describing
 the non idealities in the telescope and in the camera reference frame(all of these parameters are ù
@@ -104,7 +104,7 @@ considered equal to 0 in an ideal case):
                         omegaVAXang is the azimuth of the ascending node defined as 
                         omegaVAXang = 90° + A * zVAXang
                         
-All of these angles must be expressed in RADIANS.
+All of these angles must be expressed in RADIANS and measured anticlockwise.
 """
 Base.@kwdef struct configuration_angles_ST
     wheel1ang_0_rad :: Float64 = 0
@@ -150,4 +150,55 @@ function camtoground(wheelanglesfn,
     qzVAX = qrotation_x(config_st.zVAXang_rad)    
 
     qomegaVAX * (qzVAX * (qwheel3 * (qfork * (qwheel2 * (qwheel1 * ( qtilt * (qpan * qroll)))))))
+end
+
+function startrackerpointings!(wheelanglesfn,
+                               config_ang::configuration_angles_ST,
+                               st_dir,
+                               timerange_s,
+                               dirs,
+                               latitude_deg = TENERIFE_LATITUDE_DEG,
+                               ground = false,
+                               day_duration_s = 86400.0)
+
+    if ground
+        @assert size(dirs, 2) == 4
+    else
+        @assert size(dirs, 2) == 2
+    end
+
+    for (idx, time_s) = enumerate(timerange_s)
+        # This converts the RDP into the MCS (ground reference frame)
+        groundq = camtoground(wheelanglesfn, time_s, config_ang)
+        # This converts the MCS into the celestial reference frame
+        quat = groundtoearth(groundq, time_s, latitude_deg; day_duration_s = day_duration_s)
+        θ, ϕ, _ = quat_to_angles(st_dir, Float64[1.0, 0.0, 0.0], quat)
+        (dirs[idx, 1], dirs[idx, 2]) = (θ, ϕ)
+
+        if ground
+            # Re-run the transformation algorithm using the ground quaternion
+            θ_ground, ϕ_ground, _ = quat_to_angles(st_dir, Float64[1.0, 0.0, 0.0], groundq)
+
+            (dirs[idx, 3], dirs[idx, 4]) = (θ_ground, ϕ_ground)
+        end
+    end
+end
+
+function startrackerpointings(wheelanglesfn,
+                              config_ang::configuration_angles_ST,
+                              st_dir,
+                              timerange_s;
+                              latitude_deg = TENERIFE_LATITUDE_DEG,
+                              ground = false,
+                              day_duration_s = 86400.0)
+
+    if ground
+        dirs = Array{Float64}(undef, length(timerange_s), 4)
+    else
+        dirs = Array{Float64}(undef, length(timerange_s), 2)
+    end
+
+
+
+    dirs
 end
