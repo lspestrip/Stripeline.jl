@@ -1,5 +1,6 @@
 # HEAD
 
+-   Fix issue [#56](https://github.com/lspestrip/Stripeline.jl/issues/56) (wrong pointings with Julian dates) [#58](https://github.com/lspestrip/Stripeline.jl/pull/58)
 -   Stop testing `nightly` Julia [#57](https://github.com/lspestrip/Stripeline.jl/pull/57)
 -   Implement a new structure for TOD (`StripTod`) and a new function (`allocate_tod`) to allocate them efficiently even when using MPI ([#50](https://github.com/lspestrip/Stripeline.jl/pull/50))
 -   Make the destriper more robust against numeric types ([#49](https://github.com/lspestrip/Stripeline.jl/pull/49))
