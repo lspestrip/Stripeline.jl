@@ -100,7 +100,10 @@ include("quaternions.jl")
                          wheel3ang_0_rad,
                          forkang_rad,
                          omegaVAXang_rad,
-                         zVAXang_rad)
+                         zVAXang_rad,
+                         panang_rad, 
+                         tiltang_rad,
+                         rollang_rad)
 
 Struct containing the configuration angles for the telescope ie the angles describing
 the non idealities in the telescope (all of these parameters are considered equal to 0 in 
@@ -116,6 +119,9 @@ an ideal telescope):
                         zVAXang_rad is the displacement from the V-AXIS ie the colatitude,
                         omegaVAXang_rad is the azimuth of the ascending node defined as 
                         omegaVAXang_rad = 90° + A * zVAXang_rad
+
+(panang_rad, tiltang_rad, rollang_rad): Tait-Brian angles encoding the camera orientation in the telescope reference frame.
+                            Respectively around x,y and z axis.
                         
 All of these angles must be expressed in RADIANS.
 """
@@ -126,6 +132,9 @@ Base.@kwdef struct configuration_angles
     forkang_rad :: Float64 = 0
     omegaVAXang_rad :: Float64 = 0
     zVAXang_rad :: Float64 = 0
+    rollang_rad :: Float64 = 0
+    panang_rad :: Float64 = 0
+    tiltang_rad :: Float64 = 0
 end
 
 """
@@ -200,6 +209,10 @@ containing the angles describing the non idealities of the telescope.
 function telescopetoground(wheelanglesfn, time_s, config_ang::configuration_angles = configuration_angles())
     (wheel1ang, wheel2ang, wheel3ang) = wheelanglesfn(time_s)
 
+    qroll = qrotation_z(config_st.rollang_rad)
+    qtilt = qrotation_y(config_st.tiltang_rad)
+    qpan = qrotation_x(config_st.panang_rad)
+
     qwheel1 = qrotation_z(wheel1ang - config_ang.wheel1ang_0_rad)
     qwheel2 = qrotation_y(wheel2ang - config_ang.wheel2ang_0_rad)
 
@@ -211,7 +224,7 @@ function telescopetoground(wheelanglesfn, time_s, config_ang::configuration_angl
     qomegaVAX = qrotation_z(config_ang.omegaVAXang_rad)
     qzVAX = qrotation_x(config_ang.zVAXang_rad)    
 
-    qomegaVAX * (qzVAX * (qwheel3 * (qfork * (qwheel2 * qwheel1))))
+    qomegaVAX * (qzVAX * (qwheel3 * (qfork * (qwheel2 * qwheel1 * (qpan * (qtilt * qroll))))))
 end
 
 """

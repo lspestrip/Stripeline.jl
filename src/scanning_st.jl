@@ -83,15 +83,16 @@ export startrackerpointings, startrackerpointings!
                          forkang_rad,
                          omegaVAXang_rad,
                          zVAXang_rad,
-                         rollang_rad,
-                         panang_rad,
-                         tiltang_rad)
+                         panang_rad, 
+                         tiltang_rad,
+                         rollang_rad)
 
 Struct containing the configuration angles for the star tracker ie the angles describing
 the non idealities in the telescope and in the camera reference frame(all of these parameters are ù
 considered equal to 0 in an ideal case):
 
-(rollang, panang, tiltang): Tait-Brian angles encoding the camera orientation in the telescope reference frame
+(panang, tiltang, rollang): Tait-Brian angles encoding the camera orientation in the telescope reference frame.
+                            Respectively around x,y and z axis.
 
 (wheel1ang_0, wheel2ang_0, wheel3ang_0): these are the zero points angles for the three motors
                                          (respectively the boresight, the altitude and the ground
@@ -113,9 +114,9 @@ Base.@kwdef struct configuration_angles_ST
     forkang_rad :: Float64 = 0
     omegaVAXang_rad :: Float64 = 0
     zVAXang_rad :: Float64 = 0
-    rollang_rad :: Float64 = 0
     panang_rad :: Float64 = 0
     tiltang_rad :: Float64 = 0
+    rollang_rad :: Float64 = 0
 end
 
 """
@@ -136,8 +137,8 @@ function camtoground(wheelanglesfn,
     (wheel1ang, wheel2ang, wheel3ang) = wheelanglesfn(time_s)
 
     qroll = qrotation_z(config_st.rollang_rad)
-    qpan = qrotation_y(config_st.panang_rad)
-    qtilt = qrotation_x(config_st.tiltang_rad)
+    qtilt = qrotation_y(config_st.tiltang_rad)
+    qpan = qrotation_x(config_st.panang_rad)
 
     qwheel1 = qrotation_z(wheel1ang - config_st.wheel1ang_0_rad)
     qwheel2 = qrotation_y(wheel2ang - config_st.wheel2ang_0_rad)
@@ -149,7 +150,7 @@ function camtoground(wheelanglesfn,
     qomegaVAX = qrotation_z(config_st.omegaVAXang_rad)
     qzVAX = qrotation_x(config_st.zVAXang_rad)    
 
-    qomegaVAX * (qzVAX * (qwheel3 * (qfork * (qwheel2 * (qwheel1 * ( qtilt * (qpan * qroll)))))))
+    qomegaVAX * (qzVAX * (qwheel3 * (qfork * (qwheel2 * (qwheel1 * ( qpan * (qtilt * qroll)))))))
 end
 
 function startrackerpointings!(wheelanglesfn,
@@ -198,7 +199,16 @@ function startrackerpointings(wheelanglesfn,
         dirs = Array{Float64}(undef, length(timerange_s), 2)
     end
 
-
+    startrackerpointings!(
+        wheelanglesfn,
+        config_ang,
+        st_dir,
+        timerange_s,
+        dirs,
+        latitude_deg,
+        ground,
+        day_duration_s
+    )
 
     dirs
 end
