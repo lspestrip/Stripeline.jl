@@ -134,7 +134,8 @@ containing the angles describing the non idealities of the telescope.
 function camtoground(wheelanglesfn, 
                      time_s,
                      config_st::configuration_angles_ST = configuration_angles_ST())
-    (wheel1ang, wheel2ang, wheel3ang) = wheelanglesfn(time_s)
+    telescopetoground(wheelanglesfn, time_s, config_st)
+#=     (wheel1ang, wheel2ang, wheel3ang) = wheelanglesfn(time_s)
 
     qroll = qrotation_z(config_st.rollang_rad)
     qtilt = qrotation_y(config_st.tiltang_rad)
@@ -151,6 +152,7 @@ function camtoground(wheelanglesfn,
     qzVAX = qrotation_x(config_st.zVAXang_rad)    
 
     qomegaVAX * (qzVAX * (qwheel3 * (qfork * (qwheel2 * (qwheel1 * ( qpan * (qtilt * qroll)))))))
+=#
 end
 
 function startrackerpointings!(wheelanglesfn,

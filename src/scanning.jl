@@ -206,7 +206,7 @@ telescope.
 The parameter `config_ang` must be a configuration_angles struct
 containing the angles describing the non idealities of the telescope.
 """
-function telescopetoground(wheelanglesfn, time_s, config_ang::configuration_angles)
+function telescopetoground(wheelanglesfn, time_s, config_ang)
     (wheel1ang, wheel2ang, wheel3ang) = wheelanglesfn(time_s)
 
     qroll = qrotation_z(config_ang.rollang_rad)
