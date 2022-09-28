@@ -371,6 +371,7 @@ function genpointings!(wheelanglesfn,
         groundq = telescopetoground(wheelanglesfn, time_s)
         # This converts the MCS into the celestial reference frame
         quat = groundtoearth(groundq, time_s, latitude_deg; day_duration_s = day_duration_s)
+            
         θ, ϕ, curpsi = quat_to_angles(beam_dir, polaxis, quat)
         (dirs[idx, 1], dirs[idx, 2]) = (θ, ϕ)
 
@@ -456,7 +457,7 @@ function genpointings!(wheelanglesfn,
         north = northdir(π / 2 - Dec_rad, Ra_rad)
         east = eastdir(π / 2 - Dec_rad, Ra_rad)
 
-        skydirs[idx, 1] = Dec_rad
+        skydirs[idx, 1] = π/2 - Dec_rad
         skydirs[idx, 2] = Ra_rad
         skypsi[idx] = polarizationangle(north, east, poldir)
     end

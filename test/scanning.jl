@@ -42,8 +42,8 @@ dir = inv(rotmatr) * vector
                                nutation = true,
                                aberration = true,
                                refraction = true)
-crab_position_skydirs = sqrt(skydirs[1]^2 + skydirs[2]^2)
-@test skydirs[1] ≈ crab_dec_astropy_rad atol = eps
+crab_position_skydirs = sqrt((π/2 - skydirs[1])^2 + skydirs[2]^2)
+@test skydirs[1] ≈ π/2 - crab_dec_astropy_rad atol = eps
 @test skydirs[2] ≈ crab_ra_astropy_rad atol = eps
 @test crab_position_skydirs ≈ crab_position atol = eps
 
@@ -97,13 +97,13 @@ for (idx, day) in enumerate(days)
     skydirs[idx, 2] = skydirections[2]
 end
 
-crab_position_skydirs = sqrt.(skydirs[:, 1].^2 + skydirs[:, 2].^2)
+crab_position_skydirs = sqrt.((π/2 .- skydirs[:, 1]).^2 + skydirs[:, 2].^2)
 
-@test skydirs[1, 1] ≈ crab_dec_astropy_rad atol = eps
+@test skydirs[1, 1] ≈ π/2 - crab_dec_astropy_rad atol = eps
 @test skydirs[1, 2] ≈ crab_ra_astropy_rad atol = eps
-@test skydirs[2, 1] ≈ crab_dec_astropy_rad atol = eps
+@test skydirs[2, 1] ≈ π/2 - crab_dec_astropy_rad atol = eps
 @test skydirs[2, 2] ≈ crab_ra_astropy_rad atol = eps
-@test skydirs[3, 1] ≈ crab_dec_astropy_rad atol = eps
+@test skydirs[3, 1] ≈ π/2 - crab_dec_astropy_rad atol = eps
 @test skydirs[3, 2] ≈ crab_ra_astropy_rad atol = eps
 @test crab_position_skydirs[1] ≈ crab_position atol = eps
 @test crab_position_skydirs[2] ≈ crab_position atol = eps
