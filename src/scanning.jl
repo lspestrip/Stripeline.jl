@@ -94,6 +94,8 @@ const TENERIFE_HEIGHT_M = 2390
 
 include("quaternions.jl")
 
+abstract type ConfigAngles end
+
 """
     configuration_angles(wheel1ang_0_rad,
                          wheel2ang_0_rad,
@@ -125,7 +127,7 @@ an ideal telescope):
                         
 All of these angles must be expressed in RADIANS and measured anticlockwise..
 """
-Base.@kwdef struct configuration_angles
+Base.@kwdef struct configuration_angles <: ConfigAngles
     wheel1ang_0_rad :: Float64 = 0
     wheel2ang_0_rad :: Float64 = 0
     wheel3ang_0_rad :: Float64 = 0
@@ -183,7 +185,7 @@ telescopetoground(3600.0) do
 end
 `````
 """
-function telescopetoground(wheelanglesfn, time_s)
+function telescopetoground(wheelanglesfn, time_s, config_ang::Nothing = nothing)
     (wheel1ang, wheel2ang, wheel3ang) = wheelanglesfn(time_s)
 
     qwheel1 = qrotation_z(wheel1ang)
@@ -215,7 +217,6 @@ function telescopetoground(wheelanglesfn, time_s, config_ang)
 
     qwheel1 = qrotation_z(wheel1ang - config_ang.wheel1ang_0_rad)
     qwheel2 = qrotation_y(wheel2ang - config_ang.wheel2ang_0_rad)
-
     # The minus sign here takes into account the fact that the azimuth
     # motor requires positive angles to turn North into East
     qwheel3 = qrotation_z(-wheel3ang + config_ang.wheel3ang_0_rad)
