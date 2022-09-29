@@ -110,20 +110,20 @@ the non idealities in the telescope (all of these parameters are considered equa
 an ideal telescope):
 
 (wheel1ang_0_rad, wheel2ang_0_rad, wheel3ang_0_rad): these are the zero points angles for the three motors
-                                         (respectively the boresight, the altitude and the ground
-                                         motor)
+                                                     (respectively the boresight, the altitude and the ground
+                                                     motor)
 
 (forkang_rad): describe the deviation of orthogonality between the H-AXIS and the V-AXIS
 
 (omegaVAXang_rad, zVAXang_rad): wobble angles encoding the deviation of the V-AXIS from the local vertical;
-                        zVAXang_rad is the displacement from the V-AXIS ie the colatitude,
-                        omegaVAXang_rad is the azimuth of the ascending node defined as 
-                        omegaVAXang_rad = 90° + A * zVAXang_rad
+                                zVAXang_rad is the displacement from the V-AXIS ie the colatitude,
+                                omegaVAXang_rad is the azimuth of the ascending node defined as 
+                                omegaVAXang_rad = 90° + A * zVAXang_rad
 
 (panang_rad, tiltang_rad, rollang_rad): Tait-Brian angles encoding the camera orientation in the telescope reference frame.
-                            Respectively around x,y and z axis.
+                                        Respectively around x,y and z axis.
                         
-All of these angles must be expressed in RADIANS.
+All of these angles must be expressed in RADIANS and measured anticlockwise..
 """
 Base.@kwdef struct configuration_angles
     wheel1ang_0_rad :: Float64 = 0

@@ -19,10 +19,6 @@ end
     include("scanning.jl")
 end
 
-@testset "Pointing reconstruction star tracker" begin
-    include("scanning_st.jl")
-end
-
 @testset "Map maker" begin
     include("map_maker_tests.jl")
 end
