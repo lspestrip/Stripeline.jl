@@ -4,12 +4,16 @@ DocTestSetup = quote
 end
 ```
 
-# Simulating the scanning strategy
+# [Simulating the scanning strategy](@id scanning_strategy)
 
 Stripeline includes a set of tools to simulate the observation of the
 sky by the telescope. The way a telescope observes the sky is called
 *scanning strategy*, and it is obviously one of the most basic and
 important task in any simulation of data taking.
+
+It should be noted that in this section only the case of an **_ideal telescope_** will be analyzed.
+A more realistic case is described by a telescope with a fixed set of configuration angles;
+tools for analyzing a realistic telescope are discussed in [Pointing Reconstruction Model](@ref prm).
 
 ## Strip's location and movements
 
