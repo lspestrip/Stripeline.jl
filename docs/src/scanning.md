@@ -155,7 +155,7 @@ call to `project_to_map`, and plotting the result:
 ```@example scanningstrategy
 # We create a Healpix map that represents the whole sky sphere,
 # tessellated up to some resolution NSIDE=128
-map = Healpix.Map{Float64, RingOrder}(128)
+map = HealpixMap{Float64, RingOrder}(128)
 
 # Set the sampling time, the number of seconds used to create one
 # measurement. The real value is 0.01, but we use a larger
