@@ -96,16 +96,8 @@ include("quaternions.jl")
 
 abstract type ConfigAngles end
 
-"""
-    configuration_angles(wheel1ang_0_rad,
-                         wheel2ang_0_rad,
-                         wheel3ang_0_rad,
-                         forkang_rad,
-                         omegaVAXang_rad,
-                         zVAXang_rad,
-                         panang_rad, 
-                         tiltang_rad,
-                         rollang_rad)
+@doc raw"""
+    configuration_angles <: ConfigAngles
 
 Struct containing the configuration angles for the telescope i.e. the angles describing
 the non idealities in the telescope (all of these parameters are considered equal to 0 in 
