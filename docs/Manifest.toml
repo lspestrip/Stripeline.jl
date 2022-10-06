@@ -830,9 +830,7 @@ version = "0.3.5"
 
 [[deps.Stripeline]]
 deps = ["AstroLib", "AstroTime", "BenchmarkTools", "CorrNoise", "Dates", "Documenter", "FITSIO", "Healpix", "LinearAlgebra", "MPI", "Printf", "Random", "RandomNumbers", "RecipesBase", "StaticArrays", "Statistics", "Test", "YAML"]
-git-tree-sha1 = "459b7ee4b7a8e8fd61d3426adf61f0a77f611274"
-repo-rev = "docdeps"
-repo-url = ".."
+path = ".."
 uuid = "45029ab0-c194-11e8-0c82-65ed36a31fad"
 version = "0.5.0"
 
