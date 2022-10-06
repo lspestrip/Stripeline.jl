@@ -79,7 +79,7 @@ import AstroLib
 import Dates
 
 export TENERIFE_LATITUDE_DEG, TENERIFE_LONGITUDE_DEG, TENERIFE_HEIGHT_M
-export configuration_angles
+export configuration_angles, ConfigAngles
 export timetorotang, telescopetoground, groundtoearth
 export genpointings!, genpointings, northdir, eastdir, polarizationangle
 
@@ -94,30 +94,49 @@ const TENERIFE_HEIGHT_M = 2390
 
 include("quaternions.jl")
 
+"""
+    ConfigAngles
+
+Abstract type representing a set of configuration angles.
+Defining an abstract type is usefull because if you want to
+use differents angles or introduce new ones, you only have to define
+a new subtype and add a dedicated telescopetoground function dispatch.
+
+See [`configuration_angles`](@ref)
+"""
 abstract type ConfigAngles end
 
-@doc raw"""
-    configuration_angles <: ConfigAngles
+"""
+    configuration_angles(
+        wheel1ang_0_rad :: Float64 = 0,
+        wheel2ang_0_rad :: Float64 = 0,
+        wheel3ang_0_rad :: Float64 = 0,
+        forkang_rad :: Float64 = 0,
+        omegaVAXang_rad :: Float64 = 0,
+        zVAXang_rad :: Float64 = 0,
+        panang_rad :: Float64 = 0,
+        tiltang_rad :: Float64 = 0,
+        rollang_rad :: Float64 = 0,   
+    )
 
 Struct containing the configuration angles for the telescope i.e. the angles describing
 the non idealities in the telescope (all of these parameters are considered equal to 0 in 
 an ideal telescope):
 
-(wheel1ang_0_rad, wheel2ang_0_rad, wheel3ang_0_rad): these are the zero points angles for the three motors
-                                                     (respectively the boresight, the altitude and the ground
-                                                     motor)
+(`wheel1ang_0_rad`, `wheel2ang_0_rad`, `wheel3ang_0_rad`): these are the zero points angles for the three motors
+                                                           (respectively the boresight, the altitude and the ground
+                                                           motor)
 
-(forkang_rad): describe the deviation of orthogonality between the H-AXIS and the V-AXIS
+(`forkang_rad`): describe the deviation of orthogonality between the H-AXIS and the V-AXIS
 
-(omegaVAXang_rad, zVAXang_rad): wobble angles encoding the deviation of the V-AXIS from the local vertical;
-                                zVAXang_rad is the displacement from the V-AXIS ie the colatitude,
-                                omegaVAXang_rad is the azimuth of the ascending node defined as 
-                                omegaVAXang_rad = 90° + A * zVAXang_rad
+(`omegaVAXang_rad`, `zVAXang_rad`): wobble angles encoding the deviation of the V-AXIS from the local vertical;
+                                    zVAXang is the displacement from the V-AXIS ie the colatitude,
+                                    omegaVAXang is the azimuth of the ascending node.
 
-(panang_rad, tiltang_rad, rollang_rad): Tait-Brian angles encoding the camera orientation in the telescope reference frame.
-                                        Respectively around x,y and z axis.
-                        
-All of these angles must be expressed in RADIANS and measured anticlockwise..
+(`panang_rad`, `tiltang_rad`, `rollang_rad`): Tait-Brian angles encoding the camera orientation in the telescope reference frame.
+                                              Respectively around x,y and z axis.
+
+All of these angles must be expressed in RADIANS and measured anticlockwise.
 """
 Base.@kwdef struct configuration_angles <: ConfigAngles
     wheel1ang_0_rad :: Float64 = 0
@@ -201,6 +220,9 @@ coordinate transform from the focal plane to the ground of the
 telescope. 
 The parameter `config_ang` must be a configuration_angles struct
 containing the angles describing the non idealities of the telescope.
+
+N.B. This version of telescopetoground compute all the rotation associated
+with the configurations angles (i.e. the non idealities of the system).
 """
 function telescopetoground(wheelanglesfn, time_s, config_ang)
     (wheel1ang, wheel2ang, wheel3ang) = wheelanglesfn(time_s)

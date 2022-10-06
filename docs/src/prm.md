@@ -25,13 +25,23 @@ top of the V-AXIS holds the horizontal axis (H-AXIS) which allows the Altitude r
 ideal case V-AXIS and H-AXIS are perpendicular and V-AXIS is aligned with the local
 (topocentric) zenith.
 
+The rotation around the V-AXIS is performed by the _ground_ motor, while the rotation around
+H-AXIS by the _altitude_ motor. There is also a _boresight_ motor that will be kept constant
+and egual to zero. The position of each motor is encoded by an angle _wheel#ang_.
+
 ## Configuration angles
 
 To describe the non idealities of the telescope we need nine angles:
 
 - ()
 
+## Pointing Reconstruction Method
 
+## Example
+
+## Reference Documentation
 ```@docs
+ConfigAngles
 configuration_angles
+telescopetoground
 ```
