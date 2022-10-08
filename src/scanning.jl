@@ -130,11 +130,13 @@ an ideal telescope):
 (`forkang_rad`): describe the deviation of orthogonality between the H-AXIS and the V-AXIS
 
 (`omegaVAXang_rad`, `zVAXang_rad`): wobble angles encoding the deviation of the V-AXIS from the local vertical;
-                                    zVAXang is the displacement from the V-AXIS ie the colatitude,
+                                    zVAXang is the displacement from the V-AXIS,
                                     omegaVAXang is the azimuth of the ascending node.
 
 (`panang_rad`, `tiltang_rad`, `rollang_rad`): Tait-Brian angles encoding the camera orientation in the telescope reference frame.
                                               Respectively around x,y and z axis.
+
+See the documentation for a graphical rapresentation of each angles.
 
 All of these angles must be expressed in RADIANS and measured anticlockwise.
 """
