@@ -37,23 +37,53 @@ that describe, respectively, the boresight, the altitude and the ground motor ro
 To describe the non idealities of the telescope we need nine angles, each of which represent a rotation around
 specific ($\hat{e}_x$, $\hat{e}_y$, $\hat{e}_z$) coordinate axis:
 
-1. `wheel1ang_0`, `wheel2ang_0`, `wheel3ang_0`: encode the deviation of the zero point of the telescope's motors:
+1. `wheel1ang_0`, `wheel2ang_0`, `wheel3ang_0`: 
+
+    encode the deviation of the zero point of the telescope's motors:
     - _wheel1_ correspond to the boresight motor, and the zero point angle cause a rotation around the z-axis;
     - _wheel2_ correspond to the altitude motor, and the zero point angle cause a rotation around the y-axis;
     - _wheel3_ correspond to the ground motor, and the zero point angle cause a rotation around the z-axis.
     
-2. `forkang`: encodes the deviation of orthogonality between the H-AXIS and the V-AXIS;
-    As reported in the figure this angles cause a rotation of the system around the x-axis.
+2. `forkang`: 
 
-3. `omegaVAXang`, `zVAXang`: encode the deviation of the V-AXIS from the local vertical;
+    encodes the deviation of orthogonality between the H-AXIS and the V-AXIS;
+    as reported in the figure this angles cause a rotation of the system around the x-axis.
 
-4. `panang`, `tiltang`, `rollang`: encode the camera orientation in the telescope reference frame.
+3. `omegaVAXang`, `zVAXang`: 
+
+    encode the deviation of the V-AXIS from the local vertical; 
+    zVax is the angle between V-AXIS and the local vertical, 
+    while omegaVAX is the azimuth of the ascending node (see the )
+
+4. `panang`, `tiltang`, `rollang`: 
+    
+    encode the camera orientation in the telescope reference frame:
+    - _pan_ is a rotation around the x-axis
+    - _tilt_ is a rotation around the y-axis
+    - _roll_ is a rotation around the z-axis
 
 ```@raw html
-<img src="assets/prm/fork.png" width="40%"/>
+<figure>
+    <img src="assets/prm/fork.png" width="50%"/>
+    <figcaption>Fig.2 Fork angle</figcaption>
+</figure>
+<figure>
+    <img src="assets/prm/wobble.png" width="50%"/>
+    <figcaption>Fig.3 Wobble angles</figcaption>
+</figure>
 ```
 
 ## Pointing Reconstruction Method
+
+PRM consist of calculate a chain of rotations to project the direction of sight of a generic camera
+into the Topocentric Horizontal Reference Frame (the ground r.f. of the telescope 
+see [`telescopetoground`](@ref)).
+
+We can define the following three steps of rotations:
+
+
+
+
 
 ## Example
 
