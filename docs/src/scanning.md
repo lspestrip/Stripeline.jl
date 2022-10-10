@@ -89,7 +89,7 @@ hours (much faster in the animation than in reality!), the observation
 pattern is a spiral that covers a «strip» on the sky, whose apparent
 height is roughly equal to twice the angle of the boresight wheel.
 
-## Simulating the motion of the telescope wheels
+## [Simulating the motion of the telescope wheels](@id scanning_example)
 
 We'll now use the tools provided by Stripeline to simulate the region
 of the sky that is observed by the telescope. You can type the
@@ -324,7 +324,7 @@ where you really want to do this are the following:
 4.  You want to assess how much effects like precession, nutation, and
     aberration affect the measurements.
 
-## Reference documentation
+## [Reference documentation](@id scanning_docs)
 
 ```@docs
 TENERIFE_LATITUDE_DEG

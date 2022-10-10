@@ -19,7 +19,10 @@ First, to understand all the control angles lets analyze a model of the telescop
 alt-az mount. A simplified model is reported in the following figure.
 
 ```@raw html
-<img src="assets/prm/telescope_model.png" width="60%"/>
+<figure>
+    <img src="assets/prm/telescope_model.png" width="60%"/>
+    <figcaption>Fig.1 Telescope model</figcaption>
+</figure>
 ```
 
 A basement holds a vertical axis (V-AXIS) allowing the Azimuth rotation, a fork mounted on the
@@ -79,18 +82,101 @@ PRM consist of calculate a chain of rotations to project the direction of sight 
 into the Topocentric Horizontal Reference Frame (the ground r.f. of the telescope 
 see [`telescopetoground`](@ref)).
 
-We can define the following three steps of rotations:
+We can define a quaternion encoding all the necessary rotations and for clarity we can split the rotations
+in three steps ($R_i$ is a quaternion representing the rotation around the i axis):
 
+$\mathbf{R}^{(\mathrm{tel})} = R_x(\mathrm{panang})R_y(\mathrm{tiltang})R_z(\mathrm{rollang})$
+$\mathbf{R}^{(\mathrm{V-AXIS})} = R_z(\mathrm{wheel3ang-wheel3ang_0})R_x(\mathrm{forkang})R_y(\mathrm{wheel2ang-wheel2ang_0})$
+$\mathbf{R}^{(\mathrm{geo})} = R_z(\mathrm{\omega_{VAX}})R_x(\mathrm{z_{VAX}})$
 
-
-
+Taking as a reference Fig.1: the first step project the coordinates from the camera reference frame to the telescope r.f.;
+than the second one from the telescope r.f. to the V-AXIS r.f. and at the last one from the V-AXIS r.f to the ground r.f. .
 
 ## Example
 
+Let's see a simple example, we'll now simulate the region of the sky observed by the telescope with and without the configuration
+angles (we will use very large values i.e. not a very realistic case). Just like for [this example](@ref scanning_example) let's load all the
+needed packages:
+
+```@example prm
+using Plots
+using Healpix
+using Stripeline
+```
+
+We can now define both the control angles (representing the motor position in function of time) and the configuration angles (representing the non idealities of the system):
+
+
+```@example prm
+telescope_motors(time_s) = (0.0, deg2rad(20.0), timetorotang(time_s, 1))
+config_ang = configuration_angles(
+    forkang_rad = deg2rad(13.0),
+    zVAXang_rad = deg2rad(10.0),
+    omegaVAXang_rad = deg2rad(15.0)
+)
+nothing; #hide
+```
+
+Now we can define a function that call genpointing with and without the
+non idealities and iterate over matrix containing the directions and set a specific value for each pixel in a Healpix map:
+
+```@example prm
+function project_to_map(time_range, map, config_ang)
+    # Call genpointings for the ideal case
+    dirs, _ = genpointings(
+        telescope_motors,
+        Float64[0, 0, 1],
+        time_range,
+    )
+
+    # Call genpointings for the non ideal case
+    dirs_nonideal, _ = genpointings(
+        telescope_motors,
+        Float64[0, 0, 1],
+        time_range,
+        config_ang = config_ang
+    )
+
+    # For each sample, set the corresponding pixel in the sky map to:
+    # 1 for the ideal case
+    # 2 for the non ideal case
+    for idx in 1:length(time_range)
+        colat, long = dirs[idx, :]
+        pixel_index = ang2pix(map, colat, long)
+        map[pixel_index] = 1
+        # Set the non ideal directions pixel
+        colat, long = dirs_nonideal[idx, :]
+        pixel_index = ang2pix(map, colat, long)
+        map[pixel_index] = 2
+    end
+end
+nothing; #hide
+```
+
+Finally, we can create the map calling `project_to_map` and plotting the result:
+
+```@example prm
+map = HealpixMap{Float64, RingOrder}(128)
+sampling_time_s = 0.05
+project_to_map(0.0:sampling_time_s:60.0, map, config_ang)
+plot(map, orthographic)
+savefig("oneminutemap_prm.svg"); nothing # hide
+```
+
+![](oneminutemap_prm.svg)
+
+Where the pixels set to 2 are the non ideal case taking into account of
+the configuration angles (in this example only the forkand and the
+wobble angles) while the pixels set to 1 are the ideal case alredy
+discussed [here](@ref scanning_example) 
+
+
 ## Reference Documentation
+
+For a complete list of function used to reconstruct the scanning
+direction, see [this](@ref scanning_docs).  
+
 ```@docs
 ConfigAngles
 configuration_angles
-telescopetoground
-genpointings
 ```
