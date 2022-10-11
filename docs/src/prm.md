@@ -60,10 +60,10 @@ specific ($\hat{e}_x$, $\hat{e}_y$, $\hat{e}_z$) coordinate axis:
 
 4. `panang`, `tiltang`, `rollang`: 
     
-    encode the camera orientation in the telescope reference frame:
-    - _pan_ is a rotation around the x-axis
-    - _tilt_ is a rotation around the y-axis
-    - _roll_ is a rotation around the z-axis
+    encode the camera orientation in the telescope reference frame: _pan_ is a rotation around the x-axis, 
+    _tilt_ is a rotation around the y-axis, _roll_ is a rotation around the z-axis. With this convention a 
+    roll rotates the image seen by the camera around its center, a small pan (or tilt) shifts the image 
+    along the camera X (or Y) axis.
 
 ```@raw html
 <figure>
@@ -82,15 +82,18 @@ PRM consist of calculate a chain of rotations to project the direction of sight 
 into the Topocentric Horizontal Reference Frame (the ground r.f. of the telescope 
 see [`telescopetoground`](@ref)).
 
-We can define a quaternion encoding all the necessary rotations and for clarity we can split the rotations
-in three steps ($R_i$ is a quaternion representing the rotation around the i axis):
+For clarity, we can split the rotations in three steps ($R_i$ is a quaternion representing the rotation around the i axis):
 
 $\mathbf{R}^{(\mathrm{tel})} = R_x(\mathrm{panang})R_y(\mathrm{tiltang})R_z(\mathrm{rollang})$
 $\mathbf{R}^{(\mathrm{V-AXIS})} = R_z(\mathrm{wheel3ang-wheel3ang_0})R_x(\mathrm{forkang})R_y(\mathrm{wheel2ang-wheel2ang_0})$
 $\mathbf{R}^{(\mathrm{geo})} = R_z(\mathrm{\omega_{VAX}})R_x(\mathrm{z_{VAX}})$
 
-Taking as a reference Fig.1: the first step project the coordinates from the camera reference frame to the telescope r.f.;
-than the second one from the telescope r.f. to the V-AXIS r.f. and at the last one from the V-AXIS r.f to the ground r.f. .
+Taking as a reference Fig.1: the first step project the coordinates from the camera reference frame to the telescope r.f.,
+then the second one from the telescope r.f. to the V-AXIS r.f. and at the last one from the V-AXIS r.f to the ground r.f.;
+the final rotation operator describing the projection of the coordinate axis of the camera reference frame into the local 
+topocentric reference frame is: $\mathbf{R}^{(\mathrm{geo})} * \mathbf{R}^{(\mathrm{V-AXIS})} * \mathbf{R}^{(\mathrm{tel})}$.
+
+This operator is the output of [`telescopetoground`](@ref).
 
 ## Example
 
