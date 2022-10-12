@@ -113,10 +113,7 @@ abstract type ConfigAngles end
         wheel3ang_0_rad :: Float64 = 0,
         forkang_rad :: Float64 = 0,
         omegaVAXang_rad :: Float64 = 0,
-        zVAXang_rad :: Float64 = 0,
-        panang_rad :: Float64 = 0,
-        tiltang_rad :: Float64 = 0,
-        rollang_rad :: Float64 = 0,   
+        zVAXang_rad :: Float64 = 0,  
     )
 
 Struct containing the configuration angles for the telescope i.e. the angles describing
@@ -133,20 +130,20 @@ an ideal telescope):
                                     zVAXang is the displacement from the V-AXIS,
                                     omegaVAXang is the azimuth of the ascending node.
 
-(`panang_rad`, `tiltang_rad`, `rollang_rad`): Tait-Brian angles encoding the camera orientation in the telescope reference frame.
-                                              Respectively around x,y and z axis.
-
 See the documentation for a graphical rapresentation of each angles.
 
 All of these angles must be expressed in RADIANS and measured anticlockwise.
 """
-Base.@kwdef struct configuration_angles <: ConfigAngles
+Base.@kwdef struct telescope_angles <: ConfigAngles
     wheel1ang_0_rad :: Float64 = 0
     wheel2ang_0_rad :: Float64 = 0
     wheel3ang_0_rad :: Float64 = 0
     forkang_rad :: Float64 = 0
     omegaVAXang_rad :: Float64 = 0
     zVAXang_rad :: Float64 = 0
+end
+
+Base.@kwdef struct cam_angles <: ConfigAngles 
     panang_rad :: Float64 = 0
     tiltang_rad :: Float64 = 0
     rollang_rad :: Float64 = 0
