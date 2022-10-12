@@ -221,7 +221,7 @@ function telescopetoground(wheelanglesfn, time_s, cam_ang::Nothing = nothing, te
     qwheel3 * (qwheel2 * qwheel1)
 end
 
-function telescopetoground(wheelanglesfn, time_s, cam_ang::CameraAngles, telescope_ang::Nothing = nothing)
+function telescopetoground(wheelanglesfn, time_s, cam_ang::CameraAngles, telescope_ang::Nothing)
     (wheel1ang, wheel2ang, wheel3ang) = wheelanglesfn(time_s)
 
     qcam = camtotelescope(cam_ang)
@@ -233,7 +233,7 @@ function telescopetoground(wheelanglesfn, time_s, cam_ang::CameraAngles, telesco
     qwheel3 * (qwheel2 * (qwheel1 * qcam))
 end
 
-function telescopetoground(wheelanglesfn, time_s, telescope_ang::TelescopeAngles, cam_ang::Nothing = nothing)
+function telescopetoground(wheelanglesfn, time_s, cam_ang::Nothing, telescope_ang::TelescopeAngles)
     (wheel1ang, wheel2ang, wheel3ang) = wheelanglesfn(time_s)
 
     qwheel1 = qrotation_z(wheel1ang - telescope_ang.wheel1ang_0_rad)
