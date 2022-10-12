@@ -183,28 +183,28 @@ end
 # Test the PRM with non idealities
 # Can't test wheel1ang_0 (the boresight motor zero point) because PyPRM doesn't support it, a solution must be found!
 
-function angletomatrix(wheelanglesfn, time_s, config_ang::configuration_angles)
-    rotationmatrix_normalized(telescopetoground(wheelanglesfn, time_s, config_ang))    
+function angletomatrix(wheelanglesfn, time_s, tel_ang::Union{TelescopeAngles, Nothing}=nothing, cam_ang::Union{CameraAngles, Nothing}=nothing)
+    rotationmatrix_normalized(telescopetoground(wheelanglesfn, time_s, cam_ang, tel_ang))    
 end
 
 # Single configuration angles
-@test isapprox(angletomatrix(_ -> (0.0, deg2rad(20.0), 0), 0, configuration_angles()), 
+@test isapprox(angletomatrix(_ -> (0.0, deg2rad(20.0), 0), 0, TelescopeAngles(), CameraAngles()), 
                 [0.9396926207859084 0.0 0.3420201433256687; 0.0 1.0 0.0; -0.3420201433256687 0.0 0.9396926207859084])
-@test isapprox(angletomatrix(_ -> (0.0, deg2rad(20.0), 0), 0, configuration_angles(forkang_rad=deg2rad(10))),
+@test isapprox(angletomatrix(_ -> (0.0, deg2rad(20.0), 0), 0, TelescopeAngles(forkang_rad=deg2rad(10))),
                 [0.9396926207859084 0.0 0.3420201433256687; 0.0593911746138847 0.984807753012208 -0.16317591116653482; -0.33682408883346515 0.17364817766693033 0.9254165783983234])
-@test isapprox(angletomatrix(_ -> (0.0, deg2rad(20.0), 0), 0, configuration_angles(wheel2ang_0_rad=deg2rad(10))), 
+@test isapprox(angletomatrix(_ -> (0.0, deg2rad(20.0), 0), 0, TelescopeAngles(wheel2ang_0_rad=deg2rad(10))), 
                 [0.984807753012208 0.0 0.17364817766693033; 0.0 1.0 0.0; -0.17364817766693033 0.0 0.984807753012208])
-@test isapprox(angletomatrix(_ -> (0.0, deg2rad(20.0), 0), 0, configuration_angles(wheel3ang_0_rad=deg2rad(-10))), 
+@test isapprox(angletomatrix(_ -> (0.0, deg2rad(20.0), 0), 0, TelescopeAngles(wheel3ang_0_rad=deg2rad(-10))), 
                 [0.9254165783983234 0.17364817766693033 0.33682408883346515; -0.16317591116653482 0.984807753012208 -0.0593911746138847; -0.3420201433256687 0.0 0.9396926207859084])
-@test isapprox(angletomatrix(_ -> (0.0, deg2rad(20.0), 0), 0, configuration_angles(zVAXang_rad=deg2rad(10))), 
+@test isapprox(angletomatrix(_ -> (0.0, deg2rad(20.0), 0), 0, TelescopeAngles(zVAXang_rad=deg2rad(10))), 
                 [0.9396926207859084 0.0 0.3420201433256687; 0.0593911746138847 0.984807753012208 -0.16317591116653482; -0.33682408883346515 0.17364817766693033 0.9254165783983234])
-@test isapprox(angletomatrix(_ -> (0.0, deg2rad(20.0), 0), 0, configuration_angles(omegaVAXang_rad=deg2rad(10))), 
+@test isapprox(angletomatrix(_ -> (0.0, deg2rad(20.0), 0), 0, TelescopeAngles(omegaVAXang_rad=deg2rad(10))), 
                 [0.9254165783983234 -0.17364817766693033 0.33682408883346515; 0.16317591116653482 0.984807753012208 0.0593911746138847; -0.3420201433256687 0.0 0.9396926207859084])
-@test isapprox(angletomatrix(_ -> (0, deg2rad(20.0), deg2rad(-30.0)), 0, configuration_angles(rollang_rad=deg2rad(45))),
+@test isapprox(angletomatrix(_ -> (0, deg2rad(20.0), deg2rad(-30.0)), 0, CameraAngles(rollang_rad=deg2rad(45))),
 				[0.2218884684027577 -0.928995249589305 0.29619813272602386; 0.9446039478901318 0.28014092350145736 0.17101007166283433; -0.24184476264797528 0.24184476264797522 0.9396926207859084])
-@test isapprox(angletomatrix(_ -> (0, deg2rad(20.0), deg2rad(-30.0)), 0, configuration_angles(panang_rad=deg2rad(25))),
+@test isapprox(angletomatrix(_ -> (0, deg2rad(20.0), deg2rad(-30.0)), 0, CameraAngles(panang_rad=deg2rad(25))),
 				[0.8137976813493738 -0.32797515353481177 0.4797558050656603; 0.46984631039295416 0.8571575464476954 -0.21101039116094453; -0.3420201433256687 0.39713126196710286 0.8516507396391465])
-@test isapprox(angletomatrix(_ -> (0, deg2rad(20.0), deg2rad(-30.0)), 0, configuration_angles(tiltang_rad=deg2rad(10))),
+@test isapprox(angletomatrix(_ -> (0, deg2rad(20.0), deg2rad(-30.0)), 0, CameraAngles(tiltang_rad=deg2rad(10))),
 				[0.7500000000000001 -0.49999999999999994 0.4330127018922193; 0.4330127018922193 0.8660254037844387 0.24999999999999994; -0.49999999999999994 0.0 0.8660254037844387])
 
 # Combination of different configuration angles

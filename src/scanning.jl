@@ -79,7 +79,7 @@ import AstroLib
 import Dates
 
 export TENERIFE_LATITUDE_DEG, TENERIFE_LONGITUDE_DEG, TENERIFE_HEIGHT_M
-export configuration_angles, ConfigAngles
+export ConfigAngles, TelescopeAngles, CameraAngles
 export timetorotang, telescopetoground, groundtoearth
 export genpointings!, genpointings, northdir, eastdir, polarizationangle
 
@@ -102,7 +102,7 @@ Defining an abstract type is usefull because if you want to
 use differents angles or introduce new ones, you only have to define
 a new subtype and add a dedicated telescopetoground function dispatch.
 
-See [`telescope_angles`](@ref) [`camera_angles`](@ref)
+See [`TelescopeAngles`](@ref) [`CameraAngles`](@ref)
 """
 abstract type ConfigAngles end
 
@@ -418,7 +418,7 @@ function genpointings!(wheelanglesfn,
     for (idx, time_s) = enumerate(timerange_s)
 
         # This converts the RDP into the MCS (ground reference frame)
-        groundq = telescopetoground(wheelanglesfn, time_s, config_ang)
+        groundq = telescopetoground(wheelanglesfn, time_s)
         # This converts the MCS into the celestial reference frame
         quat = groundtoearth(groundq, time_s, latitude_deg; day_duration_s = day_duration_s)
             
@@ -491,7 +491,7 @@ function genpointings!(wheelanglesfn,
     @assert size(skypsi, 2) == 1
 
     for (idx, time_s) = enumerate(timerange_s)
-        groundq = telescopetoground(wheelanglesfn, time_s, config_ang)
+        groundq = telescopetoground(wheelanglesfn, time_s)
         rotmatr = rotationmatrix_normalized(groundq)
         vector = rotmatr * beam_dir
 
