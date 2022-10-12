@@ -102,18 +102,18 @@ Defining an abstract type is usefull because if you want to
 use differents angles or introduce new ones, you only have to define
 a new subtype and add a dedicated telescopetoground function dispatch.
 
-See [`configuration_angles`](@ref)
+See [`telescope_angles`](@ref) [`camera_angles`](@ref)
 """
 abstract type ConfigAngles end
 
 """
     configuration_angles(
-        wheel1ang_0_rad :: Float64 = 0,
-        wheel2ang_0_rad :: Float64 = 0,
-        wheel3ang_0_rad :: Float64 = 0,
-        forkang_rad :: Float64 = 0,
-        omegaVAXang_rad :: Float64 = 0,
-        zVAXang_rad :: Float64 = 0,  
+        wheel1ang_0_rad :: Float64 = 0.0,
+        wheel2ang_0_rad :: Float64 = 0.0,
+        wheel3ang_0_rad :: Float64 = 0.0,
+        forkang_rad :: Float64 = 0.0,
+        omegaVAXang_rad :: Float64 = 0.0,
+        zVAXang_rad :: Float64 = 0.0  
     )
 
 Struct containing the configuration angles for the telescope i.e. the angles describing
@@ -134,19 +134,19 @@ See the documentation for a graphical rapresentation of each angles.
 
 All of these angles must be expressed in RADIANS and measured anticlockwise.
 """
-Base.@kwdef struct telescope_angles <: ConfigAngles
-    wheel1ang_0_rad :: Float64 = 0
-    wheel2ang_0_rad :: Float64 = 0
-    wheel3ang_0_rad :: Float64 = 0
-    forkang_rad :: Float64 = 0
-    omegaVAXang_rad :: Float64 = 0
-    zVAXang_rad :: Float64 = 0
+Base.@kwdef struct TelescopeAngles <: ConfigAngles
+    wheel1ang_0_rad :: Float64 = 0.0
+    wheel2ang_0_rad :: Float64 = 0.0
+    wheel3ang_0_rad :: Float64 = 0.0
+    forkang_rad :: Float64 = 0.0
+    omegaVAXang_rad :: Float64 = 0.0
+    zVAXang_rad :: Float64 = 0.0
 end
 
-Base.@kwdef struct cam_angles <: ConfigAngles 
-    panang_rad :: Float64 = 0
-    tiltang_rad :: Float64 = 0
-    rollang_rad :: Float64 = 0
+Base.@kwdef struct CameraAngles <: ConfigAngles 
+    panang_rad :: Float64 = 0.0
+    tiltang_rad :: Float64 = 0.0
+    rollang_rad :: Float64 = 0.0
 end
 
 """
@@ -164,6 +164,17 @@ function timetorotang(time_s, rpm)
     end
 end
 
+"""
+    camtotelescope(cam_ang::Camera_angles)
+
+NEED A DOCSTRING!!!!!!!!!!!!!!!!
+"""
+function camtotelescope(cam_ang::CameraAngles)
+    qroll = qrotation_z(cam_ang.rollang_rad)
+    qtilt = qrotation_y(cam_ang.tiltang_rad)
+    qpan = qrotation_x(cam_ang.panang_rad)
+    qpan * (qtilt * qroll)
+end
 
 @doc raw"""
     telescopetoground(wheelanglesfn, time_s)
@@ -197,7 +208,7 @@ telescopetoground(3600.0) do
 end
 `````
 """
-function telescopetoground(wheelanglesfn, time_s, config_ang::Nothing = nothing)
+function telescopetoground(wheelanglesfn, time_s, cam_ang::Nothing = nothing, telescope_ang::Nothing = nothing)
     (wheel1ang, wheel2ang, wheel3ang) = wheelanglesfn(time_s)
 
     qwheel1 = qrotation_z(wheel1ang)
@@ -210,37 +221,46 @@ function telescopetoground(wheelanglesfn, time_s, config_ang::Nothing = nothing)
     qwheel3 * (qwheel2 * qwheel1)
 end
 
-
-"""
-    telescopetoground(wheelanglesfn, time_s, config_ang)
-
-Return a quaternion of type `Quaternion{Float64}` representing the
-coordinate transform from the focal plane to the ground of the
-telescope. 
-The parameter `config_ang` must be a configuration_angles struct
-containing the angles describing the non idealities of the telescope.
-
-N.B. This version of telescopetoground compute all the rotation associated
-with the configurations angles (i.e. the non idealities of the system).
-"""
-function telescopetoground(wheelanglesfn, time_s, config_ang)
+function telescopetoground(wheelanglesfn, time_s, cam_ang::CameraAngles, telescope_ang::Nothing = nothing)
     (wheel1ang, wheel2ang, wheel3ang) = wheelanglesfn(time_s)
 
-    qroll = qrotation_z(config_ang.rollang_rad)
-    qtilt = qrotation_y(config_ang.tiltang_rad)
-    qpan = qrotation_x(config_ang.panang_rad)
+    qcam = camtotelescope(cam_ang)
 
-    qwheel1 = qrotation_z(wheel1ang - config_ang.wheel1ang_0_rad)
-    qwheel2 = qrotation_y(wheel2ang - config_ang.wheel2ang_0_rad)
-    # The minus sign here takes into account the fact that the azimuth
-    # motor requires positive angles to turn North into East
-    qwheel3 = qrotation_z(-wheel3ang + config_ang.wheel3ang_0_rad)
+    qwheel1 = qrotation_z(wheel1ang)
+    qwheel2 = qrotation_y(wheel2ang)
+    qwheel3 = qrotation_z(-wheel3ang)  
 
-    qfork = qrotation_x(config_ang.forkang_rad)
-    qomegaVAX = qrotation_z(config_ang.omegaVAXang_rad)
-    qzVAX = qrotation_x(config_ang.zVAXang_rad)    
+    qwheel3 * (qwheel2 * (qwheel1 * qcam))
+end
 
-    qomegaVAX * (qzVAX * (qwheel3 * (qfork * (qwheel2 * qwheel1 * (qpan * (qtilt * qroll))))))
+function telescopetoground(wheelanglesfn, time_s, telescope_ang::TelescopeAngles, cam_ang::Nothing = nothing)
+    (wheel1ang, wheel2ang, wheel3ang) = wheelanglesfn(time_s)
+
+    qwheel1 = qrotation_z(wheel1ang - telescope_ang.wheel1ang_0_rad)
+    qwheel2 = qrotation_y(wheel2ang - telescope_ang.wheel2ang_0_rad)
+    qwheel3 = qrotation_z(-wheel3ang + telescope_ang.wheel3ang_0_rad)
+
+    qfork = qrotation_x(telescope_ang.forkang_rad)
+    qomegaVAX = qrotation_z(telescope_ang.omegaVAXang_rad)
+    qzVAX = qrotation_x(telescope_ang.zVAXang_rad)    
+
+    qomegaVAX * (qzVAX * (qwheel3 * (qfork * (qwheel2 * qwheel1))))
+end
+
+function telescopetoground(wheelanglesfn, time_s, cam_ang::CameraAngles, telescope_ang::TelescopeAngles)
+    (wheel1ang, wheel2ang, wheel3ang) = wheelanglesfn(time_s)
+
+    qcam = camtotelescope(cam_ang)
+
+    qwheel1 = qrotation_z(wheel1ang - telescope_ang.wheel1ang_0_rad)
+    qwheel2 = qrotation_y(wheel2ang - telescope_ang.wheel2ang_0_rad)
+    qwheel3 = qrotation_z(-wheel3ang + telescope_ang.wheel3ang_0_rad)
+
+    qfork = qrotation_x(telescope_ang.forkang_rad)
+    qomegaVAX = qrotation_z(telescope_ang.omegaVAXang_rad)
+    qzVAX = qrotation_x(telescope_ang.zVAXang_rad)    
+
+    qomegaVAX * (qzVAX * (qwheel3 * (qfork * (qwheel2 * (qwheel1 * qcam)))))
 end
 
 """
