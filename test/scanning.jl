@@ -220,3 +220,29 @@ end
 				[0.47444246561235864 0.34112613016341686 0.8115031177656669; -0.21412297968452368 -0.8494536195128901 0.4822653811621473; 0.8538475838196693 -0.4025686421173186 -0.3299739262261965])
 @test isapprox(angletomatrix(_ -> (0, deg2rad(20.0), deg2rad(-30.0)), 0, tel_ang = TelescopeAngles(wheel2ang_0_rad=deg2rad(48.),wheel3ang_0_rad=deg2rad(-30.),forkang_rad=deg2rad(52.),zVAXang_rad=deg2rad(42.),omegaVAXang_rad=deg2rad(73.)), cam_ang = CameraAngles(rollang_rad=deg2rad(26),panang_rad=deg2rad(33),tiltang_rad=deg2rad(79))),
 				[-0.17570296000187266 0.5751787563280825 0.7989354592928397; 0.45810521448987807 -0.670565309868962 0.5835081641738409; 0.8713599040027968 0.4685206115735181 -0.14567207771914797])
+
+######################################################################################
+
+# Test directiontoangles function
+
+@test all(isapprox.(directiontoangles([0.0,0.0,1.0]), (0.0,0.0,0.0)))
+@test all(isapprox.(directiontoangles([1.0,0.0,0.0]), (0.0,deg2rad(90.0),0.0)))
+@test all(isapprox.(directiontoangles([0.0,1.0,0.0]), (deg2rad(-90.0),0.0,0.0)))
+
+# This function is usefull to see is directiontoangles is consisten with the pan,roll,tilt 
+# convention used in camtotelescope
+function  taitbryan(pan, tilt, roll)
+    cam = CameraAngles(panang_rad = pan, tiltang_rad = tilt, rollang_rad = roll)
+    quat = camtotelescope(cam)
+    rot_matr = rotationmatrix_normalized(quat)    
+    dir = rot_matr * [0.0, 0.0, 1.0]
+    directiontoangles(dir)
+end
+
+@test all(isapprox.(taitbryan(deg2rad(10),deg2rad(10),deg2rad(10)), (deg2rad(10),deg2rad(10),0.0)))
+@test all(isapprox.(taitbryan(deg2rad(10),deg2rad(10),deg2rad(30)), (deg2rad(10),deg2rad(10),0.0)))
+@test all(isapprox.(taitbryan(deg2rad(40),deg2rad(0),deg2rad(0)), (deg2rad(40),deg2rad(0),0.0)))
+@test all(isapprox.(taitbryan(deg2rad(76),deg2rad(37.2),deg2rad(30)), (deg2rad(76),deg2rad(37.2),0.0)))
+@test all(isapprox.(taitbryan(deg2rad(-82),deg2rad(-31),deg2rad(10)), (deg2rad(-82),deg2rad(-31),0.0)))
+@test all(isapprox.(taitbryan(deg2rad(0),deg2rad(-37),deg2rad(10)), (deg2rad(0),deg2rad(-37),0.0)))
+

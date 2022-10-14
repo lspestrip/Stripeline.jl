@@ -80,7 +80,8 @@ import Dates
 
 export TENERIFE_LATITUDE_DEG, TENERIFE_LONGITUDE_DEG, TENERIFE_HEIGHT_M
 export ConfigAngles, TelescopeAngles, CameraAngles
-export timetorotang, telescopetoground, groundtoearth
+export directiontoangles
+export timetorotang, camtotelescope, telescopetoground, groundtoearth
 export genpointings!, genpointings, northdir, eastdir, polarizationangle
 
 "Latitude of the LSPE/Strip site in Tenerife, in degrees"
@@ -95,19 +96,7 @@ const TENERIFE_HEIGHT_M = 2390
 include("quaternions.jl")
 
 """
-    ConfigAngles
-
-Abstract type representing a set of configuration angles.
-Defining an abstract type is usefull because if you want to
-use differents angles or introduce new ones, you only have to define
-a new subtype and add a dedicated telescopetoground function dispatch.
-
-See [`TelescopeAngles`](@ref) [`CameraAngles`](@ref)
-"""
-abstract type ConfigAngles end
-
-"""
-    configuration_angles(
+    TelescopeAngles(
         wheel1ang_0_rad :: Float64 = 0.0,
         wheel2ang_0_rad :: Float64 = 0.0,
         wheel3ang_0_rad :: Float64 = 0.0,
@@ -134,7 +123,7 @@ See the documentation for a graphical rapresentation of each angles.
 
 All of these angles must be expressed in RADIANS and measured anticlockwise.
 """
-Base.@kwdef struct TelescopeAngles <: ConfigAngles
+Base.@kwdef struct TelescopeAngles
     wheel1ang_0_rad :: Float64 = 0.0
     wheel2ang_0_rad :: Float64 = 0.0
     wheel3ang_0_rad :: Float64 = 0.0
@@ -143,7 +132,16 @@ Base.@kwdef struct TelescopeAngles <: ConfigAngles
     zVAXang_rad :: Float64 = 0.0
 end
 
-Base.@kwdef struct CameraAngles <: ConfigAngles 
+"""
+    CameraAngles(panang_rad,
+                 tiltang_rad,
+                 rollang_rad)
+    
+pan around X
+tilt around Y
+roll around Z
+"""
+Base.@kwdef struct CameraAngles
     panang_rad :: Float64 = 0.0
     tiltang_rad :: Float64 = 0.0
     rollang_rad :: Float64 = 0.0
@@ -162,6 +160,23 @@ function timetorotang(time_s, rpm)
     else
         2 * π * time_s * (rpm / 60)
     end
+end
+
+"""
+    directiontoangles()
+
+This function convert a pointing direction into
+Tait-Brian angles.
+`dir` must be normalized.
+"""
+function directiontoangles(dir)
+    #y-axis rotation angle
+    tiltang = asin(dir[1])
+    #x-axis rotation angle
+    panang = - asin(dir[2]/cos(tiltang))
+    #z-azis rotation angle
+    rollang = 0.0
+    (panang, tiltang, rollang)
 end
 
 """
@@ -405,7 +420,7 @@ function genpointings!(wheelanglesfn,
                        latitude_deg = TENERIFE_LATITUDE_DEG,
                        ground = false,
                        day_duration_s = 86400.0,
-                       config_ang::Union{ConfigAngles, Nothing} = nothing)
+                       telescope_ang::Union{TelescopeAngles, Nothing} = nothing)
 
     if ground
         @assert size(dirs, 2) == 4
@@ -445,7 +460,7 @@ function genpointings(wheelanglesfn,
                        latitude_deg = TENERIFE_LATITUDE_DEG,
                        ground = false,
                        day_duration_s = 86400.0,
-                       config_ang::Union{ConfigAngles, Nothing} = nothing)
+                       telescope_ang::Union{TelescopeAngles, Nothing} = nothing)
 
     if ground
         dirs = Array{Float64}(undef, length(timerange_s), 4)
@@ -465,7 +480,7 @@ function genpointings(wheelanglesfn,
         latitude_deg = latitude_deg,
         ground = ground,
         day_duration_s = day_duration_s,
-        config_ang = config_ang
+        telescope_ang = telescope_ang
     )
 
     (dirs, psi)
@@ -485,7 +500,7 @@ function genpointings!(wheelanglesfn,
                        nutation = true,
                        aberration = true,
                        refraction = true,
-                       config_ang::Union{ConfigAngles, Nothing} = nothing)
+                       telescope_ang::Union{TelescopeAngles, Nothing} = nothing)
 
     @assert size(skydirs, 1) == size(skypsi, 1)
     @assert size(skydirs, 2) == 2
