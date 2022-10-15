@@ -163,11 +163,13 @@ function timetorotang(time_s, rpm)
 end
 
 """
-    directiontoangles()
+    directiontoangles(dir)
 
 This function convert a pointing direction into
 Tait-Brian angles.
 `dir` must be normalized.
+For the convention used to rotate camera R_x*R_y*R_z, rotate
+around z the vector [0.0,0.0,1.0] is useless
 """
 function directiontoangles(dir)
     #y-axis rotation angle
@@ -431,19 +433,24 @@ function genpointings!(wheelanglesfn,
     end
     @assert size(dirs, 1) == size(psi, 1)
 
+    if beam_dir isa Array
+        cam_ang = directiontoangles(beam_dir)
+        beam_dir = CameraAngles(panang_rad = cam_ang[1], tiltang_rad = cam_ang[2], rollang_rad = cam_ang[3])
+    end
+
     for (idx, time_s) = enumerate(timerange_s)
 
         # This converts the RDP into the MCS (ground reference frame)
-        groundq = telescopetoground(wheelanglesfn, time_s)
+        groundq = telescopetoground(wheelanglesfn, time_s, beam_dir, telescope_ang)
         # This converts the MCS into the celestial reference frame
         quat = groundtoearth(groundq, time_s, latitude_deg; day_duration_s = day_duration_s)
             
-        θ, ϕ, curpsi = quat_to_angles(beam_dir, polaxis, quat)
+        θ, ϕ, curpsi = quat_to_angles([0.0,0.0,1.0], polaxis, quat)
         (dirs[idx, 1], dirs[idx, 2]) = (θ, ϕ)
 
         if ground
             # Re-run the transformation algorithm using the ground quaternion
-            θ_ground, ϕ_ground, psi_ground = quat_to_angles(beam_dir, polaxis, groundq)
+            θ_ground, ϕ_ground, psi_ground = quat_to_angles([0.0,0.0,1.0], polaxis, groundq)
 
             (dirs[idx, 3], dirs[idx, 4]) = (θ_ground, ϕ_ground)
             (psi[idx, 1], psi[idx, 2]) = (curpsi, psi_ground)
@@ -506,10 +513,15 @@ function genpointings!(wheelanglesfn,
     @assert size(skydirs, 2) == 2
     @assert size(skypsi, 2) == 1
 
+    if beam_dir isa Array
+        cam_ang = directiontoangles(beam_dir)
+        beam_dir = CameraAngles(panang_rad = cam_ang[1], tiltang_rad = cam_ang[2], rollang_rad = cam_ang[3])
+    end
+
     for (idx, time_s) = enumerate(timerange_s)
-        groundq = telescopetoground(wheelanglesfn, time_s)
+        groundq = telescopetoground(wheelanglesfn, time_s, beam_dir, telescope_ang)
         rotmatr = rotationmatrix_normalized(groundq)
-        vector = rotmatr * beam_dir
+        vector = rotmatr * [0.0,0.0,1.0]
 
         jd = AstroLib.jdcnv(t_start + Dates.Nanosecond(round(Int64, time_s * 1e9)))
         Dec_rad, Ra_rad = vector2equatorial(vector,

@@ -239,6 +239,7 @@ function  taitbryan(pan, tilt, roll)
     directiontoangles(dir)
 end
 
+# Looking at the convention used the rotation of the camera around z (roll angle) is undefined
 @test all(isapprox.(taitbryan(deg2rad(10),deg2rad(10),deg2rad(10)), (deg2rad(10),deg2rad(10),0.0)))
 @test all(isapprox.(taitbryan(deg2rad(10),deg2rad(10),deg2rad(30)), (deg2rad(10),deg2rad(10),0.0)))
 @test all(isapprox.(taitbryan(deg2rad(40),deg2rad(0),deg2rad(0)), (deg2rad(40),deg2rad(0),0.0)))
