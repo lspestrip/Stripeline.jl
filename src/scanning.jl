@@ -659,8 +659,12 @@ radians) of the three motors:
 
 The meaning of the parameters/keywords is the following:
 
-- `beam_dir` specifies the pointing direction of the mean (the boresight is
-  [0, 0, 1]). It must be normalized.
+- `beam_dir` is [`CameraAngles`](@ref) object that specifies the three
+  Tait-Bryan angles for the detector.
+  N.B. in a previous version this parameter specifies the normalized 
+  pointing direction of the mean (the boresight is [0, 0, 1]). This is
+  still possible, due to an internal conversion if we use `Array`, but
+  will no longer be supported as default behavior.
 
 - `timerange_s` is an enumerable type that specifies at which times
   (in seconds) pointings must be computed.
@@ -699,8 +703,8 @@ The meaning of the parameters/keywords is the following:
   As these corrections are only valid for optical wavelengths, the
   default is `false`.
 
-- `config_ang`: specifies the configuration angles for the camera and for the 
-  telescope (see [`configuration_angles`](@ref) for more details). This is used
+- `telescope_ang`: specifies the configuration angles for the telescope 
+  (see [`TelescopeAngles`](@ref) for more details). This is used
   internally by [`telescopetoground`](@ref); if nothing is passes then the version 
   of telescopetoground for an ideal telescope will be used.
 
@@ -723,7 +727,7 @@ angles at each time step; `genpointings!` works as above.
 Here is an example using the form without `t_start`:
 
 `````julia
-dir, psi = genpointings([0, 0, 1], 0:0.1:1) do time_s
+dir, psi = genpointings(CameraAngles(), 0:0.1:1) do time_s
     # Boresight motor keeps a constant angle equal to 0°
     # Altitude motor remains at 20° from the Zenith
     # Ground motor spins at 1 RPM
@@ -739,7 +743,7 @@ import Dates
 
 dirs, psi = genpointings(time_s -> (0, deg2rad(20),
                                     timetorotang(time_s, 1)),
-                         [0, 0, 1],
+                         CameraAngles(),
                          0:0.1:1,
                          Dates.DateTime(2022, 01, 01, 0, 0, 0),
                          latitude_deg=10.0,
