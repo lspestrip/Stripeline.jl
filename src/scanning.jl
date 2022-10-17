@@ -77,6 +77,7 @@ import StaticArrays
 import LinearAlgebra: ×, dot
 import AstroLib
 import Dates
+include("quaternions.jl")
 
 export TENERIFE_LATITUDE_DEG, TENERIFE_LONGITUDE_DEG, TENERIFE_HEIGHT_M
 export TelescopeAngles, CameraAngles
@@ -92,8 +93,6 @@ const TENERIFE_LONGITUDE_DEG = -16.51012
 
 "Height of the LSPE/Strip site in Tenerife, in meters"
 const TENERIFE_HEIGHT_M = 2390
-
-include("quaternions.jl")
 
 """
     TelescopeAngles(
@@ -159,21 +158,6 @@ Base.@kwdef struct CameraAngles
 end
 
 """
-    timetorotang(time, rpm)
-
-Convert a time into a rotation angle, given the number of rotations per minute.
-The time should be expressed in seconds. The return value is in radians.
-`time` can either be a scalar or a vector.
-"""
-function timetorotang(time_s, rpm)
-    if rpm == 0
-        0.0
-    else
-        2 * π * time_s * (rpm / 60)
-    end
-end
-
-"""
     directiontoangles(dir)
 
 This function convert a pointing direction vector into Tait-Brian angles
@@ -194,6 +178,21 @@ function directiontoangles(dir)
     #z-azis rotation angle
     rollang = 0.0
     (panang, tiltang, rollang)
+end
+
+"""
+    timetorotang(time, rpm)
+
+Convert a time into a rotation angle, given the number of rotations per minute.
+The time should be expressed in seconds. The return value is in radians.
+`time` can either be a scalar or a vector.
+"""
+function timetorotang(time_s, rpm)
+    if rpm == 0
+        0.0
+    else
+        2 * π * time_s * (rpm / 60)
+    end
 end
 
 """
