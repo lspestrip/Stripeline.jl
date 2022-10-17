@@ -183,8 +183,9 @@ end
 # Test the PRM with non idealities
 # Can't test wheel1ang_0 (the boresight motor zero point) because PyPRM doesn't support it, a solution must be found!
 
-function angletomatrix(wheelanglesfn, time_s; tel_ang::Union{TelescopeAngles, Nothing}=nothing, cam_ang::Union{CameraAngles, Nothing}=nothing)
-    rotationmatrix_normalized(telescopetoground(wheelanglesfn, time_s, cam_ang, tel_ang))    
+function angletomatrix(wheelanglesfn, time_s; tel_ang::Union{TelescopeAngles, Nothing}=nothing, cam_ang = CameraAngles())
+    quat = telescopetoground(wheelanglesfn, time_s, tel_ang) * camtotelescope(cam_ang)
+    rotationmatrix_normalized(quat)    
 end
 
 # Single configuration angles

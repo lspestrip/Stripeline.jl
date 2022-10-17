@@ -245,7 +245,7 @@ telescopetoground(3600.0) do
 end
 `````
 """
-function telescopetoground(wheelanglesfn, time_s, cam_ang::Nothing = nothing, telescope_ang::Nothing = nothing)
+function telescopetoground(wheelanglesfn, time_s, telescope_ang::Nothing = nothing)
     (wheel1ang, wheel2ang, wheel3ang) = wheelanglesfn(time_s)
 
     qwheel1 = qrotation_z(wheel1ang)
@@ -258,7 +258,21 @@ function telescopetoground(wheelanglesfn, time_s, cam_ang::Nothing = nothing, te
     qwheel3 * (qwheel2 * qwheel1)
 end
 
-function telescopetoground(wheelanglesfn, time_s, cam_ang::CameraAngles, telescope_ang::Nothing)
+function telescopetoground(wheelanglesfn, time_s, telescope_ang::TelescopeAngles)
+    (wheel1ang, wheel2ang, wheel3ang) = wheelanglesfn(time_s)
+
+    qwheel1 = qrotation_z(wheel1ang - telescope_ang.wheel1ang_0_rad)
+    qwheel2 = qrotation_y(wheel2ang - telescope_ang.wheel2ang_0_rad)
+    qwheel3 = qrotation_z(-wheel3ang + telescope_ang.wheel3ang_0_rad)
+
+    qfork = qrotation_x(telescope_ang.forkang_rad)
+    qomegaVAX = qrotation_z(telescope_ang.omegaVAXang_rad)
+    qzVAX = qrotation_x(telescope_ang.zVAXang_rad)    
+
+    qomegaVAX * (qzVAX * (qwheel3 * (qfork * (qwheel2 * qwheel1))))
+end 
+
+#= function telescopetoground(wheelanglesfn, time_s, cam_ang::CameraAngles, telescope_ang::Nothing)
     (wheel1ang, wheel2ang, wheel3ang) = wheelanglesfn(time_s)
 
     qcam = camtotelescope(cam_ang)
@@ -282,7 +296,7 @@ function telescopetoground(wheelanglesfn, time_s, cam_ang::Nothing, telescope_an
     qzVAX = qrotation_x(telescope_ang.zVAXang_rad)    
 
     qomegaVAX * (qzVAX * (qwheel3 * (qfork * (qwheel2 * qwheel1))))
-end
+end 
 
 function telescopetoground(wheelanglesfn, time_s, cam_ang::CameraAngles, telescope_ang::TelescopeAngles)
     (wheel1ang, wheel2ang, wheel3ang) = wheelanglesfn(time_s)
@@ -298,7 +312,7 @@ function telescopetoground(wheelanglesfn, time_s, cam_ang::CameraAngles, telesco
     qzVAX = qrotation_x(telescope_ang.zVAXang_rad)    
 
     qomegaVAX * (qzVAX * (qwheel3 * (qfork * (qwheel2 * (qwheel1 * qcam)))))
-end
+end =#
 
 """
     groundtoearth(groundq, time_s, latitude_deg; day_duration_s=86400.0)
@@ -457,10 +471,12 @@ function genpointings!(wheelanglesfn,
         beam_dir = CameraAngles(panang_rad = cam_ang[1], tiltang_rad = cam_ang[2], rollang_rad = cam_ang[3])
     end
 
+    camtotel_quat = camtotelescope(beam_dir)
+
     for (idx, time_s) = enumerate(timerange_s)
 
         # This converts the RDP into the MCS (ground reference frame)
-        groundq = telescopetoground(wheelanglesfn, time_s, beam_dir, telescope_ang)
+        groundq = telescopetoground(wheelanglesfn, time_s, telescope_ang) * camtotel_quat
         # This converts the MCS into the celestial reference frame
         quat = groundtoearth(groundq, time_s, latitude_deg; day_duration_s = day_duration_s)
             
@@ -537,8 +553,10 @@ function genpointings!(wheelanglesfn,
         beam_dir = CameraAngles(panang_rad = cam_ang[1], tiltang_rad = cam_ang[2], rollang_rad = cam_ang[3])
     end
 
+    camtotel_quat = camtotelescope(beam_dir)
+
     for (idx, time_s) = enumerate(timerange_s)
-        groundq = telescopetoground(wheelanglesfn, time_s, beam_dir, telescope_ang)
+        groundq = telescopetoground(wheelanglesfn, time_s, telescope_ang) * camtotel_quat
         rotmatr = rotationmatrix_normalized(groundq)
         vector = rotmatr * [0.0,0.0,1.0]
 
