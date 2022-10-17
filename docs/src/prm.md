@@ -20,7 +20,7 @@ alt-az mount. A simplified model is reported in the following figure.
 
 ```@raw html
 <figure>
-    <img src="assets/prm/telescope_model.png" width="60%"/>
+    <img src="../assets/prm/telescope_model.png" width="60%"/>
     <figcaption>Fig.1 Telescope model</figcaption>
 </figure>
 ```
@@ -67,11 +67,11 @@ specific ($\hat{e}_x$, $\hat{e}_y$, $\hat{e}_z$) coordinate axis:
 
 ```@raw html
 <figure>
-    <img src="assets/prm/fork.png" width="50%"/>
+    <img src="../assets/prm/fork.png" width="50%"/>
     <figcaption>Fig.2 Fork angle</figcaption>
 </figure>
 <figure>
-    <img src="assets/prm/wobble.png" width="50%"/>
+    <img src="../assets/prm/wobble.png" width="50%"/>
     <figcaption>Fig.3 Wobble angles</figcaption>
 </figure>
 ```
@@ -112,11 +112,14 @@ We can now define both the control angles (representing the motor position in fu
 
 ```@example prm
 telescope_motors(time_s) = (0.0, deg2rad(20.0), timetorotang(time_s, 1))
-config_ang = configuration_angles(
+
+telescope_ang = TelescopeAngles(
     forkang_rad = deg2rad(13.0),
     zVAXang_rad = deg2rad(10.0),
     omegaVAXang_rad = deg2rad(15.0)
 )
+
+detector_ang = CameraAngles()
 nothing; #hide
 ```
 
@@ -124,20 +127,20 @@ Now we can define a function that call genpointing with and without the
 non idealities and iterate over matrix containing the directions and set a specific value for each pixel in a Healpix map:
 
 ```@example prm
-function project_to_map(time_range, map, config_ang)
+function project_to_map(time_range, map, detector_ang, telescope_ang)
     # Call genpointings for the ideal case
     dirs, _ = genpointings(
         telescope_motors,
-        Float64[0, 0, 1],
+        detector_ang,
         time_range,
     )
 
     # Call genpointings for the non ideal case
     dirs_nonideal, _ = genpointings(
         telescope_motors,
-        Float64[0, 0, 1],
+        detector_ang,
         time_range,
-        config_ang = config_ang
+        telescope_ang = telescope_ang
     )
 
     # For each sample, set the corresponding pixel in the sky map to:
@@ -161,7 +164,7 @@ Finally, we can create the map calling `project_to_map` and plotting the result:
 ```@example prm
 map = HealpixMap{Float64, RingOrder}(128)
 sampling_time_s = 0.05
-project_to_map(0.0:sampling_time_s:60.0, map, config_ang)
+project_to_map(0.0:sampling_time_s:60.0, map, detector_ang, telescope_ang)
 plot(map, orthographic)
 savefig("oneminutemap_prm.svg"); nothing # hide
 ```
@@ -171,7 +174,7 @@ savefig("oneminutemap_prm.svg"); nothing # hide
 Where the pixels set to 2 are the non ideal case taking into account of
 the configuration angles (in this example only the forkand and the
 wobble angles) while the pixels set to 1 are the ideal case alredy
-discussed [here](@ref scanning_example) 
+discussed [here](@ref scanning_example).
 
 
 ## Reference Documentation
@@ -180,6 +183,7 @@ For a complete list of function used to reconstruct the scanning
 direction, see [this](@ref scanning_docs).  
 
 ```@docs
-ConfigAngles
-configuration_angles
+TelescopeAngles
+CameraAngles
+camtotelescope
 ```

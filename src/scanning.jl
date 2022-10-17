@@ -79,7 +79,7 @@ import AstroLib
 import Dates
 
 export TENERIFE_LATITUDE_DEG, TENERIFE_LONGITUDE_DEG, TENERIFE_HEIGHT_M
-export ConfigAngles, TelescopeAngles, CameraAngles
+export TelescopeAngles, CameraAngles
 export directiontoangles
 export timetorotang, camtotelescope, telescopetoground, groundtoearth
 export genpointings!, genpointings, northdir, eastdir, polarizationangle
@@ -133,13 +133,24 @@ Base.@kwdef struct TelescopeAngles
 end
 
 """
-    CameraAngles(panang_rad,
-                 tiltang_rad,
-                 rollang_rad)
-    
-pan around X
-tilt around Y
-roll around Z
+    CameraAngles(
+        panang_rad :: Float64 = 0.0,
+        tiltang_rad :: Float64 = 0.0,
+        rollang_rad :: Float64 = 0.0
+    )
+
+Struct encoding the Tait-Bryan angles of a single camera/detector.
+Camera angles represent the orientation of the detector relative 
+to the telescope.
+
+- `panang_rad` encode a rotation around x-axis
+- `tiltang_rad` encode a rotation around y-axis
+- `rollang_rad` encode a rotation around z-axis
+
+See [`camtotelescope`](@ref) to understand how these angles are used to
+transform the pointing direction.
+
+All of these angles must be expressed in RADIANS and measured anticlockwise.
 """
 Base.@kwdef struct CameraAngles
     panang_rad :: Float64 = 0.0
@@ -165,11 +176,15 @@ end
 """
     directiontoangles(dir)
 
-This function convert a pointing direction into
-Tait-Brian angles.
-`dir` must be normalized.
-For the convention used to rotate camera R_x*R_y*R_z, rotate
-around z the vector [0.0,0.0,1.0] is useless
+This function convert a pointing direction vector into Tait-Brian angles
+used in [`CameraAngles`](@ref).
+
+The convention used to rotate camera is R_x*R_y*R_z (see [`camtotelescope`](@ref)).
+
+The input vector `dir` must be normalized.
+
+This function is used internally by [`genpointings`](@ref) to
+maintain backwards compatibility.
 """
 function directiontoangles(dir)
     #y-axis rotation angle
@@ -184,8 +199,12 @@ end
 """
     camtotelescope(cam_ang::Camera_angles)
 
-NEED A DOCSTRING!!!!!!!!!!!!!!!!
+Return a quaternion of type `Quaternion{Float64}` representing the
+coordinate transform of the detector direction into the focal plane 
+reference frame.
 
+This function is used internally in [`telescopetoground`](@ref) as
+a part of the rotations chain.
 """
 function camtotelescope(cam_ang::CameraAngles)
     qroll = qrotation_z(cam_ang.rollang_rad)
