@@ -272,48 +272,6 @@ function telescopetoground(wheelanglesfn, time_s, telescope_ang::TelescopeAngles
     qomegaVAX * (qzVAX * (qwheel3 * (qfork * (qwheel2 * qwheel1))))
 end 
 
-#= function telescopetoground(wheelanglesfn, time_s, cam_ang::CameraAngles, telescope_ang::Nothing)
-    (wheel1ang, wheel2ang, wheel3ang) = wheelanglesfn(time_s)
-
-    qcam = camtotelescope(cam_ang)
-
-    qwheel1 = qrotation_z(wheel1ang)
-    qwheel2 = qrotation_y(wheel2ang)
-    qwheel3 = qrotation_z(-wheel3ang)  
-
-    qwheel3 * (qwheel2 * (qwheel1 * qcam))
-end
-
-function telescopetoground(wheelanglesfn, time_s, cam_ang::Nothing, telescope_ang::TelescopeAngles)
-    (wheel1ang, wheel2ang, wheel3ang) = wheelanglesfn(time_s)
-
-    qwheel1 = qrotation_z(wheel1ang - telescope_ang.wheel1ang_0_rad)
-    qwheel2 = qrotation_y(wheel2ang - telescope_ang.wheel2ang_0_rad)
-    qwheel3 = qrotation_z(-wheel3ang + telescope_ang.wheel3ang_0_rad)
-
-    qfork = qrotation_x(telescope_ang.forkang_rad)
-    qomegaVAX = qrotation_z(telescope_ang.omegaVAXang_rad)
-    qzVAX = qrotation_x(telescope_ang.zVAXang_rad)    
-
-    qomegaVAX * (qzVAX * (qwheel3 * (qfork * (qwheel2 * qwheel1))))
-end 
-
-function telescopetoground(wheelanglesfn, time_s, cam_ang::CameraAngles, telescope_ang::TelescopeAngles)
-    (wheel1ang, wheel2ang, wheel3ang) = wheelanglesfn(time_s)
-
-    qcam = camtotelescope(cam_ang)
-
-    qwheel1 = qrotation_z(wheel1ang - telescope_ang.wheel1ang_0_rad)
-    qwheel2 = qrotation_y(wheel2ang - telescope_ang.wheel2ang_0_rad)
-    qwheel3 = qrotation_z(-wheel3ang + telescope_ang.wheel3ang_0_rad)
-
-    qfork = qrotation_x(telescope_ang.forkang_rad)
-    qomegaVAX = qrotation_z(telescope_ang.omegaVAXang_rad)
-    qzVAX = qrotation_x(telescope_ang.zVAXang_rad)    
-
-    qomegaVAX * (qzVAX * (qwheel3 * (qfork * (qwheel2 * (qwheel1 * qcam)))))
-end =#
-
 """
     groundtoearth(groundq, time_s, latitude_deg; day_duration_s=86400.0)
 
