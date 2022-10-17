@@ -37,7 +37,7 @@ that describe, respectively, the boresight, the altitude and the ground motor ro
 
 ## Configuration angles
 
-To describe the non idealities of the telescope we need nine angles, each of which represent a rotation around
+To describe the non idealities of the telescope we need six angles, each of which represent a rotation around
 specific ($\hat{e}_x$, $\hat{e}_y$, $\hat{e}_z$) coordinate axis:
 
 1. `wheel1ang_0`, `wheel2ang_0`, `wheel3ang_0`: 
@@ -50,20 +50,15 @@ specific ($\hat{e}_x$, $\hat{e}_y$, $\hat{e}_z$) coordinate axis:
 2. `forkang`: 
 
     encodes the deviation of orthogonality between the H-AXIS and the V-AXIS;
-    as reported in the figure this angles cause a rotation of the system around the x-axis.
+    as reported in the fig. 2 this angles cause a rotation of the system around the x-axis.
 
 3. `omegaVAXang`, `zVAXang`: 
 
     encode the deviation of the V-AXIS from the local vertical; 
     zVax is the angle between V-AXIS and the local vertical, 
-    while omegaVAX is the azimuth of the ascending node (see the )
+    while omegaVAX is the azimuth of the ascending node (see fig. 3)
 
-4. `panang`, `tiltang`, `rollang`: 
-    
-    encode the camera orientation in the telescope reference frame: _pan_ is a rotation around the x-axis, 
-    _tilt_ is a rotation around the y-axis, _roll_ is a rotation around the z-axis. With this convention a 
-    roll rotates the image seen by the camera around its center, a small pan (or tilt) shifts the image 
-    along the camera X (or Y) axis.
+These angles are defined using a [`TelescopeAngles`](@ref) struct.
 
 ```@raw html
 <figure>
@@ -75,6 +70,21 @@ specific ($\hat{e}_x$, $\hat{e}_y$, $\hat{e}_z$) coordinate axis:
     <figcaption>Fig.3 Wobble angles</figcaption>
 </figure>
 ```
+## Camera angles
+
+To describe the orientation of a specific detector into the telescope reference frame we need to use three
+Tait-Bryan angles:
+
+- `panang`: representing a rotation around the x-axis
+
+- `tiltang`: representing a rotation around the y-axis
+
+- `rollang`: representing a rotation around the z-axis
+
+With this convention a roll rotates the image seen by the camera around its center, a small pan (or tilt) shifts 
+the image along the camera X (or Y) axis.
+
+These angles are defined using a [`CameraAngles`](@ref) struct.
 
 ## Pointing Reconstruction Method
 
@@ -82,7 +92,8 @@ PRM consist of calculate a chain of rotations to project the direction of sight 
 into the Topocentric Horizontal Reference Frame (the ground r.f. of the telescope 
 see [`telescopetoground`](@ref)).
 
-For clarity, we can split the rotations in three steps ($R_i$ is a quaternion representing the rotation around the i axis):
+For clarity, we can split the rotations in three steps ($R_i$ is a quaternion or a rotation matrix representing 
+the rotation around the i axis):
 
 $\mathbf{R}^{(\mathrm{tel})} = R_x(\mathrm{panang})R_y(\mathrm{tiltang})R_z(\mathrm{rollang})$
 $\mathbf{R}^{(\mathrm{V-AXIS})} = R_z(\mathrm{wheel3ang-wheel3ang_0})R_x(\mathrm{forkang})R_y(\mathrm{wheel2ang-wheel2ang_0})$
@@ -93,7 +104,8 @@ then the second one from the telescope r.f. to the V-AXIS r.f. and at the last o
 the final rotation operator describing the projection of the coordinate axis of the camera reference frame into the local 
 topocentric reference frame is: $\mathbf{R}^{(\mathrm{geo})} * \mathbf{R}^{(\mathrm{V-AXIS})} * \mathbf{R}^{(\mathrm{tel})}$.
 
-This operator is the output of [`telescopetoground`](@ref).
+The $\mathbf{R}^{(\mathrm{tel})}$ operator is the output of [`camtotelescope`](@ref) while the other two operators are
+computed by [`telescopetoground`](@ref).
 
 ## Example
 
@@ -107,12 +119,14 @@ using Healpix
 using Stripeline
 ```
 
-We can now define both the control angles (representing the motor position in function of time) and the configuration angles (representing the non idealities of the system):
-
+We can now define the control angles (representing the motor position in function of time) and the configuration angles ([`TelescopeAngles`](@ref) and 
+[`CameraAngles`](@ref)) representing the non idealities of the system:
 
 ```@example prm
+# Control angles
 telescope_motors(time_s) = (0.0, deg2rad(20.0), timetorotang(time_s, 1))
 
+# Configuration angles
 telescope_ang = TelescopeAngles(
     forkang_rad = deg2rad(13.0),
     zVAXang_rad = deg2rad(10.0),
@@ -122,9 +136,10 @@ telescope_ang = TelescopeAngles(
 detector_ang = CameraAngles()
 nothing; #hide
 ```
-
-Now we can define a function that call genpointing with and without the
-non idealities and iterate over matrix containing the directions and set a specific value for each pixel in a Healpix map:
+For this example we will use the default values for the camera angles, meaning that the detector point towards
+the boresight direction [0.0,0.0,1.0] perpendicular to the focal plane.
+Now we can define a function that call [`genpointings`](@ref) with and without the
+non idealities, iterate over matrix containing the directions and set a specific value for each pixel in a Healpix map:
 
 ```@example prm
 function project_to_map(time_range, map, detector_ang, telescope_ang)
@@ -172,10 +187,9 @@ savefig("oneminutemap_prm.svg"); nothing # hide
 ![](oneminutemap_prm.svg)
 
 Where the pixels set to 2 are the non ideal case taking into account of
-the configuration angles (in this example only the forkand and the
-wobble angles) while the pixels set to 1 are the ideal case alredy
+the configuration angles (in this example only the _forkang_ and the
+_wobble angles_), while the pixels set to 1 are the ideal case alredy
 discussed [here](@ref scanning_example).
-
 
 ## Reference Documentation
 

@@ -661,10 +661,11 @@ The meaning of the parameters/keywords is the following:
 
 - `beam_dir` is [`CameraAngles`](@ref) object that specifies the three
   Tait-Bryan angles for the detector.
+  
   N.B. in a previous version this parameter specifies the normalized 
   pointing direction of the mean (the boresight is [0, 0, 1]). This is
-  still possible, due to an internal conversion if we use `Array`, but
-  will no longer be supported as default behavior.
+  still possible, due to an internal conversion if we use an `Array` as beam_dir, 
+  but will no longer be supported as default behavior.
 
 - `timerange_s` is an enumerable type that specifies at which times
   (in seconds) pointings must be computed.
