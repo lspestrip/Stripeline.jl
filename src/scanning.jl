@@ -202,7 +202,7 @@ Return a quaternion of type `Quaternion{Float64}` representing the
 coordinate transform of the detector direction into the focal plane 
 reference frame.
 
-This function is used internally in [`telescopetoground`](@ref) as
+This function is used internally in [`genpointings`](@ref) as
 a part of the rotations chain.
 """
 function camtotelescope(cam_ang::CameraAngles)
@@ -257,6 +257,22 @@ function telescopetoground(wheelanglesfn, time_s, telescope_ang::Nothing = nothi
     qwheel3 * (qwheel2 * qwheel1)
 end
 
+"""
+    telescopetoground(
+        wheelanglesfn, 
+        time_s, 
+        telescope_ang::TelescopeAngles
+    )
+
+Return a quaternion of type Quaternion{Float64} representing the coordinate transform 
+from the focal plane to the ground of the telescope. 
+
+The parameter telescope_ang must be a TelescopeAngles struct containing the angles 
+describing the non idealities of the telescope.
+
+N.B. This version of telescopetoground compute all the rotation associated with the 
+configurations angles (i.e. the non idealities of the system).
+"""
 function telescopetoground(wheelanglesfn, time_s, telescope_ang::TelescopeAngles)
     (wheel1ang, wheel2ang, wheel3ang) = wheelanglesfn(time_s)
 
