@@ -418,7 +418,7 @@ function quat_to_angles(boreaxis, polaxis, quat)
     (θ, ϕ, polarizationangle(north, east, poldir))
 end
 
-
+# Old version of genpointings that accept beam_dir as a versor (Array) representing the pointing direction
 function genpointings!(wheelanglesfn,
                        beam_dir,
                        timerange_s,
@@ -439,10 +439,48 @@ function genpointings!(wheelanglesfn,
     end
     @assert size(dirs, 1) == size(psi, 1)
 
-    if beam_dir isa Array
-        cam_ang = directiontoangles(beam_dir)
-        beam_dir = CameraAngles(panang_rad = cam_ang[1], tiltang_rad = cam_ang[2], rollang_rad = cam_ang[3])
+    for (idx, time_s) = enumerate(timerange_s)
+
+        # This converts the RDP into the MCS (ground reference frame)
+        groundq = telescopetoground(wheelanglesfn, time_s, telescope_ang)
+        # This converts the MCS into the celestial reference frame
+        quat = groundtoearth(groundq, time_s, latitude_deg; day_duration_s = day_duration_s)
+            
+        θ, ϕ, curpsi = quat_to_angles(beam_dir, polaxis, quat)
+        (dirs[idx, 1], dirs[idx, 2]) = (θ, ϕ)
+
+        if ground
+            # Re-run the transformation algorithm using the ground quaternion
+            θ_ground, ϕ_ground, psi_ground = quat_to_angles(beam_dir, polaxis, groundq)
+
+            (dirs[idx, 3], dirs[idx, 4]) = (θ_ground, ϕ_ground)
+            (psi[idx, 1], psi[idx, 2]) = (curpsi, psi_ground)
+        else
+            psi[idx] = curpsi
+        end
     end
+end
+
+# New version of genpointings using CameraAngles
+function genpointings!(wheelanglesfn,
+                       beam_dir::CameraAngles,
+                       timerange_s,
+                       dirs,
+                       psi;
+                       polaxis = Float64[1.0, 0.0, 0.0],
+                       latitude_deg = TENERIFE_LATITUDE_DEG,
+                       ground = false,
+                       day_duration_s = 86400.0,
+                       telescope_ang::Union{TelescopeAngles, Nothing} = nothing)
+
+    if ground
+        @assert size(dirs, 2) == 4
+        @assert size(psi, 2) == 2
+    else
+        @assert size(dirs, 2) == 2
+        @assert size(psi, 2) == 1
+    end
+    @assert size(dirs, 1) == size(psi, 1)
 
     camtotel_quat = camtotelescope(beam_dir)
 
@@ -501,6 +539,7 @@ function genpointings(wheelanglesfn,
     (dirs, psi)
 end
 
+# Older version of genpointings using beam_dir::Array representing the pointing direction of the detector
 function genpointings!(wheelanglesfn,
                        beam_dir,
                        timerange_s,
@@ -521,10 +560,52 @@ function genpointings!(wheelanglesfn,
     @assert size(skydirs, 2) == 2
     @assert size(skypsi, 2) == 1
 
-    if beam_dir isa Array
-        cam_ang = directiontoangles(beam_dir)
-        beam_dir = CameraAngles(panang_rad = cam_ang[1], tiltang_rad = cam_ang[2], rollang_rad = cam_ang[3])
+    for (idx, time_s) = enumerate(timerange_s)
+        groundq = telescopetoground(wheelanglesfn, time_s, telescope_ang)
+        rotmatr = rotationmatrix_normalized(groundq)
+        vector = rotmatr * beam_dir
+
+        jd = AstroLib.jdcnv(t_start + Dates.Nanosecond(round(Int64, time_s * 1e9)))
+        Dec_rad, Ra_rad = vector2equatorial(vector,
+                                            jd,
+                                            latitude_deg,
+                                            longitude_deg,
+                                            height_m,
+                                            precession,
+                                            nutation,
+                                            aberration,
+                                            refraction)
+
+        poldir = rotmatr * polaxis
+        north = northdir(π / 2 - Dec_rad, Ra_rad)
+        east = eastdir(π / 2 - Dec_rad, Ra_rad)
+
+        skydirs[idx, 1] = π/2 - Dec_rad
+        skydirs[idx, 2] = Ra_rad
+        skypsi[idx] = polarizationangle(north, east, poldir)
     end
+end
+
+# New version using CameraAngles
+function genpointings!(wheelanglesfn,
+                       beam_dir::CameraAngles,
+                       timerange_s,
+                       t_start::Dates.DateTime,
+                       skydirs,
+                       skypsi;
+                       polaxis = Float64[1.0, 0.0, 0.0],
+                       latitude_deg = TENERIFE_LATITUDE_DEG,
+                       longitude_deg = TENERIFE_LONGITUDE_DEG,
+                       height_m = TENERIFE_HEIGHT_M,
+                       precession = true,
+                       nutation = true,
+                       aberration = true,
+                       refraction = true,
+                       telescope_ang::Union{TelescopeAngles, Nothing} = nothing)
+
+    @assert size(skydirs, 1) == size(skypsi, 1)
+    @assert size(skydirs, 2) == 2
+    @assert size(skypsi, 2) == 1
 
     camtotel_quat = camtotelescope(beam_dir)
 
