@@ -18,12 +18,9 @@ as a function of time and the configuration angles describing the geometry of th
 First, to understand all the control angles lets analyze a model of the telescope and its 
 alt-az mount. A simplified model is reported in the following figure.
 
-```@raw html
-<figure>
-    <img src="../assets/prm/telescope_model.png" width="60%"/>
-    <figcaption>Fig.1 Telescope model</figcaption>
-</figure>
-```
+|![](assets/prm/telescope_model.png)|
+|:--:|
+|Fig. 1 Telescope Model|
 
 A basement holds a vertical axis (V-AXIS) allowing the Azimuth rotation, a fork mounted on the
 top of the V-AXIS holds the horizontal axis (H-AXIS) which allows the Altitude rotation. In an
@@ -60,16 +57,11 @@ specific ($\hat{e}_x$, $\hat{e}_y$, $\hat{e}_z$) coordinate axis:
 
 These angles are defined using a [`TelescopeAngles`](@ref) struct.
 
-```@raw html
-<figure>
-    <img src="../assets/prm/fork.png" width="50%"/>
-    <figcaption>Fig.2 Fork angle</figcaption>
-</figure>
-<figure>
-    <img src="../assets/prm/wobble.png" width="50%"/>
-    <figcaption>Fig.3 Wobble angles</figcaption>
-</figure>
-```
+|![](assets/prm/fork.png)|![](assets/prm/wobble.png)|
+|:--:|:--:|
+|Fig. 2 Fork angle|Fig. 3 Wobble angles|
+
+
 ## Camera angles
 
 To describe the orientation of a specific detector into the telescope reference frame we need to use three
