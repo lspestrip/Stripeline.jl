@@ -688,17 +688,21 @@ end
 
 
 @doc raw"""
-    genpointings!(wheelanglesfn, beam_dir, timerange_s, dirs, psi;
+    genpointings!(wheelanglesfn, beam_dir::CameraAngles, 
+                  timerange_s, 
+                  dirs, psi;
                   polaxis = Float64[1.0, 0.0, 0.0],
                   latitude_deg = TENERIFE_LATITUDE_DEG,
                   ground = false,
                   config_ang::Union{ConfigAngles, Nothing} = nothing)
-    genpointings(wheelanglesfn, beam_dir, timerange_s;
+    genpointings(wheelanglesfn, beam_dir::CameraAngles, 
+                 timerange_s;
                  polaxis = Float64[1.0, 0.0, 0.0],
                  latitude_deg = TENERIFE_LATITUDE_DEG,
                  ground = false,
                  config_ang::Union{ConfigAngles, Nothing} = nothing)
-    genpointings!(wheelanglesfn, beam_dir, timerange_s, t_start, dirs, psi;
+    genpointings!(wheelanglesfn, beam_dir::CameraAngles, 
+                  timerange_s, t_start, dirs, psi;
                   polaxis = Float64[1.0, 0.0, 0.0],
                   latitude_deg = TENERIFE_LATITUDE_DEG,
                   longitude_deg = TENERIFE_LONGITUDE_DEG,
@@ -708,7 +712,8 @@ end
                   aberration = true,
                   refraction = true,
                   config_ang::Union{ConfigAngles, Nothing} = nothing)
-    genpointings(wheelanglesfn, beam_dir, timerange_s, t_start;
+    genpointings(wheelanglesfn, beam_dir::CameraAngles, 
+                 timerange_s, t_start;
                  polaxis=Float64[1.0, 0.0, 0.0],
                  latitude_deg=TENERIFE_LATITUDE_DEG,
                  longitude_deg=TENERIFE_LONGITUDE_DEG,
