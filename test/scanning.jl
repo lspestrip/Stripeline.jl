@@ -119,7 +119,7 @@ spin_velocity = 1
 τ_s = 1 / sampling_rate
 times = 0:τ_s:time_duration
 
-(dirs, ψ) = genpointings(db.focalplane["I0"].orientation,
+(dirs, ψ) = genpointings(CameraAngles(),
                          times;
                          latitude_deg = TEST_TENERIFE_LATITUDE_DEG) do time_s
     (0, deg2rad(20.0), Sl.timetorotang(time_s, spin_velocity))
@@ -248,3 +248,19 @@ end
 @test all(isapprox.(taitbryan(deg2rad(-82),deg2rad(-31),deg2rad(10)), (deg2rad(-82),deg2rad(-31),0.0)))
 @test all(isapprox.(taitbryan(deg2rad(0),deg2rad(-37),deg2rad(10)), (deg2rad(0),deg2rad(-37),0.0)))
 
+
+# Test functions to rotate Xaxis and Zaxis usend in the new version of genpointings
+
+@test rotate_zaxis(qrotation_z(deg2rad(90))) == [0.0, 0.0, 1.0]
+@test rotate_zaxis(qrotation_x(deg2rad(-90))) ≈ [0.0, 1.0, 0.0]
+@test rotate_zaxis(qrotation_y(deg2rad(90))) ≈ [1.0, 0.0, 0.0]
+
+for i in [10., 25., 46., 70., 137., 200., 349.]
+    @test rotate_zaxis(qrotation_y(deg2rad(i))) ≈  rotationmatrix_normalized(qrotation_y(deg2rad(i))) * [0.0, 0.0, 1.0]
+    @test rotate_zaxis(qrotation_x(deg2rad(i))) ≈  rotationmatrix_normalized(qrotation_x(deg2rad(i))) * [0.0, 0.0, 1.0]
+end
+
+for i in [10., 25., 46., 70., 137., 200., 349.]
+    @test rotate_xaxis(qrotation_y(deg2rad(i))) ≈  rotationmatrix_normalized(qrotation_y(deg2rad(i))) * [1.0, 0.0, 0.0]
+    @test rotate_xaxis(qrotation_z(deg2rad(i))) ≈  rotationmatrix_normalized(qrotation_z(deg2rad(i))) * [1.0, 0.0, 0.0]
+end

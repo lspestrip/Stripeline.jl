@@ -418,6 +418,17 @@ function quat_to_angles(boreaxis, polaxis, quat)
     (θ, ϕ, polarizationangle(north, east, poldir))
 end
 
+function quat_to_angles(quat)
+    boresight = rotate_zaxis(quat)
+    poldir = rotate_xaxis(quat)
+
+    (θ, ϕ) = Healpix.vec2ang(boresight...)
+
+    north = northdir(θ, ϕ)
+    east = eastdir(θ, ϕ)
+    (θ, ϕ, polarizationangle(north, east, poldir))
+end
+
 # Old version of genpointings that accept beam_dir as a versor (Array) representing the pointing direction
 function genpointings!(wheelanglesfn,
                        beam_dir,
@@ -491,12 +502,12 @@ function genpointings!(wheelanglesfn,
         # This converts the MCS into the celestial reference frame
         quat = groundtoearth(groundq, time_s, latitude_deg; day_duration_s = day_duration_s)
             
-        θ, ϕ, curpsi = quat_to_angles([0.0,0.0,1.0], polaxis, quat)
+        θ, ϕ, curpsi = quat_to_angles(quat)
         (dirs[idx, 1], dirs[idx, 2]) = (θ, ϕ)
 
         if ground
             # Re-run the transformation algorithm using the ground quaternion
-            θ_ground, ϕ_ground, psi_ground = quat_to_angles([0.0,0.0,1.0], polaxis, groundq)
+            θ_ground, ϕ_ground, psi_ground = quat_to_angles(groundq)
 
             (dirs[idx, 3], dirs[idx, 4]) = (θ_ground, ϕ_ground)
             (psi[idx, 1], psi[idx, 2]) = (curpsi, psi_ground)
