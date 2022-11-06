@@ -622,8 +622,7 @@ function genpointings!(wheelanglesfn,
 
     for (idx, time_s) = enumerate(timerange_s)
         groundq = telescopetoground(wheelanglesfn, time_s, telescope_ang) * camtotel_quat
-        rotmatr = rotationmatrix_normalized(groundq)
-        vector = rotmatr * [0.0,0.0,1.0]
+        vector = rotate_zaxis(groundq)
 
         jd = AstroLib.jdcnv(t_start + Dates.Nanosecond(round(Int64, time_s * 1e9)))
         Dec_rad, Ra_rad = vector2equatorial(vector,
@@ -636,7 +635,7 @@ function genpointings!(wheelanglesfn,
                                             aberration,
                                             refraction)
 
-        poldir = rotmatr * polaxis
+        poldir = rotate_xaxis(groundq)
         north = northdir(π / 2 - Dec_rad, Ra_rad)
         east = eastdir(π / 2 - Dec_rad, Ra_rad)
 
