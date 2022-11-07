@@ -418,6 +418,21 @@ function quat_to_angles(boreaxis, polaxis, quat)
     (θ, ϕ, polarizationangle(north, east, poldir))
 end
 
+"""
+    quat_to_angles(quat)
+
+Transform the boresight direction `[0.0,0.0,1.0]` and the polarization direction
+`[1.0,0.0,0.0]` according to quaternion `quat`. Return the 3-tuple (θ, ϕ, ψ)
+representing the colatitude, longitude, and polarization angle
+(calculated northward).
+
+*Warning:* the definition of polarization angle does not work if the
+observer is at the North or South Pole of the coordinate system. This
+means that the polarization angle is not valid if the quaternion is
+expressed in the ground reference system.
+
+This function is used internally by [`genpointings`](@ref).
+"""
 function quat_to_angles(quat)
     boresight = rotate_zaxis(quat)
     poldir = rotate_xaxis(quat)
