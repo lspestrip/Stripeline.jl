@@ -78,10 +78,11 @@ skydirs = Array{Float64}(undef, 3, 2)
 for (idx, day) in enumerate(days)
     local vector = Float64[Healpix.ang2vec(dirs[idx, 1], dirs[idx, 2])...]
     local dir = inv(rotmatr) * vector
+    local dir_ang = directiontoangles(dir)
 
     local (skydirections, skyψ) = genpointings(
         _ -> (0, deg2rad(20), 0),
-        dir,
+        CameraAngles(panang_rad = dir_ang[1], tiltang_rad = dir_ang[2], rollang_rad = dir_ang[3]),
         [0],
         day,
         latitude_deg = TEST_TENERIFE_LATITUDE_DEG,
@@ -157,16 +158,18 @@ let defaultdb = InstrumentDB()
     timerange = 7200:1:(7200 + 60)
     G0_vec = defaultdb.focalplane["G0"].orientation
     V0_vec = defaultdb.focalplane["V0"].orientation
+    G0_ang = directiontoangles(G0_vec)
+    V0_ang = directiontoangles(V0_vec)
 
     dirG0, psiG0 = Stripeline.genpointings(
         wheelfn,
-        G0_vec,
+        CameraAngles(panang_rad = G0_ang[1], tiltang_rad = G0_ang[2], rollang_rad = G0_ang[3]),
         timerange,
         latitude_deg = TEST_TENERIFE_LATITUDE_DEG,
     )
     dirV0, psiV0 = Stripeline.genpointings(
         wheelfn,
-        V0_vec,
+        CameraAngles(panang_rad = V0_ang[1], tiltang_rad = V0_ang[2], rollang_rad = V0_ang[3]),
         timerange,
         latitude_deg = TEST_TENERIFE_LATITUDE_DEG,
     )
