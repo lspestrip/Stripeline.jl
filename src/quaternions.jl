@@ -68,19 +68,30 @@ function `rotationmatrix_normalized`.
 """
 qrotation_x, qrotation_y, qrotation_z
 
+"""
+    rotate_zaxis(q::Quaternion)
 
+Return a `3-element Vector{Float64}` representing the z-axis 
+[0.0,0.0,1.0] rotated using the quaternion q. 
+"""
 function rotate_zaxis(q::Quaternion)
     Float64[
-        2. * (q.v3 * q.v1 + q.s * q.v2)
-        2. * (q.v2 * q.v3 - q.s * q.v1)
+        2. * (q.v3 * q.v1 + q.s * q.v2),
+        2. * (q.v2 * q.v3 - q.s * q.v1),
         1.0 - 2. * (q.v1*q.v1 + q.v2*q.v2)
     ]
 end
 
+"""
+    rotate_zaxis(q::Quaternion)
+
+Return a `3-element Vector{Float64}` representing the x-axis 
+[1.0,0.0,0.0] rotated using the quaternion q. 
+"""
 function rotate_xaxis(q::Quaternion)
     Float64[
-        1.0 - 2. * (q.v2*q.v2 + q.v3*q.v3)
-        2. * (q.v1 * q.v2 + q.s * q.v3)
+        1.0 - 2. * (q.v2*q.v2 + q.v3*q.v3),
+        2. * (q.v1 * q.v2 + q.s * q.v3),
         2. * (q.v1 * q.v3 - q.s * q.v2)
     ]
 end
