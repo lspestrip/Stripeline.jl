@@ -212,8 +212,37 @@ function camtotelescope(cam_ang::CameraAngles)
     qpan * (qtilt * qroll)
 end
 
+
+function telescopetoground(wheelanglesfn, time_s, telescope_ang::Nothing = nothing)
+    (wheel1ang, wheel2ang, wheel3ang) = wheelanglesfn(time_s)
+
+    qwheel1 = qrotation_z(wheel1ang)
+    qwheel2 = qrotation_y(wheel2ang)
+
+    # The minus sign here takes into account the fact that the azimuth
+    # motor requires positive angles to turn North into East
+    qwheel3 = qrotation_z(-wheel3ang)
+
+    qwheel3 * (qwheel2 * qwheel1)
+end
+
+function telescopetoground(wheelanglesfn, time_s, telescope_ang::TelescopeAngles)
+    (wheel1ang, wheel2ang, wheel3ang) = wheelanglesfn(time_s)
+
+    qwheel1 = qrotation_z(wheel1ang - telescope_ang.wheel1ang_0_rad)
+    qwheel2 = qrotation_y(wheel2ang - telescope_ang.wheel2ang_0_rad)
+    qwheel3 = qrotation_z(-wheel3ang + telescope_ang.wheel3ang_0_rad)
+
+    qfork = qrotation_x(telescope_ang.forkang_rad)
+    qomegaVAX = qrotation_z(telescope_ang.omegaVAXang_rad)
+    qzVAX = qrotation_x(telescope_ang.zVAXang_rad)    
+
+    qomegaVAX * (qzVAX * (qwheel3 * (qfork * (qwheel2 * qwheel1))))
+end 
+
 @doc raw"""
-    telescopetoground(wheelanglesfn, time_s)
+    telescopetoground(wheelanglesfn, time_s, telescope_ang::Nothing = nothing)
+    telescopetoground(wheelanglesfn, time_s, telescope_ang::TelescopeAngles)
 
 Return a quaternion of type `Quaternion{Float64}` representing the
 coordinate transform from the focal plane to the ground of the
@@ -231,7 +260,10 @@ takes as input a time, `time_s`, in seconds, and it must return a
 3. The ground motor (rotation around the ``z`` axis, **clockwise**:
    N→E→S→W)
 
-N.B. This version of the function is used for an ideal telescope.
+The parameter telescope_ang must be a `TelescopeAngles` struct containing the angles 
+describing the non idealities of the telescope. If `nothing` is passed the function
+calculate the quaternion associated with the ideal case i.e. like all the TelescopeAngles
+are zero.
 
 # Example
 
@@ -244,48 +276,7 @@ telescopetoground(3600.0) do
 end
 `````
 """
-function telescopetoground(wheelanglesfn, time_s, telescope_ang::Nothing = nothing)
-    (wheel1ang, wheel2ang, wheel3ang) = wheelanglesfn(time_s)
-
-    qwheel1 = qrotation_z(wheel1ang)
-    qwheel2 = qrotation_y(wheel2ang)
-
-    # The minus sign here takes into account the fact that the azimuth
-    # motor requires positive angles to turn North into East
-    qwheel3 = qrotation_z(-wheel3ang)
-
-    qwheel3 * (qwheel2 * qwheel1)
-end
-
-"""
-    telescopetoground(
-        wheelanglesfn, 
-        time_s, 
-        telescope_ang::TelescopeAngles
-    )
-
-Return a quaternion of type Quaternion{Float64} representing the coordinate transform 
-from the focal plane to the ground of the telescope. 
-
-The parameter telescope_ang must be a TelescopeAngles struct containing the angles 
-describing the non idealities of the telescope.
-
-N.B. This version of telescopetoground compute all the rotation associated with the 
-configurations angles (i.e. the non idealities of the system).
-"""
-function telescopetoground(wheelanglesfn, time_s, telescope_ang::TelescopeAngles)
-    (wheel1ang, wheel2ang, wheel3ang) = wheelanglesfn(time_s)
-
-    qwheel1 = qrotation_z(wheel1ang - telescope_ang.wheel1ang_0_rad)
-    qwheel2 = qrotation_y(wheel2ang - telescope_ang.wheel2ang_0_rad)
-    qwheel3 = qrotation_z(-wheel3ang + telescope_ang.wheel3ang_0_rad)
-
-    qfork = qrotation_x(telescope_ang.forkang_rad)
-    qomegaVAX = qrotation_z(telescope_ang.omegaVAXang_rad)
-    qzVAX = qrotation_x(telescope_ang.zVAXang_rad)    
-
-    qomegaVAX * (qzVAX * (qwheel3 * (qfork * (qwheel2 * qwheel1))))
-end 
+telescopetoground
 
 """
     groundtoearth(groundq, time_s, latitude_deg; day_duration_s=86400.0)
