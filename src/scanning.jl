@@ -397,7 +397,7 @@ expressed in the ground reference system.
 
 This function is used internally by [`genpointings`](@ref).
 """
-function quat_to_angles(boreaxis, polaxis, quat)
+function quat_to_angles(boreaxis::Array, polaxis::Array, quat::Quaternion)
     rotmatr = rotationmatrix_normalized(quat)
     boresight = rotmatr * boreaxis
     poldir = rotmatr * polaxis
@@ -424,7 +424,7 @@ expressed in the ground reference system.
 
 This function is used internally by [`genpointings`](@ref).
 """
-function quat_to_angles(quat)
+function quat_to_angles(quat::Quaternion)
     boresight = rotate_zaxis(quat)
     poldir = rotate_xaxis(quat)
 
