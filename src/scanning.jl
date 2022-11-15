@@ -402,7 +402,7 @@ function quat_to_angles(boreaxis::Array, polaxis::Array, quat::Quaternion)
     boresight = rotmatr * boreaxis
     poldir = rotmatr * polaxis
 
-    (θ, ϕ) = Healpix.vec2ang(boresight...)
+    (θ, ϕ) = Healpix.vec2ang(boresight[1], boresight[2], boresight[3])
 
     north = northdir(θ, ϕ)
     east = eastdir(θ, ϕ)
@@ -428,7 +428,7 @@ function quat_to_angles(quat::Quaternion)
     boresight = rotate_zaxis(quat)
     poldir = rotate_xaxis(quat)
 
-    (θ, ϕ) = Healpix.vec2ang(boresight...)
+    (θ, ϕ) = Healpix.vec2ang(boresight[1], boresight[2], boresight[3])
 
     north = northdir(θ, ϕ)
     east = eastdir(θ, ϕ)
