@@ -213,8 +213,7 @@ function camtotelescope(cam_ang::CameraAngles)
 end
 
 
-function telescopetoground(wheelanglesfn, time_s, telescope_ang::Nothing = nothing)
-    (wheel1ang, wheel2ang, wheel3ang) = wheelanglesfn(time_s)
+function telescopetoground(wheel1ang, wheel2ang, wheel3ang, telescope_ang::Nothing = nothing)
 
     qwheel1 = qrotation_z(wheel1ang)
     qwheel2 = qrotation_y(wheel2ang)
@@ -226,8 +225,7 @@ function telescopetoground(wheelanglesfn, time_s, telescope_ang::Nothing = nothi
     qwheel3 * (qwheel2 * qwheel1)
 end
 
-function telescopetoground(wheelanglesfn, time_s, telescope_ang::TelescopeAngles)
-    (wheel1ang, wheel2ang, wheel3ang) = wheelanglesfn(time_s)
+function telescopetoground(wheel1ang, wheel2ang, wheel3ang, telescope_ang::TelescopeAngles)
 
     qwheel1 = qrotation_z(wheel1ang - telescope_ang.wheel1ang_0_rad)
     qwheel2 = qrotation_y(wheel2ang - telescope_ang.wheel2ang_0_rad)
@@ -457,9 +455,11 @@ function genpointings!(wheelanglesfn,
     @assert size(dirs, 1) == size(psi, 1)
 
     for (idx, time_s) = enumerate(timerange_s)
+        
+        (wheel1ang, wheel2ang, wheel3ang) = wheelanglesfn(time_s)
 
         # This converts the RDP into the MCS (ground reference frame)
-        groundq = telescopetoground(wheelanglesfn, time_s, telescope_ang)
+        groundq = telescopetoground(wheel1ang, wheel2ang, wheel3ang, telescope_ang)
         # This converts the MCS into the celestial reference frame
         quat = groundtoearth(groundq, time_s, latitude_deg; day_duration_s = day_duration_s)
             
@@ -503,8 +503,10 @@ function genpointings!(wheelanglesfn,
 
     for (idx, time_s) = enumerate(timerange_s)
 
+        (wheel1ang, wheel2ang, wheel3ang) = wheelanglesfn(time_s)
+
         # This converts the RDP into the MCS (ground reference frame)
-        groundq = telescopetoground(wheelanglesfn, time_s, telescope_ang) * camtotel_quat
+        groundq = telescopetoground(wheel1ang, wheel2ang, wheel3ang, telescope_ang) * camtotel_quat
         # This converts the MCS into the celestial reference frame
         quat = groundtoearth(groundq, time_s, latitude_deg; day_duration_s = day_duration_s)
             
@@ -578,7 +580,8 @@ function genpointings!(wheelanglesfn,
     @assert size(skypsi, 2) == 1
 
     for (idx, time_s) = enumerate(timerange_s)
-        groundq = telescopetoground(wheelanglesfn, time_s, telescope_ang)
+        (wheel1ang, wheel2ang, wheel3ang) = wheelanglesfn(time_s)
+        groundq = telescopetoground(wheel1ang, wheel2ang, wheel3ang, telescope_ang)
         rotmatr = rotationmatrix_normalized(groundq)
         vector = rotmatr * beam_dir
 
@@ -627,7 +630,8 @@ function genpointings!(wheelanglesfn,
     camtotel_quat = camtotelescope(beam_dir)
 
     for (idx, time_s) = enumerate(timerange_s)
-        groundq = telescopetoground(wheelanglesfn, time_s, telescope_ang) * camtotel_quat
+        (wheel1ang, wheel2ang, wheel3ang) = wheelanglesfn(time_s)
+        groundq = telescopetoground(wheel1ang, wheel2ang, wheel3ang, telescope_ang) * camtotel_quat
         vector = rotate_zaxis(groundq)
 
         jd = AstroLib.jdcnv(t_start + Dates.Nanosecond(round(Int64, time_s * 1e9)))
