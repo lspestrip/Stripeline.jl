@@ -239,15 +239,13 @@ function telescopetoground(wheel1ang, wheel2ang, wheel3ang, telescope_ang::Teles
 end 
 
 @doc raw"""
-    telescopetoground(wheelanglesfn, time_s, telescope_ang::Nothing = nothing)
-    telescopetoground(wheelanglesfn, time_s, telescope_ang::TelescopeAngles)
+    telescopetoground(wheel1ang, wheel2ang, wheel3ang, telescope_ang::Nothing = nothing)
+    telescopetoground(wheel1ang, wheel2ang, wheel3ang, telescope_ang::TelescopeAngles)
 
 Return a quaternion of type `Quaternion{Float64}` representing the
 coordinate transform from the focal plane to the ground of the
-telescope. The parameter `wheelanglesfn` must be a function which
-takes as input a time, `time_s`, in seconds, and it must return a
-3-tuple containing the angles of the following motors, measured in
-**radians**:
+telescope. The parameters `wheel1ang`, `wheel2ang`, `wheel3ang` 
+are the angles of the following motors, measured in **radians**:
 
 1. The boresight motor (rotation around the ``z`` axis,
    counterclockwise)
