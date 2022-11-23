@@ -232,10 +232,22 @@ function telescopetoground(wheel1ang, wheel2ang, wheel3ang, telescope_ang::Teles
     qwheel3 = qrotation_z(-wheel3ang + telescope_ang.wheel3ang_0_rad)
 
     qfork = qrotation_x(telescope_ang.forkang_rad)
-    qomegaVAX = qrotation_z(telescope_ang.omegaVAXang_rad)
-    qzVAX = qrotation_x(telescope_ang.zVAXang_rad)    
+    # qomegaVAX = qrotation_z(telescope_ang.omegaVAXang_rad)
+    # qzVAX = qrotation_x(telescope_ang.zVAXang_rad)    
 
-    qomegaVAX * (qzVAX * (qwheel3 * (qfork * (qwheel2 * qwheel1))))
+    cos_z = cos(telescope_ang.zVAXang_rad/2)
+    sin_z = sin(telescope_ang.zVAXang_rad/2)
+    cos_ω = cos(telescope_ang.omegaVAXang_rad/2)
+    sin_ω = sin(telescope_ang.omegaVAXang_rad/2)
+
+    qwobble = Quaternion(
+        cos_z,
+        sin_z*4.0*(cos_ω*cos_ω*sin_ω*sin_ω),
+        sin_z*2.0*sin_ω*cos_ω*(sin_ω*sin_ω - cos_ω*cos_ω),
+        sin_z*(1.0-2*sin_ω*sin_ω)
+    )
+
+    qwobble * (qwheel3 * (qfork * (qwheel2 * qwheel1)))
 end 
 
 @doc raw"""
