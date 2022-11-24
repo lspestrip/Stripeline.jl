@@ -183,6 +183,20 @@ end
 
 #############################################################
 
+# Test wobble quaternion
+
+@test [0.0,0.0,1.0] ≈ rotate_zaxis(qrotation_wobble(0.0,0.0))
+@test [0.0,0.0,1.0] ≈ rotate_zaxis(qrotation_wobble(0.0,deg2rad(90.0)))
+@test [0.0,0.0,1.0] ≈ rotate_zaxis(qrotation_wobble(0.0,deg2rad(180.0)))
+@test [0.0,0.0,1.0] ≈ rotate_zaxis(qrotation_wobble(0.0,deg2rad(270.0)))
+
+@test [0.0,-1.0,0.0] ≈ rotate_zaxis(qrotation_wobble(deg2rad(90.0),0.0))
+@test [1.0,0.0,0.0] ≈ rotate_zaxis(qrotation_wobble(deg2rad(90.0),deg2rad(90.0)))
+@test [0.0,1.0,0.0] ≈ rotate_zaxis(qrotation_wobble(deg2rad(90.0),deg2rad(180.0)))
+@test [-1.0,0.0,0.0] ≈ rotate_zaxis(qrotation_wobble(deg2rad(90.0),deg2rad(270.0)))
+
+
+
 # Test the PRM with non idealities
 # Can't test wheel1ang_0 (the boresight motor zero point) because PyPRM doesn't support it, a solution must be found!
 
@@ -230,10 +244,10 @@ const (w1ang, w2ang, w3ang) = (0.0, deg2rad(20.0), 0.0)
 
 # Test the symmetry of ω wobble angle
 
-@test isapprox(
+#= @test isapprox(
     angletomatrix(w1ang, w2ang, w3ang, tel_ang = TelescopeAngles(omegaVAXang_rad = deg2rad(90.0))),
     angletomatrix(w1ang, w2ang, w3ang, tel_ang = TelescopeAngles(omegaVAXang_rad = deg2rad(0.0)))
-    )
+    ) =#
 
 ######################################################################################
 

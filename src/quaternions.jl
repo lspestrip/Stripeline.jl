@@ -1,4 +1,4 @@
-export Quaternion, rotationmatrix_normalized, qrotation_x, qrotation_y, qrotation_z, rotate_zaxis, rotate_xaxis
+export Quaternion, rotationmatrix_normalized, qrotation_x, qrotation_y, qrotation_z, qrotation_wobble, rotate_zaxis, rotate_xaxis
 
 import Base: *, ≈
 
@@ -67,6 +67,18 @@ returned by these functions are already normalized and can be used with the
 function `rotationmatrix_normalized`.
 """
 qrotation_x, qrotation_y, qrotation_z
+
+function qrotation_wobble(z, ω)
+    cos_z = cos(z/2)
+    sin_z = sin(z/2)
+
+    return Quaternion(
+        cos_z,
+        sin_z * sin(z) * cos(ω),
+        sin_z * sin(z) * sin(ω),   
+        0.0
+    )
+end
 
 """
     rotate_zaxis(q::Quaternion)
