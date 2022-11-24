@@ -195,8 +195,6 @@ end
 @test [0.0,1.0,0.0] ≈ rotate_zaxis(qrotation_wobble(deg2rad(90.0),deg2rad(180.0)))
 @test [-1.0,0.0,0.0] ≈ rotate_zaxis(qrotation_wobble(deg2rad(90.0),deg2rad(270.0)))
 
-
-
 # Test the PRM with non idealities
 # Can't test wheel1ang_0 (the boresight motor zero point) because PyPRM doesn't support it, a solution must be found!
 
