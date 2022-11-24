@@ -79,6 +79,7 @@ import AstroLib
 import Dates
 
 export TENERIFE_LATITUDE_DEG, TENERIFE_LONGITUDE_DEG, TENERIFE_HEIGHT_M
+export configuration_angles, ConfigAngles
 export timetorotang, telescopetoground, groundtoearth
 export genpointings!, genpointings, northdir, eastdir, polarizationangle
 
@@ -92,6 +93,64 @@ const TENERIFE_LONGITUDE_DEG = -16.51012
 const TENERIFE_HEIGHT_M = 2390
 
 include("quaternions.jl")
+
+"""
+    ConfigAngles
+
+Abstract type representing a set of configuration angles.
+Defining an abstract type is usefull because if you want to
+use differents angles or introduce new ones, you only have to define
+a new subtype and add a dedicated telescopetoground function dispatch.
+
+See [`configuration_angles`](@ref)
+"""
+abstract type ConfigAngles end
+
+"""
+    configuration_angles(
+        wheel1ang_0_rad :: Float64 = 0,
+        wheel2ang_0_rad :: Float64 = 0,
+        wheel3ang_0_rad :: Float64 = 0,
+        forkang_rad :: Float64 = 0,
+        omegaVAXang_rad :: Float64 = 0,
+        zVAXang_rad :: Float64 = 0,
+        panang_rad :: Float64 = 0,
+        tiltang_rad :: Float64 = 0,
+        rollang_rad :: Float64 = 0,   
+    )
+
+Struct containing the configuration angles for the telescope i.e. the angles describing
+the non idealities in the telescope (all of these parameters are considered equal to 0 in 
+an ideal telescope):
+
+(`wheel1ang_0_rad`, `wheel2ang_0_rad`, `wheel3ang_0_rad`): these are the zero points angles for the three motors
+                                                           (respectively the boresight, the altitude and the ground
+                                                           motor)
+
+(`forkang_rad`): describe the deviation of orthogonality between the H-AXIS and the V-AXIS
+
+(`omegaVAXang_rad`, `zVAXang_rad`): wobble angles encoding the deviation of the V-AXIS from the local vertical;
+                                    zVAXang is the displacement from the V-AXIS,
+                                    omegaVAXang is the azimuth of the ascending node.
+
+(`panang_rad`, `tiltang_rad`, `rollang_rad`): Tait-Brian angles encoding the camera orientation in the telescope reference frame.
+                                              Respectively around x,y and z axis.
+
+See the documentation for a graphical rapresentation of each angles.
+
+All of these angles must be expressed in RADIANS and measured anticlockwise.
+"""
+Base.@kwdef struct configuration_angles <: ConfigAngles
+    wheel1ang_0_rad :: Float64 = 0
+    wheel2ang_0_rad :: Float64 = 0
+    wheel3ang_0_rad :: Float64 = 0
+    forkang_rad :: Float64 = 0
+    omegaVAXang_rad :: Float64 = 0
+    zVAXang_rad :: Float64 = 0
+    panang_rad :: Float64 = 0
+    tiltang_rad :: Float64 = 0
+    rollang_rad :: Float64 = 0
+end
 
 """
     timetorotang(time, rpm)
@@ -128,6 +187,8 @@ takes as input a time, `time_s`, in seconds, and it must return a
 3. The ground motor (rotation around the ``z`` axis, **clockwise**:
    N→E→S→W)
 
+N.B. This version of the function is used for an ideal telescope.
+
 # Example
 
 `````julia
@@ -139,7 +200,7 @@ telescopetoground(3600.0) do
 end
 `````
 """
-function telescopetoground(wheelanglesfn, time_s)
+function telescopetoground(wheelanglesfn, time_s, config_ang::Nothing = nothing)
     (wheel1ang, wheel2ang, wheel3ang) = wheelanglesfn(time_s)
 
     qwheel1 = qrotation_z(wheel1ang)
@@ -152,6 +213,38 @@ function telescopetoground(wheelanglesfn, time_s)
     qwheel3 * (qwheel2 * qwheel1)
 end
 
+
+"""
+    telescopetoground(wheelanglesfn, time_s, config_ang)
+
+Return a quaternion of type `Quaternion{Float64}` representing the
+coordinate transform from the focal plane to the ground of the
+telescope. 
+The parameter `config_ang` must be a configuration_angles struct
+containing the angles describing the non idealities of the telescope.
+
+N.B. This version of telescopetoground compute all the rotation associated
+with the configurations angles (i.e. the non idealities of the system).
+"""
+function telescopetoground(wheelanglesfn, time_s, config_ang)
+    (wheel1ang, wheel2ang, wheel3ang) = wheelanglesfn(time_s)
+
+    qroll = qrotation_z(config_ang.rollang_rad)
+    qtilt = qrotation_y(config_ang.tiltang_rad)
+    qpan = qrotation_x(config_ang.panang_rad)
+
+    qwheel1 = qrotation_z(wheel1ang - config_ang.wheel1ang_0_rad)
+    qwheel2 = qrotation_y(wheel2ang - config_ang.wheel2ang_0_rad)
+    # The minus sign here takes into account the fact that the azimuth
+    # motor requires positive angles to turn North into East
+    qwheel3 = qrotation_z(-wheel3ang + config_ang.wheel3ang_0_rad)
+
+    qfork = qrotation_x(config_ang.forkang_rad)
+    qomegaVAX = qrotation_z(config_ang.omegaVAXang_rad)
+    qzVAX = qrotation_x(config_ang.zVAXang_rad)    
+
+    qomegaVAX * (qzVAX * (qwheel3 * (qfork * (qwheel2 * qwheel1 * (qpan * (qtilt * qroll))))))
+end
 
 """
     groundtoearth(groundq, time_s, latitude_deg; day_duration_s=86400.0)
@@ -293,7 +386,8 @@ function genpointings!(wheelanglesfn,
                        polaxis = Float64[1.0, 0.0, 0.0],
                        latitude_deg = TENERIFE_LATITUDE_DEG,
                        ground = false,
-                       day_duration_s = 86400.0)
+                       day_duration_s = 86400.0,
+                       config_ang::Union{ConfigAngles, Nothing} = nothing)
 
     if ground
         @assert size(dirs, 2) == 4
@@ -307,9 +401,10 @@ function genpointings!(wheelanglesfn,
     for (idx, time_s) = enumerate(timerange_s)
 
         # This converts the RDP into the MCS (ground reference frame)
-        groundq = telescopetoground(wheelanglesfn, time_s)
+        groundq = telescopetoground(wheelanglesfn, time_s, config_ang)
         # This converts the MCS into the celestial reference frame
         quat = groundtoearth(groundq, time_s, latitude_deg; day_duration_s = day_duration_s)
+            
         θ, ϕ, curpsi = quat_to_angles(beam_dir, polaxis, quat)
         (dirs[idx, 1], dirs[idx, 2]) = (θ, ϕ)
 
@@ -331,7 +426,8 @@ function genpointings(wheelanglesfn,
                        polaxis = Float64[1.0, 0.0, 0.0],
                        latitude_deg = TENERIFE_LATITUDE_DEG,
                        ground = false,
-                       day_duration_s = 86400.0)
+                       day_duration_s = 86400.0,
+                       config_ang::Union{ConfigAngles, Nothing} = nothing)
 
     if ground
         dirs = Array{Float64}(undef, length(timerange_s), 4)
@@ -351,6 +447,7 @@ function genpointings(wheelanglesfn,
         latitude_deg = latitude_deg,
         ground = ground,
         day_duration_s = day_duration_s,
+        config_ang = config_ang
     )
 
     (dirs, psi)
@@ -369,14 +466,15 @@ function genpointings!(wheelanglesfn,
                        precession = true,
                        nutation = true,
                        aberration = true,
-                       refraction = true)
+                       refraction = true,
+                       config_ang::Union{ConfigAngles, Nothing} = nothing)
 
     @assert size(skydirs, 1) == size(skypsi, 1)
     @assert size(skydirs, 2) == 2
     @assert size(skypsi, 2) == 1
 
     for (idx, time_s) = enumerate(timerange_s)
-        groundq = telescopetoground(wheelanglesfn, time_s)
+        groundq = telescopetoground(wheelanglesfn, time_s, config_ang)
         rotmatr = rotationmatrix_normalized(groundq)
         vector = rotmatr * beam_dir
 
@@ -395,7 +493,7 @@ function genpointings!(wheelanglesfn,
         north = northdir(π / 2 - Dec_rad, Ra_rad)
         east = eastdir(π / 2 - Dec_rad, Ra_rad)
 
-        skydirs[idx, 1] = Dec_rad
+        skydirs[idx, 1] = π/2 - Dec_rad
         skydirs[idx, 2] = Ra_rad
         skypsi[idx] = polarizationangle(north, east, poldir)
     end
@@ -457,11 +555,13 @@ end
     genpointings!(wheelanglesfn, beam_dir, timerange_s, dirs, psi;
                   polaxis = Float64[1.0, 0.0, 0.0],
                   latitude_deg = TENERIFE_LATITUDE_DEG,
-                  ground = false)
+                  ground = false,
+                  config_ang::Union{ConfigAngles, Nothing} = nothing)
     genpointings(wheelanglesfn, beam_dir, timerange_s;
                  polaxis = Float64[1.0, 0.0, 0.0],
                  latitude_deg = TENERIFE_LATITUDE_DEG,
-                 ground = false)
+                 ground = false,
+                 config_ang::Union{ConfigAngles, Nothing} = nothing)
     genpointings!(wheelanglesfn, beam_dir, timerange_s, t_start, dirs, psi;
                   polaxis = Float64[1.0, 0.0, 0.0],
                   latitude_deg = TENERIFE_LATITUDE_DEG,
@@ -470,7 +570,8 @@ end
                   precession = true,
                   nutation = true,
                   aberration = true,
-                  refraction = true)
+                  refraction = true,
+                  config_ang::Union{ConfigAngles, Nothing} = nothing)
     genpointings(wheelanglesfn, beam_dir, timerange_s, t_start;
                  polaxis=Float64[1.0, 0.0, 0.0],
                  latitude_deg=TENERIFE_LATITUDE_DEG,
@@ -479,7 +580,8 @@ end
                  precession = true,
                  nutation = true,
                  aberration = true,
-                 refraction = true)
+                 refraction = true,
+                 config_ang::Union{ConfigAngles, Nothing} = nothing)
 
 Generate a set of pointing directions for a STRIP detector. Each
 function is provided in two flavours: the ones ending with `!` save
@@ -541,6 +643,11 @@ The meaning of the parameters/keywords is the following:
 - `refraction`: if `true`, refraction corrections are taken into account.
   As these corrections are only valid for optical wavelengths, the
   default is `false`.
+
+- `config_ang`: specifies the configuration angles for the camera and for the 
+  telescope (see [`configuration_angles`](@ref) for more details). This is used
+  internally by [`telescopetoground`](@ref); if nothing is passes then the version 
+  of telescopetoground for an ideal telescope will be used.
 
 # Return values
 

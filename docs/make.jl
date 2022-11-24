@@ -25,6 +25,7 @@ makedocs(
         "Time-ordered data" => "tod.md",
         "Scanning strategy" => "scanning.md",
         "Noise generation" => "noise.md",
+        "Pointing Reconstruction Model" => "prm.md",
         "Data acquisition" => "acquisition.md",
         "Map making" => "mapmaking.md",
 	"Full-scale simulation tutorial" => "simulation_tutorial.md",
