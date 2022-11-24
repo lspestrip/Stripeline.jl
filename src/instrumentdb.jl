@@ -1,12 +1,16 @@
-export Horn, Detector, InstrumentDB, BandshapeInfo, SpectrumInfo, NoiseTemperatureInfo
+export Horn, Detector, InstrumentDB, BandshapeInfo, SpectrumInfo
+export NoiseFitParams, NoiseTemperatureInfo
 export InstrumentDB, defaultdbfolder, parsefpdict, parsedetdict
 export sensitivity_tant, t_to_trj, trj_to_t, deltat_to_deltatrj, deltatrj_to_deltat
 export detector, bandpass, bandshape, spectrum, fknee_hz, tnoise
+export oof_noise_k2_hz, white_noise_k2_hz, noise_k2_hz
 
 import YAML
 import Stripeline
 import Base: show
 import RecipesBase
+using StaticArrays
+using LinearAlgebra
 
 using Printf
 
@@ -58,14 +62,14 @@ function Base.show(io::IO, horn::Horn)
         print(io, "Horn $(horn.name), module $(horn.moduleid) ($(horn.color))")
     else
         @printf(io, """
-            Horn %s, module %d (%s):
+            Horn %s, module %d (%s), STRIP%02d:
                 Orientation: [%.4f, %.4f, %.4f]
                 FWHM (X/Y): %.4f × %.4f °
                 Spillover: %f (main), %f (sub)
                 Cross-polarization: %.2f dB
                 Directivity: %.2f dBi
                 Ellipticity: %.4f""",
-            horn.name, horn.moduleid, horn.color,
+            horn.name, horn.moduleid, horn.color, horn.polid,
             horn.orientation[1], horn.orientation[2], horn.orientation[3],
             horn.fwhm_x_deg, horn.fwhm_y_deg, 
             horn.main_spillover, horn.sub_spillover,
@@ -212,33 +216,47 @@ object.
 bandshape
 
 @doc raw"""
+    NoiseFitParams = SVector{3, Float32}
+
+An array of three parameters describing the PSD of the noise for some
+output.
+"""
+NoiseFitParams = Union{SVector{3, Float32}, Nothing}
+
+@doc raw"""
     SpectrumInfo
 
 Information about the noise spectrum of the output of a polarimeter.
 
-Field                | Type     | Meaning
-:------------------- |:-------- |:-------------------------------------------------------
-`slope_i`            | Float64  | The slope ($\alpha$) of the 1/f component of the noise in the I signal
-`slope_i_err`        | Float64  | Error associated with the value of `slope_i`
-`slope_q`            | Float64  | Same as `slope_i`, but for the Q signal
-`slope_q_err`        | Float64  | Error associated with the value of `slope_q`
-`slope_u`            | Float64  | Same as `slope_i`, but for the U signal
-`slope_u_err`        | Float64  | Error associated with the value of `slope_u`
-`fknee_i_hz`         | Float64  | Knee frequency of the I signal, in Hz
-`fknee_i_err_hz`     | Float64  | Error associated with the value of `fknee_i_hz`
-`fknee_q_hz`         | Float64  | Knee frequency of the Q signal, in Hz
-`fknee_q_err_hz`     | Float64  | Error associated with the value of `fknee_q_hz`
-`fknee_u_hz`         | Float64  | Knee frequency of the U signal, in Hz
-`fknee_u_err_hz`     | Float64  | Error associated with the value of `fknee_u_hz`
-`wn_i_k2_hz`         | Float64  | White noise level for the I signal, in K^2 Hz
-`wn_i_err_k2_hz`     | Float64  | Error associated with the value of `wn_i_k2_hz`
-`wn_q_k2_hz`         | Float64  | White noise level for the Q signal, in K^2 Hz
-`wn_q_err_k2_hz`     | Float64  | Error associated with the value of `wn_q_k2_hz`
-`wn_u_k2_hz`         | Float64  | White noise level for the U signal, in K^2 Hz
-`wn_u_err_k2_hz`     | Float64  | Error associated with the value of `wn_u_k2_hz`
-`load_temperature_k` | Float64  | System brightness temperature used during the tests (in K)
-`test_id`            | Int      | ID of the unit-level test used to characterize the bandshape
-`analysis_id`        | Int      | ID of the unit-level analysis used to characterize the bandshape
+Field                    | Type            | Meaning
+:----------------------- |:--------------- |:-------------------------------------------------------
+`slope_i`                | Float64         | The slope ($\alpha$) of the 1/f component of the noise in the I signal
+`slope_i_err`            | Float64         | Error associated with the value of `slope_i`
+`slope_q`                | Float64         | Same as `slope_i`, but for the Q signal
+`slope_q_err`            | Float64         | Error associated with the value of `slope_q`
+`slope_u`                | Float64         | Same as `slope_i`, but for the U signal
+`slope_u_err`            | Float64         | Error associated with the value of `slope_u`
+`fknee_i_hz`             | Float64         | Knee frequency of the I signal, in Hz
+`fknee_i_err_hz`         | Float64         | Error associated with the value of `fknee_i_hz`
+`fknee_q_hz`             | Float64         | Knee frequency of the Q signal, in Hz
+`fknee_q_err_hz`         | Float64         | Error associated with the value of `fknee_q_hz`
+`fknee_u_hz`             | Float64         | Knee frequency of the U signal, in Hz
+`fknee_u_err_hz`         | Float64         | Error associated with the value of `fknee_u_hz`
+`wn_i_k2_hz`             | Float64         | White noise level for the I signal, in K^2 Hz
+`wn_i_err_k2_hz`         | Float64         | Error associated with the value of `wn_i_k2_hz`
+`wn_q_k2_hz`             | Float64         | White noise level for the Q signal, in K^2 Hz
+`wn_q_err_k2_hz`         | Float64         | Error associated with the value of `wn_q_k2_hz`
+`wn_u_k2_hz`             | Float64         | White noise level for the U signal, in K^2 Hz
+`wn_u_err_k2_hz`         | Float64         | Error associated with the value of `wn_u_k2_hz`
+`i_fit_parameters_k2_hz` | Vector{Float32} | Fit coefficients for the I spectrum in K²/Hz, or `nothing`
+`q_fit_parameters_k2_hz` | Vector{Float32} | Fit coefficients for the Q spectrum in K²/Hz, or `nothing`
+`u_fit_parameters_k2_hz` | Vector{Float32} | Fit coefficients for the U spectrum in K²/Hz, or `nothing`
+`pwr_cov_matrix_k2`      | Symmetric{4}    | Covariance matrix of the signals Q1, Q2, U1, U2 (PWR) in K² or `nothing`
+`dem_cov_matrix_k2`      | Symmetric{4}    | Covariance matrix of the signals Q1, Q2, U1, U2 (DEM) in K² or `nothing`
+`iqu_cov_matrix_k2`      | Symmetric{3}    | Covariance matrix of I = ∑PWR / 4, Q = (Q1 + Q2) / 2, U = (U1 + U2) / 2
+`load_temperature_k`     | Float64         | System brightness temperature used during the tests (in K)
+`test_id`                | Int             | ID of the unit-level test used to characterize the bandshape
+`analysis_id`            | Int             | ID of the unit-level analysis used to characterize the bandshape
 
 You can quickly plot the theoretical shape of the noise power spectrum
 using `plot` on a `SpectrumInfo` object.
@@ -263,6 +281,20 @@ struct SpectrumInfo
     wn_i_err_k2_hz::Float64
     wn_q_err_k2_hz::Float64
     wn_u_err_k2_hz::Float64
+    pwrq1_fit_parameters_k2_hz::Union{NoiseFitParams, Nothing}
+    pwrq2_fit_parameters_k2_hz::Union{NoiseFitParams, Nothing}
+    pwru1_fit_parameters_k2_hz::Union{NoiseFitParams, Nothing}
+    pwru2_fit_parameters_k2_hz::Union{NoiseFitParams, Nothing}
+    demq1_fit_parameters_k2_hz::Union{NoiseFitParams, Nothing}
+    demq2_fit_parameters_k2_hz::Union{NoiseFitParams, Nothing}
+    demu1_fit_parameters_k2_hz::Union{NoiseFitParams, Nothing}
+    demu2_fit_parameters_k2_hz::Union{NoiseFitParams, Nothing}
+    i_fit_parameters_k2_hz::Union{NoiseFitParams, Nothing}
+    q_fit_parameters_k2_hz::Union{NoiseFitParams, Nothing}
+    u_fit_parameters_k2_hz::Union{NoiseFitParams, Nothing}
+    pwr_cov_matrix_k2::Union{Symmetric{Float32, AbstractMatrix{Float32}}, Nothing}
+    dem_cov_matrix_k2::Union{Symmetric{Float32, AbstractMatrix{Float32}}, Nothing}
+    iqu_cov_matrix_k2::Union{Symmetric{Float32, AbstractMatrix{Float32}}, Nothing}
     load_temperature_k::Float64
     test_id::Int
     analysis_id::Int
@@ -328,7 +360,15 @@ end
 
 Initialize a SpectrumInfo object with all values set to zero.
 """
-SpectrumInfo() = SpectrumInfo(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, 0)
+
+SpectrumInfo() = SpectrumInfo(
+    0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+    nothing, nothing, nothing, nothing, # PWR fit coefficients
+    nothing, nothing, nothing, nothing, # DEM fit coefficients
+    nothing, nothing, nothing,          # IQU fit coefficients
+    nothing, nothing, nothing,          # PWR, DEM, IQU covariance matrices
+    0.0, 0, 0,
+)
 
 @doc raw"""
     NoiseTemperatureInfo
@@ -579,8 +619,39 @@ function parsebandshape(banddict::Dict{Any,Any})
         get(banddict, "analysis_id", 0))
 end
 
+function get_fit_coeffs(specdict, key)
+    coeffs = get(specdict, key, nothing)
+    isnothing(coeffs) && return nothing
+
+    coeffs = SVector{3, Float64}(coeffs)
+    (coeffs != SVector{3, Float64}(0, 0, 0)) ? coeffs : nothing
+end
+
+function get_cov_matrix(specdict, key, size)
+    entry = get(specdict, key, nothing)
+    isnothing(entry) && return nothing
+
+    labels = entry["labels"]
+    cov = Symmetric(SMatrix{size, size, Float32}(hcat(entry["coefficients"]...)))
+    if ((labels == ["PWR0/Q1", "PWR1/U1", "PWR2/U2", "PWR3/Q2"]) ||
+        (labels == ["DEM0/Q1", "DEM1/U1", "DEM2/U2", "DEM3/Q2"]))
+        # We need to reorder the columns/rows, as the order saved in
+        # the instrument DB matches the nomenclature used in Bicocca,
+        # which is good for electronics but terrible for data
+        # analysis!
+        return Symmetric(
+            SMatrix{4, 4}([cov[1, 1] cov[1, 4] cov[1, 2] cov[1, 3];
+                           cov[4, 1] cov[4, 4] cov[4, 2] cov[4, 3];
+                           cov[2, 1] cov[2, 4] cov[2, 2] cov[2, 3];
+                           cov[3, 1] cov[3, 4] cov[3, 2] cov[3, 3]]))
+    else
+        return cov
+    end
+end
+
 function parsespectrum(specdict::Dict{Any,Any})
-    SpectrumInfo(get(specdict, "I_slope", 0.0),
+    SpectrumInfo(
+        get(specdict, "I_slope", 0.0),
         get(specdict, "Q_slope", 0.0),
         get(specdict, "U_slope", 0.0),
         get(specdict, "I_slope_err", 0.0),
@@ -598,9 +669,24 @@ function parsespectrum(specdict::Dict{Any,Any})
         get(specdict, "I_wn_level_err_k2_hz", 0.0),
         get(specdict, "Q_wn_level_err_k2_hz", 0.0),
         get(specdict, "U_wn_level_err_k2_hz", 0.0),
+        get_fit_coeffs(specdict, "PWRQ1_fit_parameters_k2_hz"),
+        get_fit_coeffs(specdict, "PWRQ2_fit_parameters_k2_hz"),
+        get_fit_coeffs(specdict, "PWRU1_fit_parameters_k2_hz"),
+        get_fit_coeffs(specdict, "PWRU2_fit_parameters_k2_hz"),
+        get_fit_coeffs(specdict, "DEMQ1_fit_parameters_k2_hz"),
+        get_fit_coeffs(specdict, "DEMQ2_fit_parameters_k2_hz"),
+        get_fit_coeffs(specdict, "DEMU1_fit_parameters_k2_hz"),
+        get_fit_coeffs(specdict, "DEMU2_fit_parameters_k2_hz"),
+        get_fit_coeffs(specdict, "I_fit_parameters_k2_hz"),
+        get_fit_coeffs(specdict, "Q_fit_parameters_k2_hz"),
+        get_fit_coeffs(specdict, "U_fit_parameters_k2_hz"),
+        get_cov_matrix(specdict, "PWR_cov_matrix_k2", 4),
+        get_cov_matrix(specdict, "DEM_cov_matrix_k2", 4),
+        get_cov_matrix(specdict, "IQU_cov_matrix_k2", 3),
         get(specdict, "load_average_temperature_k", 20.0),
         get(specdict, "test_id", 0),
-        get(specdict, "analysis_id", 0))
+        get(specdict, "analysis_id", 0),
+    )
 end
 
 function parsetnoise(tnoisedict::Dict{Any,Any})
@@ -609,6 +695,69 @@ function parsetnoise(tnoisedict::Dict{Any,Any})
         get(tnoisedict, "tnoise_test_ids", Int[]),
         get(tnoisedict, "analysis_ids", Int[]),
         get(tnoisedict, "values_k", Float64[]))
+end
+
+@doc raw"""
+    oof_noise_k2_hz(fit_coeffs::Union{Vector{Float64}, Nothing}, nu)
+
+Compute the amount of power (in K²/Hz) associated with 1/f noise,
+given a set of fitting coefficients for the function ``f(\nu) = \nu^a
+e^b + e^c``. This is the same as [`noise_k2_hz`](@ref), but it returns
+the 1/f part only.
+
+The fitting coefficients are usually taken from a
+[`SpectrumInfo`](@ref) structure, namely in the three fields
+`i_fit_parameters_k2_hz`, `q_fit_parameters_k2_hz`, and
+`u_fit_parameters_k2_hz`.
+
+"""
+function oof_noise_k2_hz(fit_coeffs::Union{Vector{Float64}, Nothing}, nu)
+    isnothing(fit_coeffs) && return 0.0
+    
+    a, b, _ = fit_coeffs
+    nu^a * exp(b)
+end
+
+@doc raw"""
+    white_noise_k2_hz(fit_coeffs::Union{Vector{Float64}, Nothing}, nu)
+
+Compute the amount of power (in K²/Hz) associated with white noise,
+given a set of fitting coefficients for the function ``f(\nu) = \nu^a
+e^b + e^c``. This is the same as [`noise_k2_hz`](@ref), but it returns
+the white noise part only.
+
+The fitting coefficients are usually taken from a
+[`SpectrumInfo`](@ref) structure, namely in the three fields
+`i_fit_parameters_k2_hz`, `q_fit_parameters_k2_hz`, and
+`u_fit_parameters_k2_hz`.
+
+"""
+function white_noise_k2_hz(fit_coeffs::Union{Vector{Float64}, Nothing}, nu)
+    isnothing(fit_coeffs) && return 0.0
+    
+    _, _, c = fit_coeffs
+    exp(c)
+end
+
+@doc raw"""
+    noise_k2_hz(fit_coeffs::Union{Vector{Float64}, Nothing}, nu)
+
+Compute the amount of power (in K²/Hz) associated with 1/f plus white
+noise, given a set of fitting coefficients for the function ``f(\nu) =
+\nu^a e^b + e^c``. This is the kind of function fitted by the code
+that analyzed the unit-test data.
+
+The fitting coefficients are usually taken from a
+[`SpectrumInfo`](@ref) structure, namely in the three fields
+`i_fit_parameters_k2_hz`, `q_fit_parameters_k2_hz`, and
+`u_fit_parameters_k2_hz`.
+
+To compute the 1/f and white noise parts separately, you can use
+[`oof_noise_k2_hz`](@ref) and [`white_noise_k2_hz`](@ref).
+
+"""
+function noise_k2_hz(fit_coeffs::Union{Vector{Float64}, Nothing}, nu)
+    oof_noise_k2_hz(fit_coeffs, nu) + white_noise_k2_hz(fit_coeffs, nu)
 end
 
 @doc raw"""

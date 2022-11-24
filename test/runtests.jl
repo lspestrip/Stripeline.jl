@@ -11,7 +11,7 @@ end
     include("instrumentdb_tests.jl")
 end
 
-@testset "Time-oriented data" begin
+@testset "Time-ordered data" begin
     include("tod_tests.jl")
 end
 
