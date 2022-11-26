@@ -275,8 +275,29 @@ end
 @test [0.0,1.0,0.0] ≈ rotate_zaxis(telescopetoground(0.0,0.0,0.0,TelescopeAngles(zVAXang_rad = deg2rad(90.), ωVAXang_rad = deg2rad(180.))))
 @test [-1.0,0.0,0.0] ≈ rotate_zaxis(telescopetoground(0.0,0.0,0.0,TelescopeAngles(zVAXang_rad = deg2rad(90.), ωVAXang_rad = deg2rad(270.))))
 
-# Test using rotationmatrix_normalized and data taken from PyPRM
+# Test the rotation chain
 
+@test [0.0,-1.0,0.0] ≈ rotate_zaxis(telescopetoground(0.0,0.0,0.0,TelescopeAngles(
+    wheel1ang_0_rad = deg2rad(90),
+    wheel2ang_0_rad = deg2rad(90),
+    wheel3ang_0_rad = deg2rad(90),
+    forkang_rad = deg2rad(90),
+    zVAXang_rad = deg2rad(90),
+    ωVAXang_rad = deg2rad(90)
+)
+))
+
+@test [0.0,-1.0,0.0] ≈ rotate_zaxis(telescopetoground(0.0,0.0,0.0,TelescopeAngles(
+    wheel1ang_0_rad = deg2rad(180),
+    wheel2ang_0_rad = deg2rad(90),
+    wheel3ang_0_rad = deg2rad(90),
+    forkang_rad = deg2rad(90),
+    zVAXang_rad = deg2rad(90),
+    ωVAXang_rad = deg2rad(90)
+)
+))
+
+# Test using rotationmatrix_normalized and data taken from PyPRM
 function angletomatrix(w1ang, w2ang, w3ang; tel_ang::Union{TelescopeAngles, Nothing}=nothing, cam_ang = CameraAngles())
     quat = telescopetoground(w1ang, w2ang, w3ang, tel_ang) * camtotelescope(cam_ang)
     rotationmatrix_normalized(quat)    
