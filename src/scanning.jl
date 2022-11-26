@@ -114,7 +114,7 @@ an ideal telescope):
 
 (`forkang_rad`): describe the deviation of orthogonality between the H-AXIS and the V-AXIS
 
-(`omegaVAXang_rad`, `zVAXang_rad`): wobble angles encoding the deviation of the V-AXIS from the local vertical;
+(`ωVAXang_rad`, `zVAXang_rad`): wobble angles encoding the deviation of the V-AXIS from the local vertical;
                                     zVAXang is the displacement from the V-AXIS,
                                     omegaVAXang is the azimuth of the ascending node.
 
@@ -127,7 +127,7 @@ Base.@kwdef struct TelescopeAngles
     wheel2ang_0_rad :: Float64 = 0.0
     wheel3ang_0_rad :: Float64 = 0.0
     forkang_rad :: Float64 = 0.0
-    omegaVAXang_rad :: Float64 = 0.0
+    ωVAXang_rad :: Float64 = 0.0
     zVAXang_rad :: Float64 = 0.0
 end
 
@@ -229,13 +229,10 @@ function telescopetoground(wheel1ang, wheel2ang, wheel3ang, telescope_ang::Teles
 
     qwheel1 = qrotation_z(wheel1ang - telescope_ang.wheel1ang_0_rad)
     qwheel2 = qrotation_y(wheel2ang - telescope_ang.wheel2ang_0_rad)
-    qwheel3 = qrotation_z(-wheel3ang + telescope_ang.wheel3ang_0_rad)
+    qwheel3 = qrotation_z(telescope_ang.wheel3ang_0_rad - wheel3ang)
 
-    qfork = qrotation_x(telescope_ang.forkang_rad)
-    # qomegaVAX = qrotation_z(telescope_ang.omegaVAXang_rad)
-    # qzVAX = qrotation_x(telescope_ang.zVAXang_rad)    
-
-    qwobble = qrotation_wobble(telescope_ang.zVAXang_rad, telescope_ang.omegaVAXang_rad)
+    qfork = qrotation_x(telescope_ang.forkang_rad)  
+    qwobble = qrotation_wobble(telescope_ang.zVAXang_rad, telescope_ang.ωVAXang_rad)
 
     qwobble * (qwheel3 * (qfork * (qwheel2 * qwheel1)))
 end 
