@@ -35,7 +35,7 @@ contains the following fields:
     polarimeters) or a list of strings, e.g., `["I0", "I3", "V2"]`.
 -   `time_range`: a range representing the time of each sample in the
     TOD. Very common choices for this are floating-point ranges like
-    `0.0:(1 / 100):50.0` (100 s sampled at 50 Hz) and ranges of
+    `0.0:(1 / 50):100.0` (100 s sampled at 50 Hz) and ranges of
     astronomical times, created using the
     [AstroTime](https://juliaastro.github.io/AstroTime.jl/stable/)
     package.
