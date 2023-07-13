@@ -274,6 +274,7 @@ end
 @test [1.0,0.0,0.0] ≈ rotate_zaxis(telescopetoground(0.0,0.0,0.0,TelescopeAngles(zVAXang_rad = deg2rad(90.), ωVAXang_rad = deg2rad(90.))))
 @test [0.0,1.0,0.0] ≈ rotate_zaxis(telescopetoground(0.0,0.0,0.0,TelescopeAngles(zVAXang_rad = deg2rad(90.), ωVAXang_rad = deg2rad(180.))))
 @test [-1.0,0.0,0.0] ≈ rotate_zaxis(telescopetoground(0.0,0.0,0.0,TelescopeAngles(zVAXang_rad = deg2rad(90.), ωVAXang_rad = deg2rad(270.))))
+@test [sin(deg2rad(45))*cos(deg2rad(45)), -sin(deg2rad(45))*sin(deg2rad(45)), sin(deg2rad(45))] ≈ rotate_zaxis(telescopetoground(0.0,0.0,0.0,TelescopeAngles(zVAXang_rad = deg2rad(45.), ωVAXang_rad = deg2rad(45.))))
 
 # Test the rotation chain
 
