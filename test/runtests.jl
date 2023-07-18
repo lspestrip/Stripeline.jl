@@ -19,6 +19,10 @@ end
     include("scanning.jl")
 end
 
+@testset "Pointing comparison with M.Maris PyPRM" begin
+    include("pointing.jl")
+end
+
 @testset "Map maker" begin
     include("map_maker_tests.jl")
 end
