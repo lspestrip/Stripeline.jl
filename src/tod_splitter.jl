@@ -42,64 +42,65 @@ end
 """
     function split_tod_mpi(total_time, baseline_length_s, baselines_per_process, num_of_MPI_proc)
            
-        This function can be used to split the TOD production of many polarimeters among MPI processes.
+This function can be used to split the TOD production of many polarimeters among MPI processes.
 
-        It requires in input:
+It requires in input:
 
-        -the total time (in seconds) of the simulated observation 
-        -the length (in seconds) of each 1/f noise baseline
-        -the array containing the number of 1/f baselines to simulate for each process.
-            It can be obtained by using the function `plit_into_n` in the following way:
+-   the total time (in seconds) of the simulated observation 
+-   the length (in seconds) of each 1/f noise baseline
+-   the array containing the number of 1/f baselines to simulate for each process.
 
-            split_into_n(num_of_polarimeters*baselines_per_pol, num_of_MPI_proc)
-                
-            where baselines_per_pol = Int64(total_time/baseline_length_s) is the number of baselines of each polarimeter
+    This can be obtained by using the function `plit_into_n` in the following way:
+    
+        split_into_n(num_of_polarimeters * baselines_per_pol, num_of_MPI_proc)
+            
+    where baselines_per_pol = Int64(total_time/baseline_length_s) is the number of baselines of each polarimeter
 
-        -the number of MPI processes used
+- the number of MPI processes used
 
-        It returns an array of arrays of `datachunk` instances, of length == num_of_MPI_proc
-        where each element tells the chunk of data that each process should simulate (see Example) 
+The function returns an array of arrays of `datachunk` instances, of length == num_of_MPI_proc
+where each element tells the chunk of data that each process should simulate (see Example) 
 
-        # Example
-        ```julia-repl
-        julia> num_of_polarimeters = 4
-        julia> num_of_MPI_proc = 3
-        julia> total_time = 50
-        julia> baseline_length_s = 10
-        julia> baselines_per_pol = Int64(total_time/baseline_length_s)
-        5
+# Example
+```julia-repl
+julia> num_of_polarimeters = 4
+julia> num_of_MPI_proc = 3
+julia> total_time = 50
+julia> baseline_length_s = 10
+julia> baselines_per_pol = Int64(total_time/baseline_length_s)
+5
 
-        julia> baselines_per_process = split_into_n(20, 3)
-        3-element Array{Int64,1}:
-        6
-        7
-        7
+julia> baselines_per_process = split_into_n(20, 3)
+3-element Array{Int64,1}:
+6
+7
+7
 
-        julia> chunks = split_tod_mpi(total_time, baseline_length_s, baselines_per_process, num_of_MPI_proc)
-        3-element Array{Any,1}:
-        Any[datachunk(1, 1, 5, 5), datachunk(2, 1, 1, 1)]
-        Any[datachunk(2, 2, 5, 4), datachunk(3, 1, 3, 3)]
-        Any[datachunk(3, 4, 5, 2), datachunk(4, 1, 5, 5)]
-        ```
+julia> chunks = split_tod_mpi(total_time, baseline_length_s, baselines_per_process, num_of_MPI_proc)
+3-element Array{Any,1}:
+Any[datachunk(1, 1, 5, 5), datachunk(2, 1, 1, 1)]
+Any[datachunk(2, 2, 5, 4), datachunk(3, 1, 3, 3)]
+Any[datachunk(3, 4, 5, 2), datachunk(4, 1, 5, 5)]
+```
 
-        which means:
+which means:
 
-        - process number 0 should simulate: 
-        polarimeter number 1 from baseline 1 to baseline 5,  total number of baselines = 5
-        polarimeter number 2 from baseline 1 to baseline 1 , total number of baselines = 1
+- process number 0 should simulate: 
+  #. polarimeter number 1 from baseline 1 to baseline 5,  total number of baselines = 5
+  #. polarimeter number 2 from baseline 1 to baseline 1 , total number of baselines = 1
 
-        - process number 1 should simulate: 
-        polarimeter number 2 from baseline 2 to baseline 5,  total number of baselines = 4
-        polarimeter number 3 from baseline 1 to baseline 3 , total number of baselines = 3
+- process number 1 should simulate: 
+  #. polarimeter number 2 from baseline 2 to baseline 5,  total number of baselines = 4
+  #. polarimeter number 3 from baseline 1 to baseline 3 , total number of baselines = 3
 
-        - process number 2 should simulate: 
-        polarimeter number 3 from baseline 4 to baseline 5,  total number of baselines = 2
-        polarimeter number 4 from baseline 1 to baseline 5,  total number of baselines = 5
+- process number 2 should simulate: 
+  #. polarimeter number 3 from baseline 4 to baseline 5,  total number of baselines = 2
+  #. polarimeter number 4 from baseline 1 to baseline 5,  total number of baselines = 5
 
 """
 function split_tod_mpi(total_time, baseline_length_s, baselines_per_process, num_of_MPI_proc)
 
-    duration = Int64(total_time/baseline_length_s)
+    duration = floor(Int64, total_time/baseline_length_s)
 
     #initialization
     detector_num = 1

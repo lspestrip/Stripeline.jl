@@ -1,6 +1,7 @@
 # HEAD
 
--   Implemented pointing reconstruction model [#55](https://github.com/lspestrip/Stripeline.jl/pull/55)
+-   Prevent crashes in the destriper [#63](https://github.com/lspestrip/Stripeline.jl/pull/63)
+-   Implement the pointing reconstruction model [#55](https://github.com/lspestrip/Stripeline.jl/pull/55)
 -   Fix dependency on Documenter.jl [#59](https://github.com/lspestrip/Stripeline.jl/pull/59), [#60](https://github.com/lspestrip/Stripeline.jl/pull/60)
 -   Fix issue [#56](https://github.com/lspestrip/Stripeline.jl/issues/56) (wrong pointings with Julian dates) [#58](https://github.com/lspestrip/Stripeline.jl/pull/58)
 -   Implement a faster way to inject noise in TODs ([#52](https://github.com/lspestrip/Stripeline.jl/pull/52))
