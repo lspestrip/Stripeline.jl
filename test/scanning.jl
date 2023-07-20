@@ -82,7 +82,7 @@ for (idx, day) in enumerate(days)
 
     local (skydirections, skyψ) = genpointings(
         _ -> (0, deg2rad(20), 0),
-        CameraAngles(panang_rad = dir_ang[1], tiltang_rad = dir_ang[2], rollang_rad = dir_ang[3]),
+        CameraAngles(tiltang_rad = dir_ang[1], panang_rad = dir_ang[2], rollang_rad = dir_ang[3]),
         [0],
         day,
         latitude_deg = TEST_TENERIFE_LATITUDE_DEG,
@@ -163,13 +163,13 @@ let defaultdb = InstrumentDB()
 
     dirG0, psiG0 = Stripeline.genpointings(
         wheelfn,
-        CameraAngles(panang_rad = G0_ang[1], tiltang_rad = G0_ang[2], rollang_rad = G0_ang[3]),
+        CameraAngles( tiltang_rad = G0_ang[1], panang_rad = G0_ang[2], rollang_rad = G0_ang[3]),
         timerange,
         latitude_deg = TEST_TENERIFE_LATITUDE_DEG,
     )
     dirV0, psiV0 = Stripeline.genpointings(
         wheelfn,
-        CameraAngles(panang_rad = V0_ang[1], tiltang_rad = V0_ang[2], rollang_rad = V0_ang[3]),
+        CameraAngles(tiltang_rad = V0_ang[1], panang_rad = V0_ang[2], rollang_rad = V0_ang[3]),
         timerange,
         latitude_deg = TEST_TENERIFE_LATITUDE_DEG,
     )
@@ -317,9 +317,9 @@ const (w1ang, w2ang, w3ang) = (0.0, deg2rad(20.0), 0.0)
                 [0.9254165783983234 0.17364817766693033 0.33682408883346515; -0.16317591116653482 0.984807753012208 -0.0593911746138847; -0.3420201433256687 0.0 0.9396926207859084])
 @test isapprox(angletomatrix(w1ang, w2ang, deg2rad(-30.0), cam_ang = CameraAngles(rollang_rad=deg2rad(45))),
 				[0.2218884684027577 -0.928995249589305 0.29619813272602386; 0.9446039478901318 0.28014092350145736 0.17101007166283433; -0.24184476264797528 0.24184476264797522 0.9396926207859084])
-@test isapprox(angletomatrix(w1ang, w2ang, deg2rad(-30.0), cam_ang = CameraAngles(panang_rad=deg2rad(25))),
+@test isapprox(angletomatrix(w1ang, w2ang, deg2rad(-30.0), cam_ang = CameraAngles(tiltang_rad=deg2rad(25))),
 				[0.8137976813493738 -0.32797515353481177 0.4797558050656603; 0.46984631039295416 0.8571575464476954 -0.21101039116094453; -0.3420201433256687 0.39713126196710286 0.8516507396391465])
-@test isapprox(angletomatrix(w1ang, w2ang, deg2rad(-30.0), cam_ang = CameraAngles(tiltang_rad=deg2rad(10))),
+@test isapprox(angletomatrix(w1ang, w2ang, deg2rad(-30.0), cam_ang = CameraAngles(panang_rad=deg2rad(10))),
 				[0.7500000000000001 -0.49999999999999994 0.4330127018922193; 0.4330127018922193 0.8660254037844387 0.24999999999999994; -0.49999999999999994 0.0 0.8660254037844387])
 
 # Combination of different configuration angles
@@ -327,7 +327,7 @@ const (w1ang, w2ang, w3ang) = (0.0, deg2rad(20.0), 0.0)
                 [0.7646550456261504 0.49999999999999994 -0.4065742997269626; -0.44147379642946344 0.8660254037844387 0.23473578139294538; 0.4694715627858908 0.0 0.882947592858927])
 @test isapprox(angletomatrix(w1ang, w2ang, deg2rad(-30.0), tel_ang = TelescopeAngles(wheel2ang_0_rad=deg2rad(48), wheel3ang_0_rad=deg2rad(-30), forkang_rad=deg2rad(52))),
 				[0.882947592858927 2.95973511123774e-17 -0.4694715627858908; -0.36994863998783545 0.6156614753256583 -0.6957721980440043; 0.28903555496820393 0.788010753606722 0.5435968176547656])
-@test isapprox(angletomatrix(w1ang, w2ang, deg2rad(-30.0), cam_ang = CameraAngles(rollang_rad=deg2rad(68),tiltang_rad=deg2rad(91),panang_rad=deg2rad(137))),
+@test isapprox(angletomatrix(w1ang, w2ang, deg2rad(-30.0), cam_ang = CameraAngles(rollang_rad=deg2rad(68),panang_rad=deg2rad(91),tiltang_rad=deg2rad(137))),
 				[0.47444246561235864 0.34112613016341686 0.8115031177656669; -0.21412297968452368 -0.8494536195128901 0.4822653811621473; 0.8538475838196693 -0.4025686421173186 -0.3299739262261965])
 
 ######################################################################################
@@ -340,7 +340,7 @@ const (w1ang, w2ang, w3ang) = (0.0, deg2rad(20.0), 0.0)
 
 # This function is usefull to see is directiontoangles is consisten with the pan,roll,tilt 
 # convention used in camtotelescope
-function  taitbryan(pan, tilt, roll)
+function  taitbryan(tilt, pan, roll)
     cam = CameraAngles(panang_rad = pan, tiltang_rad = tilt, rollang_rad = roll)
     quat = camtotelescope(cam)
     rot_matr = rotationmatrix_normalized(quat)    

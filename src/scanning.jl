@@ -168,8 +168,8 @@ Struct encoding the Tait-Bryan angles of a single camera/detector.
 Camera angles represent the orientation of the detector relative 
 to the telescope.
 
-- `panang_rad` encode a rotation around x-axis
-- `tiltang_rad` encode a rotation around y-axis
+- `tiltang_rad` encode a rotation around x-axis
+- `panang_rad` encode a rotation around y-axis
 - `rollang_rad` encode a rotation around z-axis
 
 See [`camtotelescope`](@ref) to understand how these angles are used to
@@ -178,8 +178,8 @@ transform the pointing direction.
 All of these angles must be expressed in RADIANS and measured anticlockwise.
 """
 Base.@kwdef struct CameraAngles
-    panang_rad :: Float64 = 0.0
     tiltang_rad :: Float64 = 0.0
+    panang_rad :: Float64 = 0.0
     rollang_rad :: Float64 = 0.0
 end
 
@@ -202,12 +202,12 @@ maintain backwards compatibility.
 """
 function directiontoangles(dir)
     #y-axis rotation angle
-    tiltang = asin(dir[1])
+    panang = asin(dir[1])
     #x-axis rotation angle
-    panang = - asin(dir[2]/cos(tiltang))
+    tiltang = - asin(dir[2]/cos(panang))
     #z-azis rotation angle
     rollang = 0.0
-    (panang, tiltang, rollang)
+    (tiltang, panang, rollang)
 end
 
 """
@@ -236,10 +236,10 @@ This function is used internally in [`genpointings`](@ref) as
 a part of the rotations chain.
 """
 function camtotelescope(cam_ang::CameraAngles)
+    qtilt = qrotation_x(cam_ang.tiltang_rad)
+    qpan = qrotation_y(cam_ang.panang_rad)
     qroll = qrotation_z(cam_ang.rollang_rad)
-    qtilt = qrotation_y(cam_ang.tiltang_rad)
-    qpan = qrotation_x(cam_ang.panang_rad)
-    qpan * (qtilt * qroll)
+    qtilt * (qpan * qroll)
 end
 
 
