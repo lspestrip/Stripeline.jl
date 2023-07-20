@@ -80,7 +80,7 @@ import Dates
 include("quaternions.jl")
 
 export TENERIFE_LATITUDE_DEG, TENERIFE_LONGITUDE_DEG, TENERIFE_HEIGHT_M
-export TelescopeAngles, CameraAngles
+export TelescopeAngles, CameraAngles, TelescopeWheelConfig
 export directiontoangles
 export timetorotang, camtotelescope, telescopetoground, groundtoearth
 export genpointings!, genpointings, northdir, eastdir, polarizationangle
@@ -746,41 +746,53 @@ end
 
 
 @doc raw"""
-    genpointings!(wheelanglesfn, beam_dir::CameraAngles, 
-                  timerange_s, 
-                  dirs, psi;
-                  polaxis = Float64[1.0, 0.0, 0.0],
-                  latitude_deg = TENERIFE_LATITUDE_DEG,
-                  ground = false,
-                  config_ang::Union{ConfigAngles, Nothing} = nothing)
-    genpointings(wheelanglesfn, beam_dir::CameraAngles, 
-                 timerange_s;
-                 polaxis = Float64[1.0, 0.0, 0.0],
-                 latitude_deg = TENERIFE_LATITUDE_DEG,
-                 ground = false,
-                 config_ang::Union{ConfigAngles, Nothing} = nothing)
-    genpointings!(wheelanglesfn, beam_dir::CameraAngles, 
-                  timerange_s, t_start, dirs, psi;
-                  polaxis = Float64[1.0, 0.0, 0.0],
-                  latitude_deg = TENERIFE_LATITUDE_DEG,
-                  longitude_deg = TENERIFE_LONGITUDE_DEG,
-                  height_m = TENERIFE_HEIGHT_M,
-                  precession = true,
-                  nutation = true,
-                  aberration = true,
-                  refraction = true,
-                  config_ang::Union{ConfigAngles, Nothing} = nothing)
-    genpointings(wheelanglesfn, beam_dir::CameraAngles, 
-                 timerange_s, t_start;
-                 polaxis=Float64[1.0, 0.0, 0.0],
-                 latitude_deg=TENERIFE_LATITUDE_DEG,
-                 longitude_deg=TENERIFE_LONGITUDE_DEG,
-                 height_m=TENERIFE_HEIGHT_M,
-                 precession = true,
-                 nutation = true,
-                 aberration = true,
-                 refraction = true,
-                 config_ang::Union{ConfigAngles, Nothing} = nothing)
+    genpointings!(
+        wheelanglesfn, beam_dir::CameraAngles, 
+        timerange_s, 
+        dirs, psi;
+        polaxis = Float64[1.0, 0.0, 0.0],
+        latitude_deg = TENERIFE_LATITUDE_DEG,
+        ground = false,
+        config_ang::Union{ConfigAngles, Nothing} = nothing,
+        wheels_conf = TelescopeWheelConfig()
+    )
+    genpointings(
+        wheelanglesfn, beam_dir::CameraAngles, 
+        timerange_s;
+        polaxis = Float64[1.0, 0.0, 0.0],
+        latitude_deg = TENERIFE_LATITUDE_DEG,
+        ground = false,
+        config_ang::Union{ConfigAngles, Nothing} = nothing,
+        wheels_conf = TelescopeWheelConfig()
+    )
+    genpointings!(
+        wheelanglesfn, beam_dir::CameraAngles, 
+        timerange_s, t_start, dirs, psi;
+        polaxis = Float64[1.0, 0.0, 0.0],
+        latitude_deg = TENERIFE_LATITUDE_DEG,
+        longitude_deg = TENERIFE_LONGITUDE_DEG,
+        height_m = TENERIFE_HEIGHT_M,
+        precession = true,
+        nutation = true,
+        aberration = true,
+        refraction = true,
+        config_ang::Union{ConfigAngles, Nothing} = nothing,
+        wheels_conf = TelescopeWheelConfig()
+    )
+    genpointings(
+        wheelanglesfn, beam_dir::CameraAngles, 
+        timerange_s, t_start;
+        polaxis=Float64[1.0, 0.0, 0.0],
+        latitude_deg=TENERIFE_LATITUDE_DEG,
+        longitude_deg=TENERIFE_LONGITUDE_DEG,
+        height_m=TENERIFE_HEIGHT_M,
+        precession = true,
+        nutation = true,
+        aberration = true,
+        refraction = true,
+        config_ang::Union{ConfigAngles, Nothing} = nothing,
+        wheels_conf = TelescopeWheelConfig()
+    )
 
 Generate a set of pointing directions for a STRIP detector. Each
 function is provided in two flavours: the ones ending with `!` save
@@ -852,6 +864,9 @@ The meaning of the parameters/keywords is the following:
   (see [`TelescopeAngles`](@ref) for more details). This is used
   internally by [`telescopetoground`](@ref); if nothing is passes then the version 
   of telescopetoground for an ideal telescope will be used.
+
+- `wheels_conf`: specifies the rotation orientation (clockwise or anticlockwise)
+  of the wheels motors. See [`TelescopeWheelConfig`](@ref) for more details.
 
 # Return values
 

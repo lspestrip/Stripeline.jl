@@ -191,5 +191,6 @@ direction, see [this](@ref scanning_docs).
 ```@docs
 TelescopeAngles
 CameraAngles
+TelescopeWheelConfig
 camtotelescope
 ```
