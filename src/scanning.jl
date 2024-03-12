@@ -683,7 +683,7 @@ function genpointings!(
 
     camtotel_quat = camtotelescope(beam_dir)
 
-    for (idx, time_s) = enumerate(timerange_s)
+    for (idx, time_s) in enumerate(timerange_s)
         (wheel1ang, wheel2ang, wheel3ang) = wheelanglesfn(time_s)
         groundq = telescopetoground(wheel1ang, wheel2ang, wheel3ang, telescope_ang, wheels_conf) * camtotel_quat
         vector = rotate_zaxis(groundq)
