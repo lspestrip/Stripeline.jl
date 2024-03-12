@@ -88,7 +88,11 @@ for (idx, day) in enumerate(days)
 
     local (skydirections, skyψ) = genpointings(
         _ -> (0, deg2rad(20), 0),
-        CameraAngles(tiltang_rad = dir_ang[1], panang_rad = dir_ang[2], rollang_rad = dir_ang[3]),
+        CameraAngles(
+            tiltang_rad = dir_ang[1],
+            panang_rad = dir_ang[2],
+            rollang_rad = dir_ang[3],
+        ),
         [0],
         day,
         latitude_deg = TEST_TENERIFE_LATITUDE_DEG,
@@ -126,11 +130,10 @@ spin_velocity = 1
 τ_s = 1 / sampling_rate
 times = 0:τ_s:time_duration
 
-(dirs, ψ) = genpointings(CameraAngles(),
-                         times;
-                         latitude_deg = TEST_TENERIFE_LATITUDE_DEG) do time_s
-    (0, deg2rad(20.0), Sl.timetorotang(time_s, spin_velocity))
-end
+(dirs, ψ) =
+    genpointings(CameraAngles(), times; latitude_deg = TEST_TENERIFE_LATITUDE_DEG) do time_s
+        (0, deg2rad(20.0), Sl.timetorotang(time_s, spin_velocity))
+    end
 
 expected_nsamples = convert(Int, time_duration * sampling_rate + 1)
 @test size(dirs) == (expected_nsamples, 2)
@@ -171,13 +174,21 @@ let defaultdb = InstrumentDB()
 
     dirG0, psiG0 = Stripeline.genpointings(
         wheelfn,
-        CameraAngles( tiltang_rad = G0_ang[1], panang_rad = G0_ang[2], rollang_rad = G0_ang[3]),
+        CameraAngles(
+            tiltang_rad = G0_ang[1],
+            panang_rad = G0_ang[2],
+            rollang_rad = G0_ang[3],
+        ),
         timerange,
         latitude_deg = TEST_TENERIFE_LATITUDE_DEG,
     )
     dirV0, psiV0 = Stripeline.genpointings(
         wheelfn,
-        CameraAngles(tiltang_rad = V0_ang[1], panang_rad = V0_ang[2], rollang_rad = V0_ang[3]),
+        CameraAngles(
+            tiltang_rad = V0_ang[1],
+            panang_rad = V0_ang[2],
+            rollang_rad = V0_ang[3],
+        ),
         timerange,
         latitude_deg = TEST_TENERIFE_LATITUDE_DEG,
     )
@@ -202,27 +213,31 @@ end
 @test rotate_xaxis(qrotation_x(deg2rad(90))) ≈ [1.0, 0.0, 0.0]
 @test rotate_xaxis(qrotation_y(deg2rad(90))) ≈ [0.0, 0.0, -1.0]
 
-for i in [-270., -180., -90., 0., 90., 180., 270.]
-    @test rotate_zaxis(qrotation_y(deg2rad(i))) ≈  rotationmatrix_normalized(qrotation_y(deg2rad(i))) * [0.0, 0.0, 1.0]
-    @test rotate_zaxis(qrotation_x(deg2rad(i))) ≈  rotationmatrix_normalized(qrotation_x(deg2rad(i))) * [0.0, 0.0, 1.0]
+for i in [-270.0, -180.0, -90.0, 0.0, 90.0, 180.0, 270.0]
+    @test rotate_zaxis(qrotation_y(deg2rad(i))) ≈
+          rotationmatrix_normalized(qrotation_y(deg2rad(i))) * [0.0, 0.0, 1.0]
+    @test rotate_zaxis(qrotation_x(deg2rad(i))) ≈
+          rotationmatrix_normalized(qrotation_x(deg2rad(i))) * [0.0, 0.0, 1.0]
 end
 
-for i in [-270., -180., -90., 0., 90., 180., 270.]
-    @test rotate_xaxis(qrotation_y(deg2rad(i))) ≈  rotationmatrix_normalized(qrotation_y(deg2rad(i))) * [1.0, 0.0, 0.0]
-    @test rotate_xaxis(qrotation_z(deg2rad(i))) ≈  rotationmatrix_normalized(qrotation_z(deg2rad(i))) * [1.0, 0.0, 0.0]
+for i in [-270.0, -180.0, -90.0, 0.0, 90.0, 180.0, 270.0]
+    @test rotate_xaxis(qrotation_y(deg2rad(i))) ≈
+          rotationmatrix_normalized(qrotation_y(deg2rad(i))) * [1.0, 0.0, 0.0]
+    @test rotate_xaxis(qrotation_z(deg2rad(i))) ≈
+          rotationmatrix_normalized(qrotation_z(deg2rad(i))) * [1.0, 0.0, 0.0]
 end
 
 # Test wobble quaternion
 
-@test [0.0,0.0,1.0] ≈ rotate_zaxis(qrotation_wobble(0.0,0.0))
-@test [0.0,0.0,1.0] ≈ rotate_zaxis(qrotation_wobble(0.0,deg2rad(90.0)))
-@test [0.0,0.0,1.0] ≈ rotate_zaxis(qrotation_wobble(0.0,deg2rad(180.0)))
-@test [0.0,0.0,1.0] ≈ rotate_zaxis(qrotation_wobble(0.0,deg2rad(270.0)))
+@test [0.0, 0.0, 1.0] ≈ rotate_zaxis(qrotation_wobble(0.0, 0.0))
+@test [0.0, 0.0, 1.0] ≈ rotate_zaxis(qrotation_wobble(0.0, deg2rad(90.0)))
+@test [0.0, 0.0, 1.0] ≈ rotate_zaxis(qrotation_wobble(0.0, deg2rad(180.0)))
+@test [0.0, 0.0, 1.0] ≈ rotate_zaxis(qrotation_wobble(0.0, deg2rad(270.0)))
 
-@test [0.0,-1.0,0.0] ≈ rotate_zaxis(qrotation_wobble(deg2rad(90.0),0.0))
-@test [1.0,0.0,0.0] ≈ rotate_zaxis(qrotation_wobble(deg2rad(90.0),deg2rad(90.0)))
-@test [0.0,1.0,0.0] ≈ rotate_zaxis(qrotation_wobble(deg2rad(90.0),deg2rad(180.0)))
-@test [-1.0,0.0,0.0] ≈ rotate_zaxis(qrotation_wobble(deg2rad(90.0),deg2rad(270.0)))
+@test [0.0, -1.0, 0.0] ≈ rotate_zaxis(qrotation_wobble(deg2rad(90.0), 0.0))
+@test [1.0, 0.0, 0.0] ≈ rotate_zaxis(qrotation_wobble(deg2rad(90.0), deg2rad(90.0)))
+@test [0.0, 1.0, 0.0] ≈ rotate_zaxis(qrotation_wobble(deg2rad(90.0), deg2rad(180.0)))
+@test [-1.0, 0.0, 0.0] ≈ rotate_zaxis(qrotation_wobble(deg2rad(90.0), deg2rad(270.0)))
 
 #--------------------------------------------------------------------------------------
 #--------------------------------------------------------------------------------------
@@ -234,132 +249,405 @@ end
 # wheel3ang_0_rad: counterclockwise rotation z axis
 
 # Test wheel1ang_0_rad
-@test [0.0,0.0,1.0] ≈ rotate_zaxis(telescopetoground(0.0,0.0,0.0,TelescopeAngles(wheel1ang_0_rad = deg2rad(0.))))
-@test [0.0,0.0,1.0] ≈ rotate_zaxis(telescopetoground(0.0,0.0,0.0,TelescopeAngles(wheel1ang_0_rad = deg2rad(90.))))
-@test [0.0,0.0,1.0] ≈ rotate_zaxis(telescopetoground(0.0,0.0,0.0,TelescopeAngles(wheel1ang_0_rad = deg2rad(180.))))
-@test [0.0,0.0,1.0] ≈ rotate_zaxis(telescopetoground(0.0,0.0,0.0,TelescopeAngles(wheel1ang_0_rad = deg2rad(270.))))
+@test [0.0, 0.0, 1.0] ≈ rotate_zaxis(
+    telescopetoground(0.0, 0.0, 0.0, TelescopeAngles(wheel1ang_0_rad = deg2rad(0.0))),
+)
+@test [0.0, 0.0, 1.0] ≈ rotate_zaxis(
+    telescopetoground(0.0, 0.0, 0.0, TelescopeAngles(wheel1ang_0_rad = deg2rad(90.0))),
+)
+@test [0.0, 0.0, 1.0] ≈ rotate_zaxis(
+    telescopetoground(0.0, 0.0, 0.0, TelescopeAngles(wheel1ang_0_rad = deg2rad(180.0))),
+)
+@test [0.0, 0.0, 1.0] ≈ rotate_zaxis(
+    telescopetoground(0.0, 0.0, 0.0, TelescopeAngles(wheel1ang_0_rad = deg2rad(270.0))),
+)
 
-@test [1.0,0.0,0.0] ≈ rotate_xaxis(telescopetoground(0.0,0.0,0.0,TelescopeAngles(wheel1ang_0_rad = deg2rad(0.))))
-@test [0.0,-1.0,0.0] ≈ rotate_xaxis(telescopetoground(0.0,0.0,0.0,TelescopeAngles(wheel1ang_0_rad = deg2rad(90.))))
-@test [-1.0,0.0,0.0] ≈ rotate_xaxis(telescopetoground(0.0,0.0,0.0,TelescopeAngles(wheel1ang_0_rad = deg2rad(180.))))
-@test [0.0,1.0,0.0] ≈ rotate_xaxis(telescopetoground(0.0,0.0,0.0,TelescopeAngles(wheel1ang_0_rad = deg2rad(270.))))
+@test [1.0, 0.0, 0.0] ≈ rotate_xaxis(
+    telescopetoground(0.0, 0.0, 0.0, TelescopeAngles(wheel1ang_0_rad = deg2rad(0.0))),
+)
+@test [0.0, -1.0, 0.0] ≈ rotate_xaxis(
+    telescopetoground(0.0, 0.0, 0.0, TelescopeAngles(wheel1ang_0_rad = deg2rad(90.0))),
+)
+@test [-1.0, 0.0, 0.0] ≈ rotate_xaxis(
+    telescopetoground(0.0, 0.0, 0.0, TelescopeAngles(wheel1ang_0_rad = deg2rad(180.0))),
+)
+@test [0.0, 1.0, 0.0] ≈ rotate_xaxis(
+    telescopetoground(0.0, 0.0, 0.0, TelescopeAngles(wheel1ang_0_rad = deg2rad(270.0))),
+)
 
 # Test wheel2ang_0_rad
-@test [0.0,0.0,1.0] ≈ rotate_zaxis(telescopetoground(0.0,0.0,0.0,TelescopeAngles(wheel2ang_0_rad = deg2rad(0.))))
-@test [-1.0,0.0,0.0] ≈ rotate_zaxis(telescopetoground(0.0,0.0,0.0,TelescopeAngles(wheel2ang_0_rad = deg2rad(90.))))
-@test [0.0,0.0,-1.0] ≈ rotate_zaxis(telescopetoground(0.0,0.0,0.0,TelescopeAngles(wheel2ang_0_rad = deg2rad(180.))))
-@test [1.0,0.0,0.0] ≈ rotate_zaxis(telescopetoground(0.0,0.0,0.0,TelescopeAngles(wheel2ang_0_rad = deg2rad(270.))))
+@test [0.0, 0.0, 1.0] ≈ rotate_zaxis(
+    telescopetoground(0.0, 0.0, 0.0, TelescopeAngles(wheel2ang_0_rad = deg2rad(0.0))),
+)
+@test [-1.0, 0.0, 0.0] ≈ rotate_zaxis(
+    telescopetoground(0.0, 0.0, 0.0, TelescopeAngles(wheel2ang_0_rad = deg2rad(90.0))),
+)
+@test [0.0, 0.0, -1.0] ≈ rotate_zaxis(
+    telescopetoground(0.0, 0.0, 0.0, TelescopeAngles(wheel2ang_0_rad = deg2rad(180.0))),
+)
+@test [1.0, 0.0, 0.0] ≈ rotate_zaxis(
+    telescopetoground(0.0, 0.0, 0.0, TelescopeAngles(wheel2ang_0_rad = deg2rad(270.0))),
+)
 
-@test [1.0,0.0,0.0] ≈ rotate_xaxis(telescopetoground(0.0,0.0,0.0,TelescopeAngles(wheel2ang_0_rad = deg2rad(0.))))
-@test [0.0,0.0,1.0] ≈ rotate_xaxis(telescopetoground(0.0,0.0,0.0,TelescopeAngles(wheel2ang_0_rad = deg2rad(90.))))
-@test [-1.0,0.0,0.0] ≈ rotate_xaxis(telescopetoground(0.0,0.0,0.0,TelescopeAngles(wheel2ang_0_rad = deg2rad(180.))))
-@test [0.0,0.0,-1.0] ≈ rotate_xaxis(telescopetoground(0.0,0.0,0.0,TelescopeAngles(wheel2ang_0_rad = deg2rad(270.))))
+@test [1.0, 0.0, 0.0] ≈ rotate_xaxis(
+    telescopetoground(0.0, 0.0, 0.0, TelescopeAngles(wheel2ang_0_rad = deg2rad(0.0))),
+)
+@test [0.0, 0.0, 1.0] ≈ rotate_xaxis(
+    telescopetoground(0.0, 0.0, 0.0, TelescopeAngles(wheel2ang_0_rad = deg2rad(90.0))),
+)
+@test [-1.0, 0.0, 0.0] ≈ rotate_xaxis(
+    telescopetoground(0.0, 0.0, 0.0, TelescopeAngles(wheel2ang_0_rad = deg2rad(180.0))),
+)
+@test [0.0, 0.0, -1.0] ≈ rotate_xaxis(
+    telescopetoground(0.0, 0.0, 0.0, TelescopeAngles(wheel2ang_0_rad = deg2rad(270.0))),
+)
 
 # Test wheel3ang_0_rad
-@test [0.0,0.0,1.0] ≈ rotate_zaxis(telescopetoground(0.0,0.0,0.0,TelescopeAngles(wheel3ang_0_rad = deg2rad(0.))))
-@test [0.0,0.0,1.0] ≈ rotate_zaxis(telescopetoground(0.0,0.0,0.0,TelescopeAngles(wheel3ang_0_rad = deg2rad(90.))))
-@test [0.0,0.0,1.0] ≈ rotate_zaxis(telescopetoground(0.0,0.0,0.0,TelescopeAngles(wheel3ang_0_rad = deg2rad(180.))))
-@test [0.0,0.0,1.0] ≈ rotate_zaxis(telescopetoground(0.0,0.0,0.0,TelescopeAngles(wheel3ang_0_rad = deg2rad(270.))))
+@test [0.0, 0.0, 1.0] ≈ rotate_zaxis(
+    telescopetoground(0.0, 0.0, 0.0, TelescopeAngles(wheel3ang_0_rad = deg2rad(0.0))),
+)
+@test [0.0, 0.0, 1.0] ≈ rotate_zaxis(
+    telescopetoground(0.0, 0.0, 0.0, TelescopeAngles(wheel3ang_0_rad = deg2rad(90.0))),
+)
+@test [0.0, 0.0, 1.0] ≈ rotate_zaxis(
+    telescopetoground(0.0, 0.0, 0.0, TelescopeAngles(wheel3ang_0_rad = deg2rad(180.0))),
+)
+@test [0.0, 0.0, 1.0] ≈ rotate_zaxis(
+    telescopetoground(0.0, 0.0, 0.0, TelescopeAngles(wheel3ang_0_rad = deg2rad(270.0))),
+)
 
-@test [1.0,0.0,0.0] ≈ rotate_xaxis(telescopetoground(0.0,0.0,0.0,TelescopeAngles(wheel3ang_0_rad = deg2rad(0.))))
-@test [0.0,1.0,0.0] ≈ rotate_xaxis(telescopetoground(0.0,0.0,0.0,TelescopeAngles(wheel3ang_0_rad = deg2rad(90.))))
-@test [-1.0,0.0,0.0] ≈ rotate_xaxis(telescopetoground(0.0,0.0,0.0,TelescopeAngles(wheel3ang_0_rad = deg2rad(180.))))
-@test [0.0,-1.0,0.0] ≈ rotate_xaxis(telescopetoground(0.0,0.0,0.0,TelescopeAngles(wheel3ang_0_rad = deg2rad(270.))))
+@test [1.0, 0.0, 0.0] ≈ rotate_xaxis(
+    telescopetoground(0.0, 0.0, 0.0, TelescopeAngles(wheel3ang_0_rad = deg2rad(0.0))),
+)
+@test [0.0, 1.0, 0.0] ≈ rotate_xaxis(
+    telescopetoground(0.0, 0.0, 0.0, TelescopeAngles(wheel3ang_0_rad = deg2rad(90.0))),
+)
+@test [-1.0, 0.0, 0.0] ≈ rotate_xaxis(
+    telescopetoground(0.0, 0.0, 0.0, TelescopeAngles(wheel3ang_0_rad = deg2rad(180.0))),
+)
+@test [0.0, -1.0, 0.0] ≈ rotate_xaxis(
+    telescopetoground(0.0, 0.0, 0.0, TelescopeAngles(wheel3ang_0_rad = deg2rad(270.0))),
+)
 
 # Test forkang_rad (around x axis)
-@test [0.0,0.0,1.0] ≈ rotate_zaxis(telescopetoground(0.0,0.0,0.0,TelescopeAngles(forkang_rad = deg2rad(0.))))
-@test [0.0,-1.0,0.0] ≈ rotate_zaxis(telescopetoground(0.0,0.0,0.0,TelescopeAngles(forkang_rad = deg2rad(90.))))
-@test [0.0,0.0,-1.0] ≈ rotate_zaxis(telescopetoground(0.0,0.0,0.0,TelescopeAngles(forkang_rad = deg2rad(180.))))
-@test [0.0,1.0,0.0] ≈ rotate_zaxis(telescopetoground(0.0,0.0,0.0,TelescopeAngles(forkang_rad = deg2rad(270.))))
+@test [0.0, 0.0, 1.0] ≈ rotate_zaxis(
+    telescopetoground(0.0, 0.0, 0.0, TelescopeAngles(forkang_rad = deg2rad(0.0))),
+)
+@test [0.0, -1.0, 0.0] ≈ rotate_zaxis(
+    telescopetoground(0.0, 0.0, 0.0, TelescopeAngles(forkang_rad = deg2rad(90.0))),
+)
+@test [0.0, 0.0, -1.0] ≈ rotate_zaxis(
+    telescopetoground(0.0, 0.0, 0.0, TelescopeAngles(forkang_rad = deg2rad(180.0))),
+)
+@test [0.0, 1.0, 0.0] ≈ rotate_zaxis(
+    telescopetoground(0.0, 0.0, 0.0, TelescopeAngles(forkang_rad = deg2rad(270.0))),
+)
 
-@test [1.0,0.0,0.0] ≈ rotate_xaxis(telescopetoground(0.0,0.0,0.0,TelescopeAngles(forkang_rad = deg2rad(0.))))
-@test [1.0,0.0,0.0] ≈ rotate_xaxis(telescopetoground(0.0,0.0,0.0,TelescopeAngles(forkang_rad = deg2rad(90.))))
-@test [1.0,0.0,0.0] ≈ rotate_xaxis(telescopetoground(0.0,0.0,0.0,TelescopeAngles(forkang_rad = deg2rad(180.))))
-@test [1.0,0.0,0.0] ≈ rotate_xaxis(telescopetoground(0.0,0.0,0.0,TelescopeAngles(forkang_rad = deg2rad(270.))))
+@test [1.0, 0.0, 0.0] ≈ rotate_xaxis(
+    telescopetoground(0.0, 0.0, 0.0, TelescopeAngles(forkang_rad = deg2rad(0.0))),
+)
+@test [1.0, 0.0, 0.0] ≈ rotate_xaxis(
+    telescopetoground(0.0, 0.0, 0.0, TelescopeAngles(forkang_rad = deg2rad(90.0))),
+)
+@test [1.0, 0.0, 0.0] ≈ rotate_xaxis(
+    telescopetoground(0.0, 0.0, 0.0, TelescopeAngles(forkang_rad = deg2rad(180.0))),
+)
+@test [1.0, 0.0, 0.0] ≈ rotate_xaxis(
+    telescopetoground(0.0, 0.0, 0.0, TelescopeAngles(forkang_rad = deg2rad(270.0))),
+)
 
 # Test wobble angles
-@test [0.0,-1.0,0.0] ≈ rotate_zaxis(telescopetoground(0.0,0.0,0.0,TelescopeAngles(zVAXang_rad = deg2rad(90.), ωVAXang_rad = deg2rad(0.))))
-@test [1.0,0.0,0.0] ≈ rotate_zaxis(telescopetoground(0.0,0.0,0.0,TelescopeAngles(zVAXang_rad = deg2rad(90.), ωVAXang_rad = deg2rad(90.))))
-@test [0.0,1.0,0.0] ≈ rotate_zaxis(telescopetoground(0.0,0.0,0.0,TelescopeAngles(zVAXang_rad = deg2rad(90.), ωVAXang_rad = deg2rad(180.))))
-@test [-1.0,0.0,0.0] ≈ rotate_zaxis(telescopetoground(0.0,0.0,0.0,TelescopeAngles(zVAXang_rad = deg2rad(90.), ωVAXang_rad = deg2rad(270.))))
-@test [sin(deg2rad(45))*cos(deg2rad(45)), -sin(deg2rad(45))*sin(deg2rad(45)), sin(deg2rad(45))] ≈ rotate_zaxis(telescopetoground(0.0,0.0,0.0,TelescopeAngles(zVAXang_rad = deg2rad(45.), ωVAXang_rad = deg2rad(45.))))
+@test [0.0, -1.0, 0.0] ≈ rotate_zaxis(
+    telescopetoground(
+        0.0,
+        0.0,
+        0.0,
+        TelescopeAngles(zVAXang_rad = deg2rad(90.0), ωVAXang_rad = deg2rad(0.0)),
+    ),
+)
+@test [1.0, 0.0, 0.0] ≈ rotate_zaxis(
+    telescopetoground(
+        0.0,
+        0.0,
+        0.0,
+        TelescopeAngles(zVAXang_rad = deg2rad(90.0), ωVAXang_rad = deg2rad(90.0)),
+    ),
+)
+@test [0.0, 1.0, 0.0] ≈ rotate_zaxis(
+    telescopetoground(
+        0.0,
+        0.0,
+        0.0,
+        TelescopeAngles(zVAXang_rad = deg2rad(90.0), ωVAXang_rad = deg2rad(180.0)),
+    ),
+)
+@test [-1.0, 0.0, 0.0] ≈ rotate_zaxis(
+    telescopetoground(
+        0.0,
+        0.0,
+        0.0,
+        TelescopeAngles(zVAXang_rad = deg2rad(90.0), ωVAXang_rad = deg2rad(270.0)),
+    ),
+)
+@test [
+    sin(deg2rad(45)) * cos(deg2rad(45)),
+    -sin(deg2rad(45)) * sin(deg2rad(45)),
+    sin(deg2rad(45)),
+] ≈ rotate_zaxis(
+    telescopetoground(
+        0.0,
+        0.0,
+        0.0,
+        TelescopeAngles(zVAXang_rad = deg2rad(45.0), ωVAXang_rad = deg2rad(45.0)),
+    ),
+)
 
 # Test the rotation chain
 
-@test [0.0,-1.0,0.0] ≈ rotate_zaxis(telescopetoground(0.0,0.0,0.0,TelescopeAngles(
-    wheel1ang_0_rad = deg2rad(90),
-    wheel2ang_0_rad = deg2rad(90),
-    wheel3ang_0_rad = deg2rad(90),
-    forkang_rad = deg2rad(90),
-    zVAXang_rad = deg2rad(90),
-    ωVAXang_rad = deg2rad(90)
+@test [0.0, -1.0, 0.0] ≈ rotate_zaxis(
+    telescopetoground(
+        0.0,
+        0.0,
+        0.0,
+        TelescopeAngles(
+            wheel1ang_0_rad = deg2rad(90),
+            wheel2ang_0_rad = deg2rad(90),
+            wheel3ang_0_rad = deg2rad(90),
+            forkang_rad = deg2rad(90),
+            zVAXang_rad = deg2rad(90),
+            ωVAXang_rad = deg2rad(90),
+        ),
+    ),
 )
-))
 
-@test [0.0,-1.0,0.0] ≈ rotate_zaxis(telescopetoground(0.0,0.0,0.0,TelescopeAngles(
-    wheel1ang_0_rad = deg2rad(180),
-    wheel2ang_0_rad = deg2rad(90),
-    wheel3ang_0_rad = deg2rad(90),
-    forkang_rad = deg2rad(90),
-    zVAXang_rad = deg2rad(90),
-    ωVAXang_rad = deg2rad(90)
+@test [0.0, -1.0, 0.0] ≈ rotate_zaxis(
+    telescopetoground(
+        0.0,
+        0.0,
+        0.0,
+        TelescopeAngles(
+            wheel1ang_0_rad = deg2rad(180),
+            wheel2ang_0_rad = deg2rad(90),
+            wheel3ang_0_rad = deg2rad(90),
+            forkang_rad = deg2rad(90),
+            zVAXang_rad = deg2rad(90),
+            ωVAXang_rad = deg2rad(90),
+        ),
+    ),
 )
-))
 
 # Test using rotationmatrix_normalized and data taken from PyPRM
-function angletomatrix(w1ang, w2ang, w3ang; tel_ang::Union{TelescopeAngles, Nothing}=nothing, cam_ang = CameraAngles())
+function angletomatrix(
+    w1ang,
+    w2ang,
+    w3ang;
+    tel_ang::Union{TelescopeAngles,Nothing} = nothing,
+    cam_ang = CameraAngles(),
+)
     quat = telescopetoground(w1ang, w2ang, w3ang, tel_ang) * camtotelescope(cam_ang)
-    rotationmatrix_normalized(quat)    
+    rotationmatrix_normalized(quat)
 end
 
 const (w1ang, w2ang, w3ang) = (0.0, deg2rad(20.0), 0.0)
 
 # Single configuration angles
-@test isapprox(angletomatrix(w1ang, w2ang, w3ang, tel_ang = TelescopeAngles(), cam_ang = CameraAngles()), 
-                [0.9396926207859084 0.0 0.3420201433256687; 0.0 1.0 0.0; -0.3420201433256687 0.0 0.9396926207859084])
-@test isapprox(angletomatrix(w1ang, w2ang, w3ang, tel_ang = TelescopeAngles(forkang_rad=deg2rad(10))),
-                [0.9396926207859084 0.0 0.3420201433256687; 0.0593911746138847 0.984807753012208 -0.16317591116653482; -0.33682408883346515 0.17364817766693033 0.9254165783983234])
-@test isapprox(angletomatrix(w1ang, w2ang, w3ang, tel_ang = TelescopeAngles(wheel2ang_0_rad=deg2rad(10))), 
-                [0.984807753012208 0.0 0.17364817766693033; 0.0 1.0 0.0; -0.17364817766693033 0.0 0.984807753012208])
-@test isapprox(angletomatrix(w1ang, w2ang, w3ang, tel_ang = TelescopeAngles(wheel3ang_0_rad=deg2rad(-10))), 
-                [0.9254165783983234 0.17364817766693033 0.33682408883346515; -0.16317591116653482 0.984807753012208 -0.0593911746138847; -0.3420201433256687 0.0 0.9396926207859084])
-@test isapprox(angletomatrix(w1ang, w2ang, deg2rad(-30.0), cam_ang = CameraAngles(rollang_rad=deg2rad(45))),
-				[0.2218884684027577 -0.928995249589305 0.29619813272602386; 0.9446039478901318 0.28014092350145736 0.17101007166283433; -0.24184476264797528 0.24184476264797522 0.9396926207859084])
-@test isapprox(angletomatrix(w1ang, w2ang, deg2rad(-30.0), cam_ang = CameraAngles(tiltang_rad=deg2rad(25))),
-				[0.8137976813493738 -0.32797515353481177 0.4797558050656603; 0.46984631039295416 0.8571575464476954 -0.21101039116094453; -0.3420201433256687 0.39713126196710286 0.8516507396391465])
-@test isapprox(angletomatrix(w1ang, w2ang, deg2rad(-30.0), cam_ang = CameraAngles(panang_rad=deg2rad(10))),
-				[0.7500000000000001 -0.49999999999999994 0.4330127018922193; 0.4330127018922193 0.8660254037844387 0.24999999999999994; -0.49999999999999994 0.0 0.8660254037844387])
+@test isapprox(
+    angletomatrix(
+        w1ang,
+        w2ang,
+        w3ang,
+        tel_ang = TelescopeAngles(),
+        cam_ang = CameraAngles(),
+    ),
+    [
+        0.9396926207859084 0.0 0.3420201433256687
+        0.0 1.0 0.0
+        -0.3420201433256687 0.0 0.9396926207859084
+    ],
+)
+@test isapprox(
+    angletomatrix(
+        w1ang,
+        w2ang,
+        w3ang,
+        tel_ang = TelescopeAngles(forkang_rad = deg2rad(10)),
+    ),
+    [
+        0.9396926207859084 0.0 0.3420201433256687
+        0.0593911746138847 0.984807753012208 -0.16317591116653482
+        -0.33682408883346515 0.17364817766693033 0.9254165783983234
+    ],
+)
+@test isapprox(
+    angletomatrix(
+        w1ang,
+        w2ang,
+        w3ang,
+        tel_ang = TelescopeAngles(wheel2ang_0_rad = deg2rad(10)),
+    ),
+    [
+        0.984807753012208 0.0 0.17364817766693033
+        0.0 1.0 0.0
+        -0.17364817766693033 0.0 0.984807753012208
+    ],
+)
+@test isapprox(
+    angletomatrix(
+        w1ang,
+        w2ang,
+        w3ang,
+        tel_ang = TelescopeAngles(wheel3ang_0_rad = deg2rad(-10)),
+    ),
+    [
+        0.9254165783983234 0.17364817766693033 0.33682408883346515
+        -0.16317591116653482 0.984807753012208 -0.0593911746138847
+        -0.3420201433256687 0.0 0.9396926207859084
+    ],
+)
+@test isapprox(
+    angletomatrix(
+        w1ang,
+        w2ang,
+        deg2rad(-30.0),
+        cam_ang = CameraAngles(rollang_rad = deg2rad(45)),
+    ),
+    [
+        0.2218884684027577 -0.928995249589305 0.29619813272602386
+        0.9446039478901318 0.28014092350145736 0.17101007166283433
+        -0.24184476264797528 0.24184476264797522 0.9396926207859084
+    ],
+)
+@test isapprox(
+    angletomatrix(
+        w1ang,
+        w2ang,
+        deg2rad(-30.0),
+        cam_ang = CameraAngles(tiltang_rad = deg2rad(25)),
+    ),
+    [
+        0.8137976813493738 -0.32797515353481177 0.4797558050656603
+        0.46984631039295416 0.8571575464476954 -0.21101039116094453
+        -0.3420201433256687 0.39713126196710286 0.8516507396391465
+    ],
+)
+@test isapprox(
+    angletomatrix(
+        w1ang,
+        w2ang,
+        deg2rad(-30.0),
+        cam_ang = CameraAngles(panang_rad = deg2rad(10)),
+    ),
+    [
+        0.7500000000000001 -0.49999999999999994 0.4330127018922193
+        0.4330127018922193 0.8660254037844387 0.24999999999999994
+        -0.49999999999999994 0.0 0.8660254037844387
+    ],
+)
 
 # Combination of different configuration angles
-@test isapprox(angletomatrix(w1ang, w2ang, w3ang, tel_ang = TelescopeAngles(wheel2ang_0_rad=deg2rad(48), wheel3ang_0_rad=deg2rad(-30))), 
-                [0.7646550456261504 0.49999999999999994 -0.4065742997269626; -0.44147379642946344 0.8660254037844387 0.23473578139294538; 0.4694715627858908 0.0 0.882947592858927])
-@test isapprox(angletomatrix(w1ang, w2ang, deg2rad(-30.0), tel_ang = TelescopeAngles(wheel2ang_0_rad=deg2rad(48), wheel3ang_0_rad=deg2rad(-30), forkang_rad=deg2rad(52))),
-				[0.882947592858927 2.95973511123774e-17 -0.4694715627858908; -0.36994863998783545 0.6156614753256583 -0.6957721980440043; 0.28903555496820393 0.788010753606722 0.5435968176547656])
-@test isapprox(angletomatrix(w1ang, w2ang, deg2rad(-30.0), cam_ang = CameraAngles(rollang_rad=deg2rad(68),panang_rad=deg2rad(91),tiltang_rad=deg2rad(137))),
-				[0.47444246561235864 0.34112613016341686 0.8115031177656669; -0.21412297968452368 -0.8494536195128901 0.4822653811621473; 0.8538475838196693 -0.4025686421173186 -0.3299739262261965])
+@test isapprox(
+    angletomatrix(
+        w1ang,
+        w2ang,
+        w3ang,
+        tel_ang = TelescopeAngles(
+            wheel2ang_0_rad = deg2rad(48),
+            wheel3ang_0_rad = deg2rad(-30),
+        ),
+    ),
+    [
+        0.7646550456261504 0.49999999999999994 -0.4065742997269626
+        -0.44147379642946344 0.8660254037844387 0.23473578139294538
+        0.4694715627858908 0.0 0.882947592858927
+    ],
+)
+@test isapprox(
+    angletomatrix(
+        w1ang,
+        w2ang,
+        deg2rad(-30.0),
+        tel_ang = TelescopeAngles(
+            wheel2ang_0_rad = deg2rad(48),
+            wheel3ang_0_rad = deg2rad(-30),
+            forkang_rad = deg2rad(52),
+        ),
+    ),
+    [
+        0.882947592858927 2.95973511123774e-17 -0.4694715627858908
+        -0.36994863998783545 0.6156614753256583 -0.6957721980440043
+        0.28903555496820393 0.788010753606722 0.5435968176547656
+    ],
+)
+@test isapprox(
+    angletomatrix(
+        w1ang,
+        w2ang,
+        deg2rad(-30.0),
+        cam_ang = CameraAngles(
+            rollang_rad = deg2rad(68),
+            panang_rad = deg2rad(91),
+            tiltang_rad = deg2rad(137),
+        ),
+    ),
+    [
+        0.47444246561235864 0.34112613016341686 0.8115031177656669
+        -0.21412297968452368 -0.8494536195128901 0.4822653811621473
+        0.8538475838196693 -0.4025686421173186 -0.3299739262261965
+    ],
+)
 
 ######################################################################################
 
 # Test directiontoangles function
 
-@test all(isapprox.(directiontoangles([0.0,0.0,1.0]), (0.0,0.0,0.0)))
-@test all(isapprox.(directiontoangles([1.0,0.0,0.0]), (0.0,deg2rad(90.0),0.0)))
-@test all(isapprox.(directiontoangles([0.0,1.0,0.0]), (deg2rad(-90.0),0.0,0.0)))
+@test all(isapprox.(directiontoangles([0.0, 0.0, 1.0]), (0.0, 0.0, 0.0)))
+@test all(isapprox.(directiontoangles([1.0, 0.0, 0.0]), (0.0, deg2rad(90.0), 0.0)))
+@test all(isapprox.(directiontoangles([0.0, 1.0, 0.0]), (deg2rad(-90.0), 0.0, 0.0)))
 
 # This function is usefull to see is directiontoangles is consisten with the pan,roll,tilt 
 # convention used in camtotelescope
-function  taitbryan(tilt, pan, roll)
+function taitbryan(tilt, pan, roll)
     cam = CameraAngles(panang_rad = pan, tiltang_rad = tilt, rollang_rad = roll)
     quat = camtotelescope(cam)
-    rot_matr = rotationmatrix_normalized(quat)    
+    rot_matr = rotationmatrix_normalized(quat)
     dir = rot_matr * [0.0, 0.0, 1.0]
     directiontoangles(dir)
 end
 
 # Looking at the convention used the rotation of the camera around z (roll angle) is undefined
-@test all(isapprox.(taitbryan(deg2rad(10),deg2rad(10),deg2rad(10)), (deg2rad(10),deg2rad(10),0.0)))
-@test all(isapprox.(taitbryan(deg2rad(10),deg2rad(10),deg2rad(30)), (deg2rad(10),deg2rad(10),0.0)))
-@test all(isapprox.(taitbryan(deg2rad(40),deg2rad(0),deg2rad(0)), (deg2rad(40),deg2rad(0),0.0)))
-@test all(isapprox.(taitbryan(deg2rad(76),deg2rad(37.2),deg2rad(30)), (deg2rad(76),deg2rad(37.2),0.0)))
-@test all(isapprox.(taitbryan(deg2rad(-82),deg2rad(-31),deg2rad(10)), (deg2rad(-82),deg2rad(-31),0.0)))
-@test all(isapprox.(taitbryan(deg2rad(0),deg2rad(-37),deg2rad(10)), (deg2rad(0),deg2rad(-37),0.0)))
+@test all(
+    isapprox.(
+        taitbryan(deg2rad(10), deg2rad(10), deg2rad(10)),
+        (deg2rad(10), deg2rad(10), 0.0),
+    ),
+)
+@test all(
+    isapprox.(
+        taitbryan(deg2rad(10), deg2rad(10), deg2rad(30)),
+        (deg2rad(10), deg2rad(10), 0.0),
+    ),
+)
+@test all(
+    isapprox.(
+        taitbryan(deg2rad(40), deg2rad(0), deg2rad(0)),
+        (deg2rad(40), deg2rad(0), 0.0),
+    ),
+)
+@test all(
+    isapprox.(
+        taitbryan(deg2rad(76), deg2rad(37.2), deg2rad(30)),
+        (deg2rad(76), deg2rad(37.2), 0.0),
+    ),
+)
+@test all(
+    isapprox.(
+        taitbryan(deg2rad(-82), deg2rad(-31), deg2rad(10)),
+        (deg2rad(-82), deg2rad(-31), 0.0),
+    ),
+)
+@test all(
+    isapprox.(
+        taitbryan(deg2rad(0), deg2rad(-37), deg2rad(10)),
+        (deg2rad(0), deg2rad(-37), 0.0),
+    ),
+)

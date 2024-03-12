@@ -149,12 +149,12 @@ See the documentation for a graphical rapresentation of each angles.
 All of these angles must be expressed in RADIANS and measured anticlockwise.
 """
 Base.@kwdef struct TelescopeAngles
-    wheel1ang_0_rad :: Float64 = 0.0
-    wheel2ang_0_rad :: Float64 = 0.0
-    wheel3ang_0_rad :: Float64 = 0.0
-    forkang_rad :: Float64 = 0.0
-    ωVAXang_rad :: Float64 = 0.0
-    zVAXang_rad :: Float64 = 0.0
+    wheel1ang_0_rad::Float64 = 0.0
+    wheel2ang_0_rad::Float64 = 0.0
+    wheel3ang_0_rad::Float64 = 0.0
+    forkang_rad::Float64 = 0.0
+    ωVAXang_rad::Float64 = 0.0
+    zVAXang_rad::Float64 = 0.0
 end
 
 """
@@ -178,9 +178,9 @@ transform the pointing direction.
 All of these angles must be expressed in RADIANS and measured anticlockwise.
 """
 Base.@kwdef struct CameraAngles
-    tiltang_rad :: Float64 = 0.0
-    panang_rad :: Float64 = 0.0
-    rollang_rad :: Float64 = 0.0
+    tiltang_rad::Float64 = 0.0
+    panang_rad::Float64 = 0.0
+    rollang_rad::Float64 = 0.0
 end
 
 
@@ -204,7 +204,7 @@ function directiontoangles(dir)
     #y-axis rotation angle
     panang = asin(dir[1])
     #x-axis rotation angle
-    tiltang = - asin(dir[2]/cos(panang))
+    tiltang = -asin(dir[2] / cos(panang))
     #z-azis rotation angle
     rollang = 0.0
     (tiltang, panang, rollang)
@@ -243,7 +243,13 @@ function camtotelescope(cam_ang::CameraAngles)
 end
 
 
-function telescopetoground(wheel1ang, wheel2ang, wheel3ang, telescope_ang::Nothing = nothing, wheels_conf = TelescopeWheelConfig())
+function telescopetoground(
+    wheel1ang,
+    wheel2ang,
+    wheel3ang,
+    telescope_ang::Nothing = nothing,
+    wheels_conf = TelescopeWheelConfig(),
+)
 
     sign1 = wheels_conf.is_wheel1_clockwise ? CLOCKWISE : ANTICLOCKWISE
     sign2 = wheels_conf.is_wheel2_clockwise ? CLOCKWISE : ANTICLOCKWISE
@@ -256,7 +262,13 @@ function telescopetoground(wheel1ang, wheel2ang, wheel3ang, telescope_ang::Nothi
     qwheel3 * (qwheel2 * qwheel1)
 end
 
-function telescopetoground(wheel1ang, wheel2ang, wheel3ang, telescope_ang::TelescopeAngles, wheels_conf = TelescopeWheelConfig())
+function telescopetoground(
+    wheel1ang,
+    wheel2ang,
+    wheel3ang,
+    telescope_ang::TelescopeAngles,
+    wheels_conf = TelescopeWheelConfig(),
+)
 
     sign1 = wheels_conf.is_wheel1_clockwise ? CLOCKWISE : ANTICLOCKWISE
     sign2 = wheels_conf.is_wheel2_clockwise ? CLOCKWISE : ANTICLOCKWISE
@@ -266,11 +278,11 @@ function telescopetoground(wheel1ang, wheel2ang, wheel3ang, telescope_ang::Teles
     qwheel2 = qrotation_y(sign2 * (wheel2ang - telescope_ang.wheel2ang_0_rad))
     qwheel3 = qrotation_z(sign3 * (wheel3ang - telescope_ang.wheel3ang_0_rad))
 
-    qfork = qrotation_x(telescope_ang.forkang_rad)  
+    qfork = qrotation_x(telescope_ang.forkang_rad)
     qwobble = qrotation_wobble(telescope_ang.zVAXang_rad, telescope_ang.ωVAXang_rad)
 
     qwobble * (qwheel3 * (qfork * (qwheel2 * qwheel1)))
-end 
+end
 
 @doc raw"""
     telescopetoground(wheel1ang, wheel2ang, wheel3ang, telescope_ang::Nothing = nothing)
@@ -478,17 +490,19 @@ function quat_to_angles(quat::Quaternion)
 end
 
 # Old version of genpointings that accept beam_dir as a versor (Array) representing the pointing direction
-function genpointings!(wheelanglesfn,
-                       beam_dir,
-                       timerange_s,
-                       dirs,
-                       psi;
-                       polaxis = Float64[1.0, 0.0, 0.0],
-                       latitude_deg = TENERIFE_LATITUDE_DEG,
-                       ground = false,
-                       day_duration_s = 86400.0,
-                       telescope_ang::Union{TelescopeAngles, Nothing} = nothing,
-                       wheels_conf = TelescopeWheelConfig())
+function genpointings!(
+    wheelanglesfn,
+    beam_dir,
+    timerange_s,
+    dirs,
+    psi;
+    polaxis = Float64[1.0, 0.0, 0.0],
+    latitude_deg = TENERIFE_LATITUDE_DEG,
+    ground = false,
+    day_duration_s = 86400.0,
+    telescope_ang::Union{TelescopeAngles,Nothing} = nothing,
+    wheels_conf = TelescopeWheelConfig(),
+)
 
     if ground
         @assert size(dirs, 2) == 4
@@ -499,12 +513,13 @@ function genpointings!(wheelanglesfn,
     end
     @assert size(dirs, 1) == size(psi, 1)
 
-    for (idx, time_s) = enumerate(timerange_s)
-        
+    for (idx, time_s) in enumerate(timerange_s)
+
         (wheel1ang, wheel2ang, wheel3ang) = wheelanglesfn(time_s)
 
         # This converts the RDP into the MCS (ground reference frame)
-        groundq = telescopetoground(wheel1ang, wheel2ang, wheel3ang, telescope_ang, wheels_conf)
+        groundq =
+            telescopetoground(wheel1ang, wheel2ang, wheel3ang, telescope_ang, wheels_conf)
         # This converts the MCS into the celestial reference frame
         quat = groundtoearth(groundq, time_s, latitude_deg; day_duration_s = day_duration_s)
 
@@ -524,17 +539,19 @@ function genpointings!(wheelanglesfn,
 end
 
 # New version of genpointings using CameraAngles
-function genpointings!(wheelanglesfn,
-                       beam_dir::CameraAngles,
-                       timerange_s,
-                       dirs,
-                       psi;
-                       polaxis = Float64[1.0, 0.0, 0.0],
-                       latitude_deg = TENERIFE_LATITUDE_DEG,
-                       ground = false,
-                       day_duration_s = 86400.0,
-                       telescope_ang::Union{TelescopeAngles, Nothing} = nothing,
-                       wheels_conf = TelescopeWheelConfig())
+function genpointings!(
+    wheelanglesfn,
+    beam_dir::CameraAngles,
+    timerange_s,
+    dirs,
+    psi;
+    polaxis = Float64[1.0, 0.0, 0.0],
+    latitude_deg = TENERIFE_LATITUDE_DEG,
+    ground = false,
+    day_duration_s = 86400.0,
+    telescope_ang::Union{TelescopeAngles,Nothing} = nothing,
+    wheels_conf = TelescopeWheelConfig(),
+)
 
     if ground
         @assert size(dirs, 2) == 4
@@ -547,15 +564,17 @@ function genpointings!(wheelanglesfn,
 
     camtotel_quat = camtotelescope(beam_dir)
 
-    for (idx, time_s) = enumerate(timerange_s)
+    for (idx, time_s) in enumerate(timerange_s)
 
         (wheel1ang, wheel2ang, wheel3ang) = wheelanglesfn(time_s)
 
         # This converts the RDP into the MCS (ground reference frame)
-        groundq = telescopetoground(wheel1ang, wheel2ang, wheel3ang, telescope_ang, wheels_conf) * camtotel_quat
+        groundq =
+            telescopetoground(wheel1ang, wheel2ang, wheel3ang, telescope_ang, wheels_conf) *
+            camtotel_quat
         # This converts the MCS into the celestial reference frame
         quat = groundtoearth(groundq, time_s, latitude_deg; day_duration_s = day_duration_s)
-            
+
         θ, ϕ, curpsi = quat_to_angles(quat)
         (dirs[idx, 1], dirs[idx, 2]) = (θ, ϕ)
 
@@ -571,15 +590,17 @@ function genpointings!(wheelanglesfn,
     end
 end
 
-function genpointings(wheelanglesfn,
-                       beam_dir,
-                       timerange_s;
-                       polaxis = Float64[1.0, 0.0, 0.0],
-                       latitude_deg = TENERIFE_LATITUDE_DEG,
-                       ground = false,
-                       day_duration_s = 86400.0,
-                       telescope_ang::Union{TelescopeAngles, Nothing} = nothing,
-                       wheels_conf = TelescopeWheelConfig())
+function genpointings(
+    wheelanglesfn,
+    beam_dir,
+    timerange_s;
+    polaxis = Float64[1.0, 0.0, 0.0],
+    latitude_deg = TENERIFE_LATITUDE_DEG,
+    ground = false,
+    day_duration_s = 86400.0,
+    telescope_ang::Union{TelescopeAngles,Nothing} = nothing,
+    wheels_conf = TelescopeWheelConfig(),
+)
 
     if ground
         dirs = Array{Float64}(undef, length(timerange_s), 4)
@@ -600,37 +621,40 @@ function genpointings(wheelanglesfn,
         ground = ground,
         day_duration_s = day_duration_s,
         telescope_ang = telescope_ang,
-        wheels_conf = wheels_conf
+        wheels_conf = wheels_conf,
     )
 
     (dirs, psi)
 end
 
 # Older version of genpointings using beam_dir::Array representing the pointing direction of the detector
-function genpointings!(wheelanglesfn,
-                       beam_dir,
-                       timerange_s,
-                       t_start::Dates.DateTime,
-                       skydirs,
-                       skypsi;
-                       polaxis = Float64[1.0, 0.0, 0.0],
-                       latitude_deg = TENERIFE_LATITUDE_DEG,
-                       longitude_deg = TENERIFE_LONGITUDE_DEG,
-                       height_m = TENERIFE_HEIGHT_M,
-                       precession = true,
-                       nutation = true,
-                       aberration = true,
-                       refraction = true,
-                       telescope_ang::Union{TelescopeAngles, Nothing} = nothing,
-                       wheels_conf = TelescopeWheelConfig())
+function genpointings!(
+    wheelanglesfn,
+    beam_dir,
+    timerange_s,
+    t_start::Dates.DateTime,
+    skydirs,
+    skypsi;
+    polaxis = Float64[1.0, 0.0, 0.0],
+    latitude_deg = TENERIFE_LATITUDE_DEG,
+    longitude_deg = TENERIFE_LONGITUDE_DEG,
+    height_m = TENERIFE_HEIGHT_M,
+    precession = true,
+    nutation = true,
+    aberration = true,
+    refraction = true,
+    telescope_ang::Union{TelescopeAngles,Nothing} = nothing,
+    wheels_conf = TelescopeWheelConfig(),
+)
 
     @assert size(skydirs, 1) == size(skypsi, 1)
     @assert size(skydirs, 2) == 2
     @assert size(skypsi, 2) == 1
 
-    for (idx, time_s) = enumerate(timerange_s)
+    for (idx, time_s) in enumerate(timerange_s)
         (wheel1ang, wheel2ang, wheel3ang) = wheelanglesfn(time_s)
-        groundq = telescopetoground(wheel1ang, wheel2ang, wheel3ang, telescope_ang, wheels_conf)
+        groundq =
+            telescopetoground(wheel1ang, wheel2ang, wheel3ang, telescope_ang, wheels_conf)
         rotmatr = rotationmatrix_normalized(groundq)
         vector = rotmatr * beam_dir
 
@@ -685,37 +709,43 @@ function genpointings!(
 
     for (idx, time_s) in enumerate(timerange_s)
         (wheel1ang, wheel2ang, wheel3ang) = wheelanglesfn(time_s)
-        groundq = telescopetoground(wheel1ang, wheel2ang, wheel3ang, telescope_ang, wheels_conf) * camtotel_quat
+        groundq =
+            telescopetoground(wheel1ang, wheel2ang, wheel3ang, telescope_ang, wheels_conf) *
+            camtotel_quat
         vector = rotate_zaxis(groundq)
 
         jd = AstroLib.jdcnv(t_start + Dates.Nanosecond(round(Int64, time_s * 1e9)))
-        Dec_rad, Ra_rad = vector2equatorial(vector,
-                                            jd,
-                                            latitude_deg,
-                                            longitude_deg,
-                                            height_m,
-                                            precession,
-                                            nutation,
-                                            aberration,
-                                            refraction)
+        Dec_rad, Ra_rad = vector2equatorial(
+            vector,
+            jd,
+            latitude_deg,
+            longitude_deg,
+            height_m,
+            precession,
+            nutation,
+            aberration,
+            refraction,
+        )
 
         poldir = rotate_xaxis(groundq)
         north = northdir(π / 2 - Dec_rad, Ra_rad)
         east = eastdir(π / 2 - Dec_rad, Ra_rad)
 
-        skydirs[idx, 1] = π/2 - Dec_rad
+        skydirs[idx, 1] = π / 2 - Dec_rad
         skydirs[idx, 2] = Ra_rad
         skypsi[idx] = polarizationangle(north, east, poldir)
     end
 end
 
-function genpointings!(wheelanglesfn,
-                       beam_dir,
-                       timerange_s,
-                       t_start::Number,
-                       skydirs,
-                       skypsi;
-                       kwargs...)
+function genpointings!(
+    wheelanglesfn,
+    beam_dir,
+    timerange_s,
+    t_start::Number,
+    skydirs,
+    skypsi;
+    kwargs...,
+)
     genpointings!(
         wheelanglesfn,
         beam_dir,
