@@ -1,5 +1,4 @@
 import Stripeline
-const Sl = Stripeline
 
 db = Sl.InstrumentDB(joinpath(dirname(pathof(Stripeline)), "..", "instrumentdb"))
 
@@ -16,17 +15,17 @@ defaultdb = Sl.InstrumentDB()
 
 # Check the high-level API
 
-@test Sl.detector(defaultdb, "I0") != nothing
-@test Sl.detector(defaultdb, 2) != nothing
+@test !isnothing(Sl.detector(defaultdb, "I0"))
+@test !isnothing(Sl.detector(defaultdb, 2))
 
-@test Sl.spectrum(defaultdb, 2) != nothing
-@test Sl.spectrum(defaultdb, "I0") != nothing
+@test !isnothing(Sl.spectrum(defaultdb, 2))
+@test !isnothing(Sl.spectrum(defaultdb, "I0"))
 
-@test Sl.tnoise(defaultdb, 2) != nothing
-@test Sl.tnoise(defaultdb, "I0") != nothing
+@test !isnothing(Sl.tnoise(defaultdb, 2))
+@test !isnothing(Sl.tnoise(defaultdb, "I0"))
 
-@test Sl.bandpass(defaultdb, 2) != nothing
-@test Sl.bandpass(defaultdb, "I0") != nothing
+@test !isnothing(Sl.bandpass(defaultdb, 2))
+@test !isnothing(Sl.bandpass(defaultdb, "I0"))
 
 x, y = Sl.bandshape(defaultdb, "I0")
 @test length(x) > 0
@@ -37,6 +36,8 @@ f2_i, f2_q, f2_u = Sl.fknee_hz(defaultdb, 10, tsys_k = 1000.0)
 
 @test f2_q < f1_q
 @test f2_u < f1_u
+
+@test noise_k2_hz(Float64[1.0, 2.0, 3.0], 0.3) ≈ 22.302253752866864
 
 # Just a few basic checks, to verify that the function does not crash
 (sensitivity, num) = Sl.sensitivity_tant(defaultdb, 10.0)

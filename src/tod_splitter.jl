@@ -10,7 +10,7 @@ using FITSIO
 try
     import MPI
 catch
-end 
+end
 
 
 """
@@ -32,128 +32,134 @@ will correspond to the following structure:
 datachunk(2, 3, 5, 3)
 """
 struct datachunk
-    pol_number ::Int
+    pol_number::Int
     first_idx::Int
     last_idx::Int
     num_of_elements::Int
-end 
+end
 
 
 """
     function split_tod_mpi(total_time, baseline_length_s, baselines_per_process, num_of_MPI_proc)
            
-        This function can be used to split the TOD production of many polarimeters among MPI processes.
+This function can be used to split the TOD production of many polarimeters among MPI processes.
 
-        It requires in input:
+It requires in input:
 
-        -the total time (in seconds) of the simulated observation 
-        -the length (in seconds) of each 1/f noise baseline
-        -the array containing the number of 1/f baselines to simulate for each process.
-            It can be obtained by using the function `plit_into_n` in the following way:
+-   the total time (in seconds) of the simulated observation 
+-   the length (in seconds) of each 1/f noise baseline
+-   the array containing the number of 1/f baselines to simulate for each process.
 
-            split_into_n(num_of_polarimeters*baselines_per_pol, num_of_MPI_proc)
-                
-            where baselines_per_pol = Int64(total_time/baseline_length_s) is the number of baselines of each polarimeter
+    This can be obtained by using the function `plit_into_n` in the following way:
+    
+        split_into_n(num_of_polarimeters * baselines_per_pol, num_of_MPI_proc)
+            
+    where baselines_per_pol = Int64(total_time/baseline_length_s) is the number of baselines of each polarimeter
 
-        -the number of MPI processes used
+- the number of MPI processes used
 
-        It returns an array of arrays of `datachunk` instances, of length == num_of_MPI_proc
-        where each element tells the chunk of data that each process should simulate (see Example) 
+The function returns an array of arrays of `datachunk` instances, of length == num_of_MPI_proc
+where each element tells the chunk of data that each process should simulate (see Example) 
 
-        # Example
-        ```julia-repl
-        julia> num_of_polarimeters = 4
-        julia> num_of_MPI_proc = 3
-        julia> total_time = 50
-        julia> baseline_length_s = 10
-        julia> baselines_per_pol = Int64(total_time/baseline_length_s)
-        5
+# Example
+```julia-repl
+julia> num_of_polarimeters = 4
+julia> num_of_MPI_proc = 3
+julia> total_time = 50
+julia> baseline_length_s = 10
+julia> baselines_per_pol = Int64(total_time/baseline_length_s)
+5
 
-        julia> baselines_per_process = split_into_n(20, 3)
-        3-element Array{Int64,1}:
-        6
-        7
-        7
+julia> baselines_per_process = split_into_n(20, 3)
+3-element Array{Int64,1}:
+6
+7
+7
 
-        julia> chunks = split_tod_mpi(total_time, baseline_length_s, baselines_per_process, num_of_MPI_proc)
-        3-element Array{Any,1}:
-        Any[datachunk(1, 1, 5, 5), datachunk(2, 1, 1, 1)]
-        Any[datachunk(2, 2, 5, 4), datachunk(3, 1, 3, 3)]
-        Any[datachunk(3, 4, 5, 2), datachunk(4, 1, 5, 5)]
-        ```
+julia> chunks = split_tod_mpi(total_time, baseline_length_s, baselines_per_process, num_of_MPI_proc)
+3-element Array{Any,1}:
+Any[datachunk(1, 1, 5, 5), datachunk(2, 1, 1, 1)]
+Any[datachunk(2, 2, 5, 4), datachunk(3, 1, 3, 3)]
+Any[datachunk(3, 4, 5, 2), datachunk(4, 1, 5, 5)]
+```
 
-        which means:
+which means:
 
-        - process number 0 should simulate: 
-        polarimeter number 1 from baseline 1 to baseline 5,  total number of baselines = 5
-        polarimeter number 2 from baseline 1 to baseline 1 , total number of baselines = 1
+- process number 0 should simulate: 
+  #. polarimeter number 1 from baseline 1 to baseline 5,  total number of baselines = 5
+  #. polarimeter number 2 from baseline 1 to baseline 1 , total number of baselines = 1
 
-        - process number 1 should simulate: 
-        polarimeter number 2 from baseline 2 to baseline 5,  total number of baselines = 4
-        polarimeter number 3 from baseline 1 to baseline 3 , total number of baselines = 3
+- process number 1 should simulate: 
+  #. polarimeter number 2 from baseline 2 to baseline 5,  total number of baselines = 4
+  #. polarimeter number 3 from baseline 1 to baseline 3 , total number of baselines = 3
 
-        - process number 2 should simulate: 
-        polarimeter number 3 from baseline 4 to baseline 5,  total number of baselines = 2
-        polarimeter number 4 from baseline 1 to baseline 5,  total number of baselines = 5
+- process number 2 should simulate: 
+  #. polarimeter number 3 from baseline 4 to baseline 5,  total number of baselines = 2
+  #. polarimeter number 4 from baseline 1 to baseline 5,  total number of baselines = 5
 
 """
-function split_tod_mpi(total_time, baseline_length_s, baselines_per_process, num_of_MPI_proc)
+function split_tod_mpi(
+    total_time,
+    baseline_length_s,
+    baselines_per_process,
+    num_of_MPI_proc,
+)
 
-    duration = Int64(total_time/baseline_length_s)
+    duration = floor(Int64, total_time / baseline_length_s)
 
     #initialization
     detector_num = 1
     sample_idx = 0
     samples_in_det = duration
     result = []
-    
-    for rank_num in 0:(num_of_MPI_proc-1)  #loop on MPI processes
-        
+
+    for rank_num = 0:(num_of_MPI_proc-1)  #loop on MPI processes
+
         samples_for_this_process = baselines_per_process[rank_num+1]
         samples_left = samples_for_this_process
         data_this_rank = []
-        
+
         while samples_left > 0  #loop on detectors
-        
+
             #if the current detector has more samples than needed to fill the current MPI process
             if samples_in_det > samples_left
-                
-                first_idx = sample_idx+1
-                last_idx = sample_idx+samples_left
+
+                first_idx = sample_idx + 1
+                last_idx = sample_idx + samples_left
                 data = datachunk(detector_num, first_idx, last_idx, samples_left)
                 data_this_rank = append!(data_this_rank, [data])
-                
+
                 sample_idx = sample_idx + samples_left
                 samples_in_det = samples_in_det - samples_left
-                samples_left = 0 
-            
-            #if the current detector has not enough samples to provide the current MPI process 
-            #with the required number of samples. In this case we need to increase "detector_num" before the next iteration
-            else 
-                
-                first_idx = sample_idx+1
-                last_idx = sample_idx+samples_in_det
+                samples_left = 0
+
+                #if the current detector has not enough samples to provide the current MPI process 
+                #with the required number of samples. In this case we need to increase "detector_num" before the next iteration
+            else
+
+                first_idx = sample_idx + 1
+                last_idx = sample_idx + samples_in_det
                 data = datachunk(detector_num, first_idx, last_idx, samples_in_det)
                 data_this_rank = append!(data_this_rank, [data])
-               
+
                 samples_left = samples_left - samples_in_det
                 samples_in_det = 0
             end
-            
+
             if samples_in_det == 0
-                detector_num +=1
+                detector_num += 1
                 sample_idx = 0
-                samples_in_det = duration 
+                samples_in_det = duration
             end
-        
-        end   
-        
+
+        end
+
         result = append!(result, [data_this_rank])
-        
-    end 
-        
+
+    end
+
     return result
-    
+
 end
 
 """
@@ -193,20 +199,20 @@ end
           with a total of 3 1/f baselines and 300 samples.
 
     """
-    function get_chunk_properties(chunks, baseline_length_s, fsamp_hz, rank)
+function get_chunk_properties(chunks, baseline_length_s, fsamp_hz, rank)
 
-        this_rank_chunk = chunks[rank+1]
-        first_time, last_time = [Array{Float64}(undef, length(this_rank_chunk)) for i in (1:2)]
-        detector_number, num_of_baselines, baseline_len, num_of_samples = [Array{Int64}(undef, length(this_rank_chunk)) for i in (1:4)]
-    
-        for i in 1:length(this_rank_chunk)
-            detector_number[i] = this_rank_chunk[i].pol_number
-            first_time[i] = (this_rank_chunk[i].first_idx-1)*baseline_length_s
-            last_time[i] = this_rank_chunk[i].last_idx*baseline_length_s -0.99*(1/fsamp_hz)
-            num_of_baselines[i] =  this_rank_chunk[i].num_of_elements
-            num_of_samples[i] = num_of_baselines[i]*baseline_length_s*fsamp_hz  
-        end
-        return (detector_number, first_time, last_time, num_of_baselines, num_of_samples)
+    this_rank_chunk = chunks[rank+1]
+    first_time, last_time = [Array{Float64}(undef, length(this_rank_chunk)) for i in (1:2)]
+    detector_number, num_of_baselines, baseline_len, num_of_samples =
+        [Array{Int64}(undef, length(this_rank_chunk)) for i in (1:4)]
+
+    for i in eachindex(this_rank_chunk)
+        detector_number[i] = this_rank_chunk[i].pol_number
+        first_time[i] = (this_rank_chunk[i].first_idx - 1) * baseline_length_s
+        last_time[i] =
+            this_rank_chunk[i].last_idx * baseline_length_s - 0.99 * (1 / fsamp_hz)
+        num_of_baselines[i] = this_rank_chunk[i].num_of_elements
+        num_of_samples[i] = num_of_baselines[i] * baseline_length_s * fsamp_hz
     end
-    
-
+    return (detector_number, first_time, last_time, num_of_baselines, num_of_samples)
+end

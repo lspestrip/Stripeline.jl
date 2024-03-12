@@ -184,7 +184,7 @@ Base.@kwdef struct CameraAngles
 end
 
 
-# FUNCITONS
+# FUNCTIONS
 
 
 """
@@ -308,6 +308,7 @@ end
 """
 telescopetoground
 
+
 """
     groundtoearth(groundq, time_s, latitude_deg; day_duration_s=86400.0)
 
@@ -342,22 +343,33 @@ is positive) and the height (in meters) of the location where the observation is
 made. The parameters `prec`, `nut` and `aber` allow to consider secondary effects
 respectively of precession, nutation and aberration.
 """
-function vector2equatorial(vector, jd, latitude_deg, longitude_deg, height_m,
-                           prec, nut, aber, ref)
+function vector2equatorial(
+    vector,
+    jd,
+    latitude_deg,
+    longitude_deg,
+    height_m,
+    prec,
+    nut,
+    aber,
+    ref,
+)
     (θ, ϕ) = Healpix.vec2ang(vector...)
     alt_rad = π / 2 - θ
     az_rad = 2π - ϕ
 
-    ra_deg, dec_deg, _ = AstroLib.hor2eq(rad2deg(alt_rad),
-                                         rad2deg(az_rad),
-                                         jd,
-                                         latitude_deg,
-                                         longitude_deg,
-                                         height_m,
-                                         precession = prec,
-                                         nutate = nut,
-                                         aberration = aber,
-                                         refract = ref)
+    ra_deg, dec_deg, _ = AstroLib.hor2eq(
+        rad2deg(alt_rad),
+        rad2deg(az_rad),
+        jd,
+        latitude_deg,
+        longitude_deg,
+        height_m,
+        precession = prec,
+        nutate = nut,
+        aberration = aber,
+        refract = ref,
+    )
     (deg2rad(dec_deg), deg2rad(ra_deg))
 end
 
@@ -495,7 +507,7 @@ function genpointings!(wheelanglesfn,
         groundq = telescopetoground(wheel1ang, wheel2ang, wheel3ang, telescope_ang, wheels_conf)
         # This converts the MCS into the celestial reference frame
         quat = groundtoearth(groundq, time_s, latitude_deg; day_duration_s = day_duration_s)
-            
+
         θ, ϕ, curpsi = quat_to_angles(beam_dir, polaxis, quat)
         (dirs[idx, 1], dirs[idx, 2]) = (θ, ϕ)
 
@@ -623,21 +635,23 @@ function genpointings!(wheelanglesfn,
         vector = rotmatr * beam_dir
 
         jd = AstroLib.jdcnv(t_start + Dates.Nanosecond(round(Int64, time_s * 1e9)))
-        Dec_rad, Ra_rad = vector2equatorial(vector,
-                                            jd,
-                                            latitude_deg,
-                                            longitude_deg,
-                                            height_m,
-                                            precession,
-                                            nutation,
-                                            aberration,
-                                            refraction)
+        Dec_rad, Ra_rad = vector2equatorial(
+            vector,
+            jd,
+            latitude_deg,
+            longitude_deg,
+            height_m,
+            precession,
+            nutation,
+            aberration,
+            refraction,
+        )
 
         poldir = rotmatr * polaxis
         north = northdir(π / 2 - Dec_rad, Ra_rad)
         east = eastdir(π / 2 - Dec_rad, Ra_rad)
 
-        skydirs[idx, 1] = π/2 - Dec_rad
+        skydirs[idx, 1] = π / 2 - Dec_rad
         skydirs[idx, 2] = Ra_rad
         skypsi[idx] = polarizationangle(north, east, poldir)
     end
@@ -707,41 +721,34 @@ function genpointings!(wheelanglesfn,
         AstroLib.daycnv(t_start)::Dates.DateTime,
         skydirs,
         skypsi,
-        kwargs...)
+        kwargs...,
+    )
 end
 
-function genpointings(wheelanglesfn,
-                      beam_dir,
-                      timerange_s,
-                      t_start::Dates.DateTime;
-                      kwargs...)
+function genpointings(
+    wheelanglesfn,
+    beam_dir,
+    timerange_s,
+    t_start::Dates.DateTime;
+    kwargs...,
+)
 
     skydirs = Array{Float64}(undef, length(timerange_s), 2)
     skypsi = Array{Float64}(undef, length(timerange_s))
 
-    genpointings!(
-        wheelanglesfn,
-        beam_dir,
-        timerange_s,
-        t_start,
-        skydirs,
-        skypsi;
-        kwargs...)
+    genpointings!(wheelanglesfn, beam_dir, timerange_s, t_start, skydirs, skypsi; kwargs...)
 
     (skydirs, skypsi)
 end
 
-function genpointings(wheelanglesfn,
-                       beam_dir,
-                       timerange_s,
-                       t_start::Number;
-                       kwargs...)
+function genpointings(wheelanglesfn, beam_dir, timerange_s, t_start::Number; kwargs...)
     genpointings(
         wheelanglesfn,
         beam_dir,
         timerange_s,
         AstroLib.daycnv(t_start)::Dates.DateTime;
-        kwargs...)
+        kwargs...,
+    )
 end
 
 

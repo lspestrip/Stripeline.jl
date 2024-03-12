@@ -99,7 +99,11 @@ Detector
 BandshapeInfo
 bandshape
 SpectrumInfo
+NoiseFitParams
 NoiseTemperatureInfo
+oof_noise_k2_hz
+white_noise_k2_hz
+noise_k2_hz
 ```
 
 ## High-level access functions

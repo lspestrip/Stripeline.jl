@@ -31,34 +31,38 @@ vector = Float64[Healpix.ang2vec(dirs...)...]
 dir = inv(rotmatr) * vector
 
 # Compute skydirs
-(skydirs, skyψ) = genpointings(_ -> (0, deg2rad(20), 0),
-                               dir,
-                               [0],
-                               t_start,
-                               latitude_deg = TEST_TENERIFE_LATITUDE_DEG,
-                               longitude_deg = TEST_TENERIFE_LONGITUDE_DEG,
-                               height_m = TEST_TENERIFE_HEIGHT_M,
-                               precession = true,
-                               nutation = true,
-                               aberration = true,
-                               refraction = true)
-crab_position_skydirs = sqrt((π/2 - skydirs[1])^2 + skydirs[2]^2)
-@test skydirs[1] ≈ π/2 - crab_dec_astropy_rad atol = eps
+(skydirs, skyψ) = genpointings(
+    _ -> (0, deg2rad(20), 0),
+    dir,
+    [0],
+    t_start,
+    latitude_deg = TEST_TENERIFE_LATITUDE_DEG,
+    longitude_deg = TEST_TENERIFE_LONGITUDE_DEG,
+    height_m = TEST_TENERIFE_HEIGHT_M,
+    precession = true,
+    nutation = true,
+    aberration = true,
+    refraction = true,
+)
+crab_position_skydirs = sqrt((π / 2 - skydirs[1])^2 + skydirs[2]^2)
+@test skydirs[1] ≈ π / 2 - crab_dec_astropy_rad atol = eps
 @test skydirs[2] ≈ crab_ra_astropy_rad atol = eps
 @test crab_position_skydirs ≈ crab_position atol = eps
 
 # Check that Julian dates work too
-(skydirs_jd, skyψ_jd) = genpointings(_ -> (0, deg2rad(20), 0),
-                                     dir,
-                                     [0],
-                                     jdcnv(t_start),
-                                     latitude_deg = TEST_TENERIFE_LATITUDE_DEG,
-                                     longitude_deg = TEST_TENERIFE_LONGITUDE_DEG,
-                                     height_m = TEST_TENERIFE_HEIGHT_M,
-                                     precession = true,
-                                     nutation = true,
-                                     aberration = true,
-                                     refraction = true)
+(skydirs_jd, skyψ_jd) = genpointings(
+    _ -> (0, deg2rad(20), 0),
+    dir,
+    [0],
+    jdcnv(t_start),
+    latitude_deg = TEST_TENERIFE_LATITUDE_DEG,
+    longitude_deg = TEST_TENERIFE_LONGITUDE_DEG,
+    height_m = TEST_TENERIFE_HEIGHT_M,
+    precession = true,
+    nutation = true,
+    aberration = true,
+    refraction = true,
+)
 
 @test skydirs_jd[:] ≈ skydirs[:]
 @test skyψ_jd[:] ≈ skyψ[:]
@@ -69,9 +73,11 @@ t_3 = DateTime(2019, 02, 03, 2, 0, 0)
 
 days = [t_1, t_2, t_3]
 
-dirs = [π / 2 - 0.6174703397894518 2π - 4.852881197778698 ;
-        π / 2 - 0.6024799007695448 2π - 4.859519751514131 ;
-        π / 2 - 0.5875049757874335 2π - 4.866139397516001]
+dirs = [
+    π/2-0.6174703397894518 2π-4.852881197778698
+    π/2-0.6024799007695448 2π-4.859519751514131
+    π/2-0.5875049757874335 2π-4.866139397516001
+]
 
 # Invert crab coordinates into telescope pointing directions
 skydirs = Array{Float64}(undef, 3, 2)
@@ -98,13 +104,13 @@ for (idx, day) in enumerate(days)
     skydirs[idx, 2] = skydirections[2]
 end
 
-crab_position_skydirs = sqrt.((π/2 .- skydirs[:, 1]).^2 + skydirs[:, 2].^2)
+crab_position_skydirs = sqrt.((π / 2 .- skydirs[:, 1]) .^ 2 + skydirs[:, 2] .^ 2)
 
-@test skydirs[1, 1] ≈ π/2 - crab_dec_astropy_rad atol = eps
+@test skydirs[1, 1] ≈ π / 2 - crab_dec_astropy_rad atol = eps
 @test skydirs[1, 2] ≈ crab_ra_astropy_rad atol = eps
-@test skydirs[2, 1] ≈ π/2 - crab_dec_astropy_rad atol = eps
+@test skydirs[2, 1] ≈ π / 2 - crab_dec_astropy_rad atol = eps
 @test skydirs[2, 2] ≈ crab_ra_astropy_rad atol = eps
-@test skydirs[3, 1] ≈ π/2 - crab_dec_astropy_rad atol = eps
+@test skydirs[3, 1] ≈ π / 2 - crab_dec_astropy_rad atol = eps
 @test skydirs[3, 2] ≈ crab_ra_astropy_rad atol = eps
 @test crab_position_skydirs[1] ≈ crab_position atol = eps
 @test crab_position_skydirs[2] ≈ crab_position atol = eps
@@ -130,10 +136,12 @@ expected_nsamples = convert(Int, time_duration * sampling_rate + 1)
 @test size(dirs) == (expected_nsamples, 2)
 @test size(ψ) == (expected_nsamples,)
 
-(dirs, ψ) = genpointings(db.focalplane["I0"].orientation,
-                         times;
-                         ground = true,
-                         latitude_deg = TEST_TENERIFE_LATITUDE_DEG) do time_s
+(dirs, ψ) = genpointings(
+    db.focalplane["I0"].orientation,
+    times;
+    ground = true,
+    latitude_deg = TEST_TENERIFE_LATITUDE_DEG,
+) do time_s
     (0, deg2rad(20.0), Sl.timetorotang(time_s, spin_velocity))
 end
 
@@ -142,7 +150,7 @@ expected_nsamples = convert(Int, time_duration * sampling_rate + 1)
 @test size(ψ) == (expected_nsamples, 2)
 
 # Check that all the values in the 3rd column are the same
-@test dirs[1:end - 1, 3] ≈ dirs[2:end, 3]
+@test dirs[1:end-1, 3] ≈ dirs[2:end, 3]
 
 # We strive for an accuracy of a few arcseconds
 @test rad2deg(dirs[1, 3]) ≈ 20.0 atol = 1e-3
@@ -155,7 +163,7 @@ let defaultdb = InstrumentDB()
     wheelfn(time_s) = (0, deg2rad(20), Stripeline.timetorotang(time_s, 1))
 
     # We do not start from t = 0s because we want the longitude to be positive
-    timerange = 7200:1:(7200 + 60)
+    timerange = 7200:1:(7200+60)
     G0_vec = defaultdb.focalplane["G0"].orientation
     V0_vec = defaultdb.focalplane["V0"].orientation
     G0_ang = directiontoangles(G0_vec)

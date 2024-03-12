@@ -19,10 +19,12 @@ they output *eight* series:
 -   Four series are called *`DEM` series*: `DEM_Q1`,
     `DEM_Q2`, `DEM_U1`, and `DEM_U2`.
     
-Each of these series is sampled at 100 Hz and contains scientific
-data; the raw instrument represents them as integer numbers, but
-Stripeline usually assumes they have already been calibrated to Kelvin
-and therefore uses floating-point numbers.
+Each of these series is sampled at 50 Hz and contains scientific data
+(in the preliminary unit tests done in 2017, the sampling frequency
+was 25 Hz; keep this in mind if you happen to replicate some returns
+of those ancient tests!); the raw instrument represents them as
+integer numbers, but Stripeline usually assumes they have already been
+calibrated to Kelvin and therefore uses floating-point numbers.
 
 A TOD is represented by the structure [`StripTod`](@ref), which
 contains the following fields:
@@ -33,7 +35,7 @@ contains the following fields:
     polarimeters) or a list of strings, e.g., `["I0", "I3", "V2"]`.
 -   `time_range`: a range representing the time of each sample in the
     TOD. Very common choices for this are floating-point ranges like
-    `0.0:(1 / 100):100.0` (100 s sampled at 100 Hz) and ranges of
+    `0.0:(1 / 50):100.0` (100 s sampled at 50 Hz) and ranges of
     astronomical times, created using the
     [AstroTime](https://juliaastro.github.io/AstroTime.jl/stable/)
     package.
@@ -51,8 +53,8 @@ Allocating the TOD is a matter of calling the function
 ```@example tods
 using Stripeline
 
-# One minute of data, 10 polarimeters
-tod = allocate_tod(Float32, 0.0:(1.0 / 100.0):60.0, 1:10)
+# One minute of data sampled at 50 Hz, 10 polarimeters
+tod = allocate_tod(StripTod, Float32, 0.0:(1.0 / 50.0):60.0, 1:10)
 ```
 
 In a MPI environment, you can pass the keywords `mpi_rank` and
@@ -111,4 +113,59 @@ demq1
 demq2
 demu1
 demu2
+```
+
+
+# I/Q/U TODs
+
+The scientific information kept in a [`StripTod`](@ref) variable is
+encoded in eight timelines (PWR_Q1`, `PWR_Q2`, `PWR_U1`, `PWR_U2`,
+`DEM_Q1`, `DEM_Q2`, `DEM_U1`, `DEM_U2`), but most of the information
+in these timelines is redundant and is essentially
+correlated/uncorrelated noise.
+
+The eight timelines can be combined to provide a direct estimate of
+the four Stokes parameters ``I``, ``Q``, and ``U`` in the reference
+frame of the detector, using these formulae:
+
+```math
+\begin{aligned}
+I &= \frac{\text{PWRQ1} + \text{PWRQ2} + \text{PWRU1} + \text{PWRU2}}4,\\
+Q &= \frac{\text{PWRQ1} - \text{PWRQ2}}2,\\
+U &= \frac{\text{PWRU1} - \text{PWRU2}}2.
+\end{aligned}
+```
+
+The three ``I``/``Q``/``U`` timelines can be stored in a
+[`StokesTod`](@ref) variable, which behaves exactly like a
+[`StripTod`](@ref) but only contains three timeseries instead of
+eight. To allocate it, you can use [`allocate_tod`](@ref) again,
+passing a [`StokesTod`](@ref) parameter:
+
+```@example tods
+stokestod = allocate_tod(StokesTod, Float32, 0.0:(1.0 / 50.0):60.0, 1:10)
+```
+
+Or you can compute it starting from a [`StokesTod`](@ref) variable:
+
+```@example tods
+stokestod = stokes(tod)
+```
+
+The latter call works out-of-the-box in a MPI environment, of course.
+You can access the ``I``/``Q``/``U`` timelines either using the
+explicit indexes [`STOKES_I_RANK`](@ref), [`STOKES_Q_RANK`](@ref),
+[`STOKES_U_RANK`](@ref), or the three functions [`stokesi`](@ref),
+[`stokesq`](@ref), [`stokesu`](@ref), similarly to what was described
+above for [`StripTod`](@ref).
+
+```@docs
+StokesTod
+stokes
+STOKES_I_RANK
+STOKES_Q_RANK
+STOKES_U_RANK
+stokesi
+stokesq
+stokesu
 ```

@@ -1,8 +1,12 @@
 # HEAD
 
--   Implemented pointing reconstruction model [#55](https://github.com/lspestrip/Stripeline.jl/pull/55)
+-   Improve the code layout and enforce the default formatting provided by [JuliaFormatter](https://github.com/domluna/JuliaFormatter.jl) [#65](https://github.com/lspestrip/Stripeline.jl/pull/65)
+-   Bump the requirement on the minimum Julia version from 1.3 to 1.6 [#64](https://github.com/lspestrip/Stripeline.jl/pull/64)
+-   Prevent crashes in the destriper [#63](https://github.com/lspestrip/Stripeline.jl/pull/63)
+-   Implement the pointing reconstruction model [#55](https://github.com/lspestrip/Stripeline.jl/pull/55)
 -   Fix dependency on Documenter.jl [#59](https://github.com/lspestrip/Stripeline.jl/pull/59), [#60](https://github.com/lspestrip/Stripeline.jl/pull/60)
 -   Fix issue [#56](https://github.com/lspestrip/Stripeline.jl/issues/56) (wrong pointings with Julian dates) [#58](https://github.com/lspestrip/Stripeline.jl/pull/58)
+-   Implement a faster way to inject noise in TODs ([#52](https://github.com/lspestrip/Stripeline.jl/pull/52))
 -   Stop testing `nightly` Julia [#57](https://github.com/lspestrip/Stripeline.jl/pull/57)
 -   Implement a new structure for TOD (`StripTod`) and a new function (`allocate_tod`) to allocate them efficiently even when using MPI ([#50](https://github.com/lspestrip/Stripeline.jl/pull/50))
 -   Make the destriper more robust against numeric types ([#49](https://github.com/lspestrip/Stripeline.jl/pull/49))

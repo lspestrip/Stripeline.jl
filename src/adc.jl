@@ -59,7 +59,16 @@ mutable struct ADC
         min_output_adu = -2^19,
         max_output_adu = 2^19,
         non_linearities_x_adu = Float64[],
-        non_linearities_y_adu = Float64[]) = new(offset_k, gain_k_over_adu, zero_point_adu, min_output_adu, max_output_adu, non_linearities_x_adu, non_linearities_y_adu)
+        non_linearities_y_adu = Float64[],
+    ) = new(
+        offset_k,
+        gain_k_over_adu,
+        zero_point_adu,
+        min_output_adu,
+        max_output_adu,
+        non_linearities_x_adu,
+        non_linearities_y_adu,
+    )
 end
 
 @doc raw"""
@@ -83,10 +92,18 @@ The function accepts the following keywords:
 - `non_linearities_y_adu`: same parameter used in the constructor for `ADC`
 
 """
-function optimized_adc(; min_input_k = 0.0, max_input_k = 100.0, dynamic_range = 0.35, nbits = 20, non_linearities_x_adu = Float64[], non_linearities_y_adu = Float64[])
+function optimized_adc(;
+    min_input_k = 0.0,
+    max_input_k = 100.0,
+    dynamic_range = 0.35,
+    nbits = 20,
+    non_linearities_x_adu = Float64[],
+    non_linearities_y_adu = Float64[],
+)
     min_output_adu = -2^(nbits - 1)
     max_output_adu = 2^(nbits - 1)
-    ADC(offset_k = -min_input_k,
+    ADC(
+        offset_k = -min_input_k,
         gain_k_over_adu = (max_input_k - min_input_k) / (2^nbits),
         zero_point_adu = min_output_adu,
         min_output_adu = min_output_adu,
@@ -107,7 +124,7 @@ See also [`adc_inv_response`](@ref) for the (pseudo)inverse function.
 """
 function adc_response(adc::ADC, input_k; include_non_linearities = true)
     output = adc.gain_k_over_adu * (input_k - adc.offset_k) + adc.zero_point_adu
-    
+
     # Let's use some shorthands here
     x = adc.non_linearities_x_adu
     y = adc.non_linearities_y_adu
@@ -119,16 +136,13 @@ function adc_response(adc::ADC, input_k; include_non_linearities = true)
                 y[idx]
             else
                 # Interpolate between idx and idx + 1
-                y[idx] + (output - x[idx]) * (y[idx] - y[idx + 1]) / (x[idx] - x[idx + 1])
+                y[idx] + (output - x[idx]) * (y[idx] - y[idx+1]) / (x[idx] - x[idx+1])
             end
             output += δ
         end
     end
 
-    clamp(round(Int, output),
-        adc.min_output_adu, 
-        adc.max_output_adu,
-    )
+    clamp(round(Int, output), adc.min_output_adu, adc.max_output_adu)
 end
 
 @doc raw"""
