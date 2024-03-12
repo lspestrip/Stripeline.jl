@@ -123,8 +123,8 @@ Return a `3-element Vector{Float64}` representing the x-axis
 """
 function rotate_xaxis(q::Quaternion)
     Float64[
-        1.0 - 2. * (q.v2*q.v2 + q.v3*q.v3),
-        2. * (q.v1 * q.v2 + q.s * q.v3),
-        2. * (q.v1 * q.v3 - q.s * q.v2)
+        1.0-2.0*(q.v2*q.v2+q.v3*q.v3),
+        2.0*(q.v1*q.v2+q.s*q.v3),
+        2.0*(q.v1*q.v3-q.s*q.v2),
     ]
 end
