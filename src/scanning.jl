@@ -658,22 +658,24 @@ function genpointings!(wheelanglesfn,
 end
 
 # New version using CameraAngles
-function genpointings!(wheelanglesfn,
-                       beam_dir::CameraAngles,
-                       timerange_s,
-                       t_start::Dates.DateTime,
-                       skydirs,
-                       skypsi;
-                       polaxis = Float64[1.0, 0.0, 0.0],
-                       latitude_deg = TENERIFE_LATITUDE_DEG,
-                       longitude_deg = TENERIFE_LONGITUDE_DEG,
-                       height_m = TENERIFE_HEIGHT_M,
-                       precession = true,
-                       nutation = true,
-                       aberration = true,
-                       refraction = true,
-                       telescope_ang::Union{TelescopeAngles, Nothing} = nothing,
-                       wheels_conf = TelescopeWheelConfig())
+function genpointings!(
+    wheelanglesfn,
+    beam_dir::CameraAngles,
+    timerange_s,
+    t_start::Dates.DateTime,
+    skydirs,
+    skypsi;
+    polaxis = Float64[1.0, 0.0, 0.0],
+    latitude_deg = TENERIFE_LATITUDE_DEG,
+    longitude_deg = TENERIFE_LONGITUDE_DEG,
+    height_m = TENERIFE_HEIGHT_M,
+    precession = true,
+    nutation = true,
+    aberration = true,
+    refraction = true,
+    telescope_ang::Union{TelescopeAngles,Nothing} = nothing,
+    wheels_conf = TelescopeWheelConfig(),
+)
 
     @assert size(skydirs, 1) == size(skypsi, 1)
     @assert size(skydirs, 2) == 2
