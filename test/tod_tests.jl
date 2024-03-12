@@ -1,6 +1,4 @@
 using AstroTime
-import Stripeline
-const Sl = Stripeline
 import Statistics: cov
 
 function test_split_into_n()
@@ -44,7 +42,8 @@ function test_allocate_tod(time_range)
     @test sum([length(cur_tod.time_range) for cur_tod in tods]) == length(time_range)
 
     # Check that there are no overlaps between consecutive TODs
-    for i = 2:length(tods)
+    for i in eachindex(tods)
+        i == firstindex(tods) && continue
         @test maximum(tods[i-1].time_range) < minimum(tods[i].time_range)
     end
 

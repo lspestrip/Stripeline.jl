@@ -1,6 +1,7 @@
 using Test
 using Stripeline
 using Documenter
+const Sl = Stripeline
 
 @testset "Doctests" begin
     DocMeta.setdocmeta!(Stripeline, :DocTestSetup, :(using Stripeline); recursive = true)

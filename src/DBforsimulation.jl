@@ -41,7 +41,7 @@ function get_info_from_DB(db, horns, stokes)
     measured_fknees = Float64[]
     measured_slopes = Float64[]
 
-    for i = 1:length(horns)
+    for i in eachindex(horns)
         polarimeters[i] = db.focalplane[horns[i]].polid
         if (db.detectors[polarimeters[i]].spectrum.fknee_q_hz != 0)
             if stokes == "Q"
@@ -59,7 +59,7 @@ function get_info_from_DB(db, horns, stokes)
     end
     rng = Random.MersenneTwister(1234)
 
-    for i = 1:length(horns)
+    for i in eachindex(horns)
         append!(orientations, [db.focalplane[horns[i]].orientation])
         β_hz[i] = db.detectors[polarimeters[i]].bandshape.bandwidth_hz
         tnoise_k[i] = db.detectors[polarimeters[i]].tnoise.tnoise_k

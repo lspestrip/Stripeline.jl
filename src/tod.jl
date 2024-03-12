@@ -249,7 +249,7 @@ function allocate_tod(
     mpi_size = 1,
     zero_tod = true,
     rng_seed = 12345,
-) where {Tod<:AbstractTod,S,V,R<:AbstractRange,T<:Real}
+) where {Tod<:AbstractTod,R<:AbstractRange,T<:Real}
 
     rank_idx = mpi_rank + 1 # Same as rank, but it starts from 1
 

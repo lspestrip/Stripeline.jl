@@ -206,7 +206,7 @@ function get_chunk_properties(chunks, baseline_length_s, fsamp_hz, rank)
     detector_number, num_of_baselines, baseline_len, num_of_samples =
         [Array{Int64}(undef, length(this_rank_chunk)) for i in (1:4)]
 
-    for i = 1:length(this_rank_chunk)
+    for i in eachindex(this_rank_chunk)
         detector_number[i] = this_rank_chunk[i].pol_number
         first_time[i] = (this_rank_chunk[i].first_idx - 1) * baseline_length_s
         last_time[i] =

@@ -53,7 +53,7 @@ function generate_noisechunks_to_send(
         #Only the first "total_number_of_polarimeters" ranks will generate noise, so they will have something to send.
         (0 <= cur_rank < total_number_of_polarimeters) || continue
 
-        for i = 1:length(chunks) #loop on chunks
+        for i in eachindex(chunks) #loop on chunks
             rank_it = i - 1
             for j = 1:length(chunks[i]) #loop on detectors per rank
                 if chunks[i][j].pol_number == pol_cur_rank #if cur_rank is going to produce noise for the "correct" polarimeter
@@ -196,17 +196,17 @@ function generate_noise_mpi(
             ]
         end
 
-        comm != nothing && MPI.Barrier(comm)
+        isnothing(comm) || MPI.Barrier(comm)
 
         ##### SEND AND RECEIVE #####
 
         start_idx = 1
         end_idx = 0
 
-        for i = 1:length(noisechunks_to_send)  #loop on ranks
+        for i in eachindex(noisechunks_to_send)  #loop on ranks
             cur_rank = i - 1
 
-            for j = 1:length(noisechunks_to_send[i]) #loop on the noise chunks produced by cur_rank
+            for j in eachindex(noisechunks_to_send[i]) #loop on the noise chunks produced by cur_rank
                 start_idx_noise = noisechunks_to_send[i][j].first_idx
                 end_idx_noise = noisechunks_to_send[i][j].last_idx
                 dest_rank = noisechunks_to_send[i][j].dest_rank
@@ -259,10 +259,10 @@ function generate_noise_mpi(
                 fsamp_hz,
             )
 
-            for i = 1:length(chunks)   #loop on ranks
+            for i in eachindex(chunks)   #loop on ranks
                 num_noise_samples = baselines_per_process[i] * baseline_length_s * fsamp_hz
 
-                for j = 1:length(chunks[i]) #loop on detectors per rank
+                for j in eachindex(chunks[i]) #loop on detectors per rank
                     cur_detector = chunks[i][j].pol_number
 
                     if cur_detector != previous_detector  #if new detector generate new noise

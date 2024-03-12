@@ -1,5 +1,4 @@
 import Stripeline
-const Sl = Stripeline
 
 ##########################################################################
 # Simple ADC, with gain 1, no offset and 20 bit of dynamic range

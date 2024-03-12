@@ -75,7 +75,7 @@ function build_noise_properties(detector_list, rms_list, num_of_baselines, num_o
     @assert length(detector_list) == length(num_of_samples)
 
     data_properties = Array{TodNoiseProperties}(undef, length(detector_list))
-    for i = 1:length(detector_list)
+    for i in eachindex(detector_list)
         # We use baselines of equal lengths
         baseline_lengths =
             repeat([Int(num_of_samples[i] / num_of_baselines[i])], num_of_baselines[i])
@@ -131,7 +131,7 @@ function tod2map_mpi(pix_idx, tod, num_of_pixels; comm = nothing, unseen = NaN)
         partial_hits[pix_idx[i]] += 1
     end
 
-    if comm != nothing
+    if !isnothing(comm)
         binned_map = MPI.Allreduce(partial_map, MPI.SUM, comm)
         hits = MPI.Allreduce(partial_hits, MPI.SUM, comm)
     else
@@ -178,7 +178,7 @@ function tod2map_mpi(
         start_idx += data_properties[j].number_of_samples
     end
 
-    if comm != nothing
+    if !isnothing(comm)
         binned_map = MPI.Allreduce(partial_map, MPI.SUM, comm)
         hits = MPI.Allreduce(partial_hits, MPI.SUM, comm)
     else
@@ -246,7 +246,7 @@ function baseline2map_mpi(
         startidx += baseline_lengths[i]
     end
 
-    if comm != nothing
+    if !isnothing(comm)
         noise_map = MPI.Allreduce(partial_map, MPI.SUM, comm)
         hits = MPI.Allreduce(partial_hits, MPI.SUM, comm)
     else
@@ -300,7 +300,7 @@ function baseline2map_mpi(
         end
     end
 
-    if comm != nothing
+    if !isnothing(comm)
         noise_map = MPI.Allreduce(partial_map, MPI.SUM, comm)
         hits = MPI.Allreduce(partial_hits, MPI.SUM, comm)
     else
@@ -409,7 +409,7 @@ function applya(
 
     #needed to assure that sum(baselines)==0
 
-    if comm != nothing
+    if !isnothing(comm)
         total_sum = MPI.Allreduce([sum(baselines)], MPI.SUM, comm)[1]
     else
         total_sum = sum(baselines)
@@ -425,7 +425,7 @@ function mpi_dot_prod(x, y; comm = nothing)
     result = zero(eltype(x))
     local_sum::eltype(x) = dot(x, y)
 
-    if comm != nothing
+    if !isnothing(comm)
         result = MPI.Allreduce([local_sum], MPI.SUM, comm)[1]
     else
         result = local_sum
@@ -636,7 +636,7 @@ function destripe(
     @assert length(pix_idx) == length(tod)
 
     num_of_baselines = 0
-    for i = 1:length(data_properties)
+    for i in eachindex(data_properties)
         num_of_baselines += length(data_properties[i].baseline_lengths)
     end
 
@@ -709,7 +709,7 @@ function baselines_covmat(polarimeters, sigma_k, baseline_length_s, fsamp_hz, to
 
     ALL_data_properties = Array{TodNoiseProperties}(undef, length(polarimeters))
     baselines_per_pol = Int64(total_time / baseline_length_s)
-    for i = 1:length(polarimeters)
+    for i in eachindex(polarimeters)
         baseline_lengths = repeat([baseline_length_s * fsamp_hz], baselines_per_pol)
         ALL_data_properties[i] = TodNoiseProperties(
             pol = polarimeters[i],
