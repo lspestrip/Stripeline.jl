@@ -1,4 +1,11 @@
-export Quaternion, rotationmatrix_normalized, qrotation_x, qrotation_y, qrotation_z, qrotation_wobble, rotate_zaxis, rotate_xaxis
+export Quaternion,
+    rotationmatrix_normalized,
+    qrotation_x,
+    qrotation_y,
+    qrotation_z,
+    qrotation_wobble,
+    rotate_zaxis,
+    rotate_xaxis
 
 import Base: *, ≈
 
