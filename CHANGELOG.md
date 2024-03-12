@@ -1,5 +1,6 @@
 # HEAD
 
+-   Bump the requirement on the minimum Julia version from 1.3 to 1.6 [#64](https://github.com/lspestrip/Stripeline.jl/pull/64)
 -   Prevent crashes in the destriper [#63](https://github.com/lspestrip/Stripeline.jl/pull/63)
 -   Implement the pointing reconstruction model [#55](https://github.com/lspestrip/Stripeline.jl/pull/55)
 -   Fix dependency on Documenter.jl [#59](https://github.com/lspestrip/Stripeline.jl/pull/59), [#60](https://github.com/lspestrip/Stripeline.jl/pull/60)
