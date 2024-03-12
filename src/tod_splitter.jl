@@ -216,5 +216,3 @@ function get_chunk_properties(chunks, baseline_length_s, fsamp_hz, rank)
     end
     return (detector_number, first_time, last_time, num_of_baselines, num_of_samples)
 end
-
-

@@ -31,4 +31,3 @@ chunks = [
 
 @test get_chunk_properties(chunks, baseline_length_s, fsamp_hz, rank) ==
       ([2, 3], [10.0, 0.0], [49.901, 29.901], [4, 3], [400, 300])
-
