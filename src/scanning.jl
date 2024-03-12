@@ -114,11 +114,11 @@ Struct used to specify the rotation direction of the telescope wheels.
 
 By defaults wheel1 and wheel2 rotate **anticlockwise** while wheel3 rotate **clockwise**.
 """
-Base.@kwdef struct TelescopeWheelConfig    
-    is_wheel1_clockwise::Bool = false       
-    is_wheel2_clockwise::Bool = false       
-    is_wheel3_clockwise::Bool = true    
-end 
+Base.@kwdef struct TelescopeWheelConfig
+    is_wheel1_clockwise::Bool = false
+    is_wheel2_clockwise::Bool = false
+    is_wheel3_clockwise::Bool = true
+end
 
 """
     TelescopeAngles(
