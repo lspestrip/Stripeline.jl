@@ -80,12 +80,8 @@ function `rotationmatrix_normalized`.
 """
 qrotation_x, qrotation_y, qrotation_z
 
-qrotation_wobble(z, ω) = Quaternion(
-    cos(z/2),
-    sin(z/2) * cos(ω),
-    sin(z/2) * sin(ω),   
-    0.0
-)
+qrotation_wobble(z, ω) =
+    Quaternion(cos(z / 2), sin(z / 2) * cos(ω), sin(z / 2) * sin(ω), 0.0)
 
 """
     qrotation_wobble(z, ω)
