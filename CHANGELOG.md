@@ -1,5 +1,6 @@
 # HEAD
 
+-   Improve the code layout and enforce the default formatting provided by [JuliaFormatter](https://github.com/domluna/JuliaFormatter.jl) [#65](https://github.com/lspestrip/Stripeline.jl/pull/65)
 -   Bump the requirement on the minimum Julia version from 1.3 to 1.6 [#64](https://github.com/lspestrip/Stripeline.jl/pull/64)
 -   Prevent crashes in the destriper [#63](https://github.com/lspestrip/Stripeline.jl/pull/63)
 -   Implement the pointing reconstruction model [#55](https://github.com/lspestrip/Stripeline.jl/pull/55)
