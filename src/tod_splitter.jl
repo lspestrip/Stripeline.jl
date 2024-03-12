@@ -10,7 +10,7 @@ using FITSIO
 try
     import MPI
 catch
-end 
+end
 
 
 """
@@ -32,11 +32,11 @@ will correspond to the following structure:
 datachunk(2, 3, 5, 3)
 """
 struct datachunk
-    pol_number ::Int
+    pol_number::Int
     first_idx::Int
     last_idx::Int
     num_of_elements::Int
-end 
+end
 
 
 """
@@ -98,63 +98,68 @@ which means:
   #. polarimeter number 4 from baseline 1 to baseline 5,  total number of baselines = 5
 
 """
-function split_tod_mpi(total_time, baseline_length_s, baselines_per_process, num_of_MPI_proc)
+function split_tod_mpi(
+    total_time,
+    baseline_length_s,
+    baselines_per_process,
+    num_of_MPI_proc,
+)
 
-    duration = floor(Int64, total_time/baseline_length_s)
+    duration = floor(Int64, total_time / baseline_length_s)
 
     #initialization
     detector_num = 1
     sample_idx = 0
     samples_in_det = duration
     result = []
-    
-    for rank_num in 0:(num_of_MPI_proc-1)  #loop on MPI processes
-        
+
+    for rank_num = 0:(num_of_MPI_proc-1)  #loop on MPI processes
+
         samples_for_this_process = baselines_per_process[rank_num+1]
         samples_left = samples_for_this_process
         data_this_rank = []
-        
+
         while samples_left > 0  #loop on detectors
-        
+
             #if the current detector has more samples than needed to fill the current MPI process
             if samples_in_det > samples_left
-                
-                first_idx = sample_idx+1
-                last_idx = sample_idx+samples_left
+
+                first_idx = sample_idx + 1
+                last_idx = sample_idx + samples_left
                 data = datachunk(detector_num, first_idx, last_idx, samples_left)
                 data_this_rank = append!(data_this_rank, [data])
-                
+
                 sample_idx = sample_idx + samples_left
                 samples_in_det = samples_in_det - samples_left
-                samples_left = 0 
-            
-            #if the current detector has not enough samples to provide the current MPI process 
-            #with the required number of samples. In this case we need to increase "detector_num" before the next iteration
-            else 
-                
-                first_idx = sample_idx+1
-                last_idx = sample_idx+samples_in_det
+                samples_left = 0
+
+                #if the current detector has not enough samples to provide the current MPI process 
+                #with the required number of samples. In this case we need to increase "detector_num" before the next iteration
+            else
+
+                first_idx = sample_idx + 1
+                last_idx = sample_idx + samples_in_det
                 data = datachunk(detector_num, first_idx, last_idx, samples_in_det)
                 data_this_rank = append!(data_this_rank, [data])
-               
+
                 samples_left = samples_left - samples_in_det
                 samples_in_det = 0
             end
-            
+
             if samples_in_det == 0
-                detector_num +=1
+                detector_num += 1
                 sample_idx = 0
-                samples_in_det = duration 
+                samples_in_det = duration
             end
-        
-        end   
-        
+
+        end
+
         result = append!(result, [data_this_rank])
-        
-    end 
-        
+
+    end
+
     return result
-    
+
 end
 
 """
@@ -194,20 +199,22 @@ end
           with a total of 3 1/f baselines and 300 samples.
 
     """
-    function get_chunk_properties(chunks, baseline_length_s, fsamp_hz, rank)
+function get_chunk_properties(chunks, baseline_length_s, fsamp_hz, rank)
 
-        this_rank_chunk = chunks[rank+1]
-        first_time, last_time = [Array{Float64}(undef, length(this_rank_chunk)) for i in (1:2)]
-        detector_number, num_of_baselines, baseline_len, num_of_samples = [Array{Int64}(undef, length(this_rank_chunk)) for i in (1:4)]
-    
-        for i in 1:length(this_rank_chunk)
-            detector_number[i] = this_rank_chunk[i].pol_number
-            first_time[i] = (this_rank_chunk[i].first_idx-1)*baseline_length_s
-            last_time[i] = this_rank_chunk[i].last_idx*baseline_length_s -0.99*(1/fsamp_hz)
-            num_of_baselines[i] =  this_rank_chunk[i].num_of_elements
-            num_of_samples[i] = num_of_baselines[i]*baseline_length_s*fsamp_hz  
-        end
-        return (detector_number, first_time, last_time, num_of_baselines, num_of_samples)
+    this_rank_chunk = chunks[rank+1]
+    first_time, last_time = [Array{Float64}(undef, length(this_rank_chunk)) for i in (1:2)]
+    detector_number, num_of_baselines, baseline_len, num_of_samples =
+        [Array{Int64}(undef, length(this_rank_chunk)) for i in (1:4)]
+
+    for i = 1:length(this_rank_chunk)
+        detector_number[i] = this_rank_chunk[i].pol_number
+        first_time[i] = (this_rank_chunk[i].first_idx - 1) * baseline_length_s
+        last_time[i] =
+            this_rank_chunk[i].last_idx * baseline_length_s - 0.99 * (1 / fsamp_hz)
+        num_of_baselines[i] = this_rank_chunk[i].num_of_elements
+        num_of_samples[i] = num_of_baselines[i] * baseline_length_s * fsamp_hz
     end
-    
+    return (detector_number, first_time, last_time, num_of_baselines, num_of_samples)
+end
+
 

@@ -1,7 +1,7 @@
 export TimeChunk, splittime
 
 struct TimeChunk
-    starttime
+    starttime::Any
     idx0::Int64
     nsamples::Int64
 end
@@ -36,18 +36,18 @@ function splittime(timelen, nchunks, sampfreq, time0 = 0)
     idx0 = 1
     for i = 1:nchunks
         starttime = time0 + (i - 1) * timelen / nchunks
-        
+
         if i < nchunks
             n = convert(Int, round(nrem // (nchunks - i + 1)))
         else
             n = nrem
         end
-        
+
         result[i] = TimeChunk(starttime, idx0, n)
-        
+
         idx0 += n
         nrem -= n
     end
-    
+
     result
 end

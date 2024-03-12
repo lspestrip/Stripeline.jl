@@ -3,7 +3,7 @@ using Stripeline
 using Documenter
 
 @testset "Doctests" begin
-    DocMeta.setdocmeta!(Stripeline, :DocTestSetup, :(using Stripeline); recursive=true)
+    DocMeta.setdocmeta!(Stripeline, :DocTestSetup, :(using Stripeline); recursive = true)
     doctest(Stripeline, manual = false)
 end
 

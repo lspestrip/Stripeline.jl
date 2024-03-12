@@ -1,4 +1,5 @@
-export TodNoiseProperties, build_noise_properties, tod2map_mpi, baseline2map_mpi, destripe, baselines_covmat
+export TodNoiseProperties,
+    build_noise_properties, tod2map_mpi, baseline2map_mpi, destripe, baselines_covmat
 
 using LinearAlgebra
 
@@ -46,10 +47,8 @@ struct TodNoiseProperties
     number_of_samples::Int
     baseline_lengths::Array{Int}
 
-    TodNoiseProperties(;
-        pol::Int,
-        rms::Float64,
-        baselines::Array{Int}) = new(pol, rms, sum(baselines), baselines)
+    TodNoiseProperties(; pol::Int, rms::Float64, baselines::Array{Int}) =
+        new(pol, rms, sum(baselines), baselines)
 end
 
 
@@ -75,10 +74,11 @@ function build_noise_properties(detector_list, rms_list, num_of_baselines, num_o
     @assert length(detector_list) == length(num_of_baselines)
     @assert length(detector_list) == length(num_of_samples)
 
-    data_properties  = Array{TodNoiseProperties}(undef, length(detector_list))
-    for i in 1:length(detector_list)
+    data_properties = Array{TodNoiseProperties}(undef, length(detector_list))
+    for i = 1:length(detector_list)
         # We use baselines of equal lengths
-        baseline_lengths  = repeat([Int(num_of_samples[i] / num_of_baselines[i])], num_of_baselines[i])
+        baseline_lengths =
+            repeat([Int(num_of_samples[i] / num_of_baselines[i])], num_of_baselines[i])
         data_properties[i] = TodNoiseProperties(
             pol = detector_list[i],
             rms = rms_list[detector_list[i]],
@@ -150,7 +150,14 @@ function tod2map_mpi(pix_idx, tod, num_of_pixels; comm = nothing, unseen = NaN)
     binned_map
 end
 
-function tod2map_mpi(pix_idx, tod, num_of_pixels, data_properties; comm = nothing, unseen = NaN)
+function tod2map_mpi(
+    pix_idx,
+    tod,
+    num_of_pixels,
+    data_properties;
+    comm = nothing,
+    unseen = NaN,
+)
     @assert length(pix_idx) == length(tod)
 
     T = eltype(tod)
@@ -164,7 +171,7 @@ function tod2map_mpi(pix_idx, tod, num_of_pixels, data_properties; comm = nothin
 
     for j in eachindex(data_properties)                 #loop on detectors
         end_idx = start_idx + data_properties[j].number_of_samples - 1
-        for i in start_idx:end_idx             #loop on samples
+        for i = start_idx:end_idx             #loop on samples
             partial_map[pix_idx[i]] += tod[i] * 1 / (data_properties[j].sigma)^2
             partial_hits[pix_idx[i]] += 1 / (data_properties[j].sigma)^2
         end
@@ -210,8 +217,14 @@ In this way, the less noisy polarimeters will count more in the estimation of th
 baseline2map_mpi
 
 
-function baseline2map_mpi(pix_idx, baselines, baseline_lengths, num_of_pixels; comm = nothing,
-                          unseen = NaN)
+function baseline2map_mpi(
+    pix_idx,
+    baselines,
+    baseline_lengths,
+    num_of_pixels;
+    comm = nothing,
+    unseen = NaN,
+)
 
     T = eltype(baselines)
     N = eltype(pix_idx)
@@ -226,7 +239,7 @@ function baseline2map_mpi(pix_idx, baselines, baseline_lengths, num_of_pixels; c
     for i in eachindex(baseline_lengths)
         endidx = baseline_lengths[i] + startidx - 1
 
-        for j in startidx:endidx
+        for j = startidx:endidx
             partial_map[pix_idx[j]] += baselines[i]
             partial_hits[pix_idx[j]] += 1
         end
@@ -253,7 +266,15 @@ function baseline2map_mpi(pix_idx, baselines, baseline_lengths, num_of_pixels; c
     noise_map
 end
 
-function baseline2map_mpi(pix_idx, baselines, num_of_pixels, data_properties, num_of_baselines; comm = nothing, unseen = NaN)
+function baseline2map_mpi(
+    pix_idx,
+    baselines,
+    num_of_pixels,
+    data_properties,
+    num_of_baselines;
+    comm = nothing,
+    unseen = NaN,
+)
 
     T = eltype(baselines)
 
@@ -269,8 +290,9 @@ function baseline2map_mpi(pix_idx, baselines, num_of_pixels, data_properties, nu
         for sample_idx in eachindex(data_properties[det_idx].baseline_lengths)
             endidx = data_properties[det_idx].baseline_lengths[sample_idx] + startidx - 1
 
-            @inbounds for j in startidx:endidx
-                partial_map[pix_idx[j]] += baselines[baseline_idx] / (data_properties[det_idx].sigma)^2
+            @inbounds for j = startidx:endidx
+                partial_map[pix_idx[j]] +=
+                    baselines[baseline_idx] / (data_properties[det_idx].sigma)^2
                 partial_hits[pix_idx[j]] += 1 / (data_properties[det_idx].sigma)^2
             end
             startidx += data_properties[det_idx].baseline_lengths[sample_idx]
@@ -299,18 +321,28 @@ function baseline2map_mpi(pix_idx, baselines, num_of_pixels, data_properties, nu
 end
 
 
-function applyz_and_sum(pix_idx, tod, num_of_pixels, data_properties, num_of_baselines; comm = nothing, unseen = NaN)
+function applyz_and_sum(
+    pix_idx,
+    tod,
+    num_of_pixels,
+    data_properties,
+    num_of_baselines;
+    comm = nothing,
+    unseen = NaN,
+)
 
     @assert length(tod) == length(pix_idx)
 
     baselines_sum = zeros(eltype(tod), num_of_baselines)
 
-    binned_map = tod2map_mpi(pix_idx,
+    binned_map = tod2map_mpi(
+        pix_idx,
         tod,
         num_of_pixels,
         data_properties,
         comm = comm,
-        unseen = unseen)
+        unseen = unseen,
+    )
 
     baseline_idx = 1
     startidx = 1
@@ -318,8 +350,10 @@ function applyz_and_sum(pix_idx, tod, num_of_pixels, data_properties, num_of_bas
         for baseline_idx in eachindex(data_properties[det_idx].baseline_lengths)
             endidx = data_properties[det_idx].baseline_lengths[baseline_idx] + startidx - 1
 
-            for j in startidx:endidx
-                baselines_sum[baseline_idx] += (tod[j] - binned_map[pix_idx[j]]) * 1 / (data_properties[det_idx].sigma)^2
+            for j = startidx:endidx
+                baselines_sum[baseline_idx] +=
+                    (tod[j] - binned_map[pix_idx[j]]) * 1 /
+                    (data_properties[det_idx].sigma)^2
             end
 
             startidx += data_properties[det_idx].baseline_lengths[baseline_idx]
@@ -331,19 +365,29 @@ function applyz_and_sum(pix_idx, tod, num_of_pixels, data_properties, num_of_bas
 end
 
 
-function applya(baselines, pix_idx, num_of_baselines, num_of_pixels, data_properties; comm = nothing, unseen = NaN)
+function applya(
+    baselines,
+    pix_idx,
+    num_of_baselines,
+    num_of_pixels,
+    data_properties;
+    comm = nothing,
+    unseen = NaN,
+)
     @assert length(baselines) == num_of_baselines
 
     baselines_sum = zeros(eltype(baselines), num_of_baselines)
     total_sum = zero(eltype(baselines))
 
-    binned_map = baseline2map_mpi(pix_idx,
+    binned_map = baseline2map_mpi(
+        pix_idx,
         baselines,
         num_of_pixels,
         data_properties,
         num_of_baselines,
         comm = comm,
-        unseen = unseen)
+        unseen = unseen,
+    )
 
     startidx = 1
     baseline_idx = 1
@@ -352,8 +396,10 @@ function applya(baselines, pix_idx, num_of_baselines, num_of_pixels, data_proper
         for baseline_idx in eachindex(data_properties[det_idx].baseline_lengths)
             endidx = data_properties[det_idx].baseline_lengths[baseline_idx] + startidx - 1
 
-            for j in startidx:endidx
-                baselines_sum[baseline_idx] += (baselines[baseline_idx] - binned_map[pix_idx[j]]) * 1 / (data_properties[det_idx].sigma)^2
+            for j = startidx:endidx
+                baselines_sum[baseline_idx] +=
+                    (baselines[baseline_idx] - binned_map[pix_idx[j]]) * 1 /
+                    (data_properties[det_idx].sigma)^2
             end
 
             startidx += data_properties[det_idx].baseline_lengths[baseline_idx]
@@ -397,15 +443,7 @@ mutable struct DestripingResults
     best_sky_map::Any
     baseline_history::Any
 
-    DestripingResults() = new(
-        1e-9,
-        1000,
-        Float64[],
-        -1,
-        Float64[],
-        nothing,
-        nothing,
-    )
+    DestripingResults() = new(1e-9, 1000, Float64[], -1, Float64[], nothing, nothing)
 end
 
 
@@ -441,7 +479,15 @@ function conj_grad(
     best_baselines = zeros(T, num_of_baselines)
     results.best_iteration = 0
 
-    r = baselines_sum - applya(baselines, pix_idx, num_of_baselines, num_of_pixels, data_properties, comm = comm)  #residual
+    r =
+        baselines_sum - applya(
+            baselines,
+            pix_idx,
+            num_of_baselines,
+            num_of_pixels,
+            data_properties,
+            comm = comm,
+        )  #residual
     p .= r
     rdotr = mpi_dot_prod(r, r, comm = comm)
     best_convergence_parameter = sqrt(rdotr)
@@ -455,7 +501,14 @@ function conj_grad(
     results.convergence_param_list = Float64[]
     iter_idx = 0
     while true
-        Ap = applya(p, pix_idx,  num_of_baselines, num_of_pixels, data_properties, comm = comm)
+        Ap = applya(
+            p,
+            pix_idx,
+            num_of_baselines,
+            num_of_pixels,
+            data_properties,
+            comm = comm,
+        )
 
         rdotr = mpi_dot_prod(r, r, comm = comm)
         pdotAp = mpi_dot_prod(p, Ap, comm = comm)
@@ -481,8 +534,9 @@ function conj_grad(
             convergence_parameter = convergence_parameter,
             convergence_threshold = results.threshold,
         )
-        
-        ((convergence_parameter < results.threshold) || (iter_idx > results.max_iter)) && break
+
+        ((convergence_parameter < results.threshold) || (iter_idx > results.max_iter)) &&
+            break
 
         beta = rdotr_next / rdotr
 
@@ -493,9 +547,26 @@ function conj_grad(
 end
 
 
-function destriped_map(baselines, pix_idx, tod, data_properties, num_of_pixels, num_of_baselines; comm = nothing, unseen = NaN)
+function destriped_map(
+    baselines,
+    pix_idx,
+    tod,
+    data_properties,
+    num_of_pixels,
+    num_of_baselines;
+    comm = nothing,
+    unseen = NaN,
+)
     @assert length(tod) == length(pix_idx)
-    tod2map_mpi(pix_idx, tod, num_of_pixels, data_properties, comm = comm) - baseline2map_mpi(pix_idx, baselines, num_of_pixels, data_properties, num_of_baselines, comm = comm)
+    tod2map_mpi(pix_idx, tod, num_of_pixels, data_properties, comm = comm) -
+    baseline2map_mpi(
+        pix_idx,
+        baselines,
+        num_of_pixels,
+        data_properties,
+        num_of_baselines,
+        comm = comm,
+    )
 end
 
 
@@ -565,11 +636,12 @@ function destripe(
     @assert length(pix_idx) == length(tod)
 
     num_of_baselines = 0
-    for i in 1:length(data_properties)
+    for i = 1:length(data_properties)
         num_of_baselines += length(data_properties[i].baseline_lengths)
     end
 
-    baselines_sum = applyz_and_sum(pix_idx,
+    baselines_sum = applyz_and_sum(
+        pix_idx,
         tod,
         num_of_pixels,
         data_properties,
@@ -597,7 +669,8 @@ function destripe(
     )
 
     # once we have an estimate of the baselines, we can build the destriped map
-    results.best_sky_map = destriped_map(results.best_baselines,
+    results.best_sky_map = destriped_map(
+        results.best_baselines,
         pix_idx,
         tod,
         data_properties,
@@ -635,20 +708,22 @@ Then it computes the covariance matrix according to these matches.
 function baselines_covmat(polarimeters, sigma_k, baseline_length_s, fsamp_hz, total_time)
 
     ALL_data_properties = Array{TodNoiseProperties}(undef, length(polarimeters))
-    baselines_per_pol =  Int64(total_time / baseline_length_s)
-    for i in 1:length(polarimeters)
-        baseline_lengths  = repeat([baseline_length_s * fsamp_hz], baselines_per_pol)
-        ALL_data_properties[i]  = TodNoiseProperties(pol = polarimeters[i], 
+    baselines_per_pol = Int64(total_time / baseline_length_s)
+    for i = 1:length(polarimeters)
+        baseline_lengths = repeat([baseline_length_s * fsamp_hz], baselines_per_pol)
+        ALL_data_properties[i] = TodNoiseProperties(
+            pol = polarimeters[i],
             rms = sigma_k[i],
             baselines = baseline_lengths,
         )
     end
 
     covariance_matrix = []
-    for i in 1:length(ALL_data_properties)
-        partial_covmat = Array{Float64}(undef, length(ALL_data_properties[i].baseline_lengths))
+    for i = 1:length(ALL_data_properties)
+        partial_covmat =
+            Array{Float64}(undef, length(ALL_data_properties[i].baseline_lengths))
 
-        for j in 1:length(ALL_data_properties[i].baseline_lengths)
+        for j = 1:length(ALL_data_properties[i].baseline_lengths)
             sigma = ALL_data_properties[i].sigma
             this_baseline_length = ALL_data_properties[i].baseline_lengths[j]
 

@@ -4,7 +4,7 @@ const Sl = Stripeline
 import Statistics: cov
 
 function test_split_into_n()
-    @test split_into_n(20, 3)  == [6, 7, 7]
+    @test split_into_n(20, 3) == [6, 7, 7]
 end
 
 function test_allocate_tod(time_range)
@@ -20,15 +20,17 @@ function test_allocate_tod(time_range)
     mpi_size = 10  # Number of fake MPI processes
 
     # Allocate all the TODs in memory, assuming we are running `mpi_size` processes
-    tods = [allocate_tod(
-        StripTod,
-        Float32,
-        time_range,
-        polarimeters,
-        mpi_rank = rank,
-        mpi_size = mpi_size,
-        rng_seed = 12345,
-    ) for rank in 0:(mpi_size - 1)]
+    tods = [
+        allocate_tod(
+            StripTod,
+            Float32,
+            time_range,
+            polarimeters,
+            mpi_rank = rank,
+            mpi_size = mpi_size,
+            rng_seed = 12345,
+        ) for rank = 0:(mpi_size-1)
+    ]
 
     # Have the N TODs been really allocated?
     @test length(tods) == 10
@@ -42,8 +44,8 @@ function test_allocate_tod(time_range)
     @test sum([length(cur_tod.time_range) for cur_tod in tods]) == length(time_range)
 
     # Check that there are no overlaps between consecutive TODs
-    for i in 2:length(tods)
-        @test maximum(tods[i - 1].time_range) < minimum(tods[i].time_range)
+    for i = 2:length(tods)
+        @test maximum(tods[i-1].time_range) < minimum(tods[i].time_range)
     end
 
     for i in eachindex(tods)
@@ -68,15 +70,17 @@ function test_stokes()
     mpi_size = 10  # Number of fake MPI processes
 
     # Allocate all the TODs in memory, assuming we are running `mpi_size` processes
-    tods = [allocate_tod(
-        StripTod,
-        Float32,
-        0.0:0.1:10.0,
-        polarimeters,
-        mpi_rank = rank,
-        mpi_size = mpi_size,
-        rng_seed = 12345,
-    ) for rank in 0:(mpi_size - 1)]
+    tods = [
+        allocate_tod(
+            StripTod,
+            Float32,
+            0.0:0.1:10.0,
+            polarimeters,
+            mpi_rank = rank,
+            mpi_size = mpi_size,
+            rng_seed = 12345,
+        ) for rank = 0:(mpi_size-1)
+    ]
 
     stokestods = [stokes(tod) for tod in tods]
 
@@ -121,7 +125,7 @@ let fsamp_hz = 100.0,
     τ_s = 1 / fsamp_hz,                       # Integration time for a sample
     t0 = TAIEpoch(2022, 1, 1, 12, 0, 0.0),    # Fake date when the observation starts
     t1 = t0 + 1hours,                         # End of the observation
-    time_range = t0 : (τ_s * seconds) : t1    # Range covering all the samples
+    time_range = t0:(τ_s*seconds):t1    # Range covering all the samples
 
     test_allocate_tod(time_range)
 end
