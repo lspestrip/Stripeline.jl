@@ -109,9 +109,9 @@ Return a `3-element Vector{Float64}` representing the z-axis
 """
 function rotate_zaxis(q::Quaternion)
     Float64[
-        2. * (q.v3 * q.v1 + q.s * q.v2),
-        2. * (q.v2 * q.v3 - q.s * q.v1),
-        1.0 - 2. * (q.v1*q.v1 + q.v2*q.v2)
+        2.0*(q.v3*q.v1+q.s*q.v2),
+        2.0*(q.v2*q.v3-q.s*q.v1),
+        1.0-2.0*(q.v1*q.v1+q.v2*q.v2),
     ]
 end
 
