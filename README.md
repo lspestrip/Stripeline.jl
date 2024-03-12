@@ -11,7 +11,7 @@ strategy of the telecope and the response of the detectors, up to the creation
 of frequency maps.
 
 Stripeline is written in [Julia](https://julialang.org). The current version
-requires Julia 1.3 or higher.
+requires Julia 1.6 or higher.
 
 ## Installation and usage
 
