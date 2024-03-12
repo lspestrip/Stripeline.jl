@@ -3,3 +3,4 @@
 .ipynb_checkpoints
 docs/build
 Manifest.toml
+scripts/benchmark.jl
