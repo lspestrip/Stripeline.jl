@@ -1,5 +1,4 @@
 import Stripeline
-const Sl = Stripeline
 
 db = Sl.InstrumentDB(joinpath(dirname(pathof(Stripeline)), "..", "instrumentdb"))
 
@@ -16,17 +15,17 @@ defaultdb = Sl.InstrumentDB()
 
 # Check the high-level API
 
-@test Sl.detector(defaultdb, "I0") != nothing
-@test Sl.detector(defaultdb, 2) != nothing
+@test !isnothing(Sl.detector(defaultdb, "I0"))
+@test !isnothing(Sl.detector(defaultdb, 2))
 
-@test Sl.spectrum(defaultdb, 2) != nothing
-@test Sl.spectrum(defaultdb, "I0") != nothing
+@test !isnothing(Sl.spectrum(defaultdb, 2))
+@test !isnothing(Sl.spectrum(defaultdb, "I0"))
 
-@test Sl.tnoise(defaultdb, 2) != nothing
-@test Sl.tnoise(defaultdb, "I0") != nothing
+@test !isnothing(Sl.tnoise(defaultdb, 2))
+@test !isnothing(Sl.tnoise(defaultdb, "I0"))
 
-@test Sl.bandpass(defaultdb, 2) != nothing
-@test Sl.bandpass(defaultdb, "I0") != nothing
+@test !isnothing(Sl.bandpass(defaultdb, 2))
+@test !isnothing(Sl.bandpass(defaultdb, "I0"))
 
 x, y = Sl.bandshape(defaultdb, "I0")
 @test length(x) > 0

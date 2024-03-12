@@ -42,13 +42,13 @@ julia> sum(split)
 function split_into_n(length, num_of_segments)
     @assert num_of_segments > 0
     @assert length >= num_of_segments
-    start_pos = zeros(Int, num_of_segments+1)
-    
-    for i in 1:num_of_segments+1
-        start_pos[i] =  floor(((i-1)*length/num_of_segments))
+    start_pos = zeros(Int, num_of_segments + 1)
+
+    for i = 1:num_of_segments+1
+        start_pos[i] = floor(((i - 1) * length / num_of_segments))
     end
-   
-    return start_pos[2:end]-start_pos[1:end-1]    
+
+    return start_pos[2:end] - start_pos[1:end-1]
 end
 
 
@@ -75,7 +75,7 @@ The fields of this structure are the following:
   to `allocate_tod`.
 
 """
-struct StripTod{T <: Number, S, R <: AbstractRNG} <: AbstractTod
+struct StripTod{T<:Number,S,R<:AbstractRNG} <: AbstractTod
     polarimeters::Any
     time_range::AbstractRange{S}
     samples::Array{T,3}
@@ -84,13 +84,16 @@ end
 
 ntimelines(t::Type{StripTod}) = 8 # PWR Q1/Q2/U1/U2 + DEM Q1/Q2/U1/U2
 
-function Base.show(io::IO, tod::StripTod{T, S}) where {T, S}
-    print(io, string(
-        "TOD($(length(tod.polarimeters)) polarimeters, ",
-        "$(length(tod.time_range)) rows/polarimeter, ",
-        "time range from $(minimum(tod.time_range)) to ",
-        "$(maximum(tod.time_range)))",
-    ))
+function Base.show(io::IO, tod::StripTod{T,S}) where {T,S}
+    print(
+        io,
+        string(
+            "TOD($(length(tod.polarimeters)) polarimeters, ",
+            "$(length(tod.time_range)) rows/polarimeter, ",
+            "time range from $(minimum(tod.time_range)) to ",
+            "$(maximum(tod.time_range)))",
+        ),
+    )
 end
 
 
@@ -113,7 +116,7 @@ The fields of this structure are the following:
   to `allocate_tod`.
 
 """
-struct StokesTod{T <: Number, S, R <: AbstractRNG} <: AbstractTod
+struct StokesTod{T<:Number,S,R<:AbstractRNG} <: AbstractTod
     polarimeters::Any
     time_range::AbstractRange{S}
     samples::Array{T,3}
@@ -122,13 +125,16 @@ end
 
 ntimelines(t::Type{StokesTod}) = 3  # I, Q, U
 
-function Base.show(io::IO, tod::StokesTod{T, S}) where {T, S}
-    print(io, string(
-        "StokesTOD($(length(tod.polarimeters)) polarimeters, ",
-        "$(length(tod.time_range)) rows/polarimeter, ",
-        "time range from $(minimum(tod.time_range)) to ",
-        "$(maximum(tod.time_range)))",
-    ))
+function Base.show(io::IO, tod::StokesTod{T,S}) where {T,S}
+    print(
+        io,
+        string(
+            "StokesTOD($(length(tod.polarimeters)) polarimeters, ",
+            "$(length(tod.time_range)) rows/polarimeter, ",
+            "time range from $(minimum(tod.time_range)) to ",
+            "$(maximum(tod.time_range)))",
+        ),
+    )
 end
 
 
@@ -183,7 +189,7 @@ for (index, ch_name, fn_name) in [
     (STOKES_U_RANK, "STOKES_U", :stokesu),
 ]
     @eval begin
-        function ($fn_name)(t::StripTod, pol::T) where T <: Integer
+        function ($fn_name)(t::StripTod, pol::T) where {T<:Integer}
             @view t.samples[:, $index, pol]
         end
 
@@ -236,21 +242,21 @@ TOD(5 polarimeters, 10001 rows/polarimeter, time range from 0.0 to 100.0)
 """
 function allocate_tod(
     todtype::Type{Tod},
-    t::Type{T},
+    ::Type{T},
     time_range::R,
     polarimeters;
     mpi_rank = 0,
     mpi_size = 1,
     zero_tod = true,
     rng_seed = 12345,
-) where {Tod <: AbstractTod, S, V, R <: AbstractRange, T <: Real}
+) where {Tod<:AbstractTod,R<:AbstractRange,T<:Real}
 
     rank_idx = mpi_rank + 1 # Same as rank, but it starts from 1
-    
+
     nsamples_arr = split_into_n(length(time_range), mpi_size)
     nsamples = nsamples_arr[rank_idx]
 
-    first_idx = sum(nsamples_arr[1:(rank_idx - 1)]) + 1
+    first_idx = sum(nsamples_arr[1:(rank_idx-1)]) + 1
     last_idx = first_idx + nsamples - 1
 
     # Determine the time range for the current rank
@@ -265,12 +271,8 @@ function allocate_tod(
 
     # Get the pseudorandom seed for this TOD
     cur_rng_seed = rand(master_rng, UInt64)
-    rng = PCGStateSetseq(
-        UInt64,
-        PCG_XSH_RR,
-        (cur_rng_seed, UInt64(rank_idx)),
-    )
-    
+    rng = PCGStateSetseq(UInt64, PCG_XSH_RR, (cur_rng_seed, UInt64(rank_idx)))
+
     todtype(
         polarimeters,
         cur_range,
@@ -290,29 +292,23 @@ outputs `PWR_Q1`, `PWR_Q2`, `PWR_U1`, `PWR_U2`, `DEM_Q1`, `DEM_Q2`,
 `DEM_U1`, `DEM_U2` of a set of Strip polarimeters.
 
 """
-function stokes(tod::StripTod{T, S, R}) where {T, S, R}
+function stokes(tod::StripTod{T,S,R}) where {T,S,R}
     nelems, _, npols = size(tod.samples)
     samples = Array{T,3}(undef, (nelems, ntimelines(StokesTod), npols))
 
-    for polidx in 1:npols
-        samples[:, STOKES_I_RANK, polidx] = (
-            pwrq1(tod, polidx) + pwrq2(tod, polidx) +
-            pwru1(tod, polidx) + pwru2(tod, polidx)
-        ) / 4
-        samples[:, STOKES_Q_RANK, polidx] = (
-            demq1(tod, polidx) + demq2(tod, polidx)
-        ) / 2
-        samples[:, STOKES_U_RANK, polidx] = (
-            demu1(tod, polidx) + demu2(tod, polidx)
-        ) / 2
+    for polidx = 1:npols
+        samples[:, STOKES_I_RANK, polidx] =
+            (
+                pwrq1(tod, polidx) +
+                pwrq2(tod, polidx) +
+                pwru1(tod, polidx) +
+                pwru2(tod, polidx)
+            ) / 4
+        samples[:, STOKES_Q_RANK, polidx] = (demq1(tod, polidx) + demq2(tod, polidx)) / 2
+        samples[:, STOKES_U_RANK, polidx] = (demu1(tod, polidx) + demu2(tod, polidx)) / 2
     end
-    
-    result = StokesTod(
-        tod.polarimeters,
-        tod.time_range,
-        samples,
-        tod.rng,
-    )
+
+    return StokesTod(tod.polarimeters, tod.time_range, samples, tod.rng)
 end
 
 
@@ -343,7 +339,7 @@ retrieve the covariance matrices; for instance:
 No 1/f noise is simulated in this function.
 
 """
-function fillnoise!(covfn_k2, tod::StripTod{T, S, R}) where {T, S, R}
+function fillnoise!(covfn_k2, tod::StripTod{T,S,R}) where {T,S,R}
     # Generate white noise
     for i in eachindex(tod.samples)
         tod.samples[i] = randn(tod.rng)
@@ -356,7 +352,7 @@ function fillnoise!(covfn_k2, tod::StripTod{T, S, R}) where {T, S, R}
         pwr_chol = cholesky(Matrix(pwr_cov))
         pwr_samples = @view tod.samples[:, PWR_Q1_RANK:PWR_U2_RANK, polidx]
         rmul!(pwr_samples, pwr_chol.U)
-        
+
         dem_chol = cholesky(Matrix(dem_cov))
         dem_samples = @view tod.samples[:, DEM_Q1_RANK:DEM_U2_RANK, polidx]
         rmul!(dem_samples, dem_chol.U)
