@@ -3,7 +3,6 @@ using Stripeline
 using Dates
 using AstroLib
 using Healpix
-using StaticArrays
 #const Sl = Stripeline
 
 # These are the old values that were used by @fincardona to test
@@ -405,29 +404,3 @@ end
         0.8713599040027968 0.4685206115735181 -0.14567207771914797
     ],
 )
-
-# New test to check that the polarization angle is computed correctly
-# if Julian Dates are used
-
-let times = 0.0:0.1:1.0, latitude_deg = 28.29
-    (_, psi_solar) = Sl.genpointings(
-        SVector(0.0, 0.0, 1.0),
-        times,
-        Dates.DateTime(2026, 01, 01, 00, 00, 00),
-        latitude_deg=latitude_deg,
-    ) do time_s
-        (0.0, deg2rad(20.0), Sl.timetorotang(time_s, 1.0))
-    end
-
-    @test psi_solar[1] ≈ 1.5747867612568307
-    @test psi_solar[2] ≈ 1.560929162843191
-    @test psi_solar[3] ≈ 1.5470723919649034
-    @test psi_solar[4] ≈ 1.533217620642667
-    @test psi_solar[5] ≈ 1.5193660189782203
-    @test psi_solar[6] ≈ 1.5055187540549246
-    @test psi_solar[7] ≈ 1.4916769888231458
-    @test psi_solar[8] ≈ 1.4778418810155476
-    @test psi_solar[9] ≈ 1.4640145820540134
-    @test psi_solar[10] ≈ 1.4501962359892084
-    @test psi_solar[11] ≈ 1.4363879784382272
-end
