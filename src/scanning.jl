@@ -497,7 +497,7 @@ function genpointings!(
         vector = rotmatr * beam_dir
 
         jd = AstroLib.jdcnv(t_start + Dates.Nanosecond(round(Int64, time_s * 1e9)))
-        Dec_rad, Ra_rad = vector2equatorial(
+        dec_rad, ra_rad = vector2equatorial(
             vector,
             jd,
             latitude_deg,
@@ -509,12 +509,32 @@ function genpointings!(
             refraction,
         )
 
-        poldir = rotmatr * polaxis
-        north = northdir(π / 2 - Dec_rad, Ra_rad)
-        east = eastdir(π / 2 - Dec_rad, Ra_rad)
+        north = northdir(π / 2 - dec_rad, ra_rad)
+        east = eastdir(π / 2 - dec_rad, ra_rad)
 
-        skydirs[idx, 1] = π / 2 - Dec_rad
-        skydirs[idx, 2] = Ra_rad
+        poldir = rotmatr * polaxis
+        dec_pol, ra_pol = vector2equatorial(
+            poldir,
+            jd,
+            latitude_deg,
+            longitude_deg,
+            height_m,
+            precession,
+            nutation,
+            aberration,
+            refraction,
+        )
+
+        poldir = let fact = sin(π / 2 - dec_pol)
+            @SVector [
+                cos(ra_pol) * fact,
+                sin(ra_pol) * fact,
+                cos(π / 2 - dec_pol),
+            ]
+        end
+
+        skydirs[idx, 1] = π / 2 - dec_rad
+        skydirs[idx, 2] = ra_rad
         skypsi[idx] = polarizationangle(north, east, poldir)
     end
 end
