@@ -509,9 +509,38 @@ function genpointings!(
             refraction,
         )
 
-        poldir = rotmatr * polaxis
         north = northdir(π / 2 - Dec_rad, Ra_rad)
         east = eastdir(π / 2 - Dec_rad, Ra_rad)
+
+        poldir = rotmatr * polaxis
+        Dec_pol, Ra_pol = vector2equatorial(
+            poldir,
+            jd,
+            latitude_deg,
+            longitude_deg,
+            height_m,
+            precession,
+            nutation,
+            aberration,
+            refraction,
+        )
+
+        #poldir = let fact = sin(π / 2 - dec_pol)
+        #    @SVector [
+        #        cos(ra_pol) * fact,
+        #        sin(ra_pol) * fact,
+        #        cos(π / 2 - dec_pol),
+        #    ]
+        #end
+
+        poldir = let fact = cos(dec_pol)
+            @SVector [
+                cos(ra_pol) * fact,
+                sin(ra_pol) * fact,
+                sin(dec_pol),
+            ]
+        end
+
 
         skydirs[idx, 1] = π / 2 - Dec_rad
         skydirs[idx, 2] = Ra_rad

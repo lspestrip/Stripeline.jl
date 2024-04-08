@@ -302,6 +302,11 @@ function generate_noise_mpi(
         end
 
     end
+    #memory is not properly freed by MPI rank 0 task (indaco issue?), so manaully force GC                                                                     
+    cur_noise_send = nothing
+    cur_noise_rec  = nothing
+    cur_noise      = nothing
+    GC.gc()
 
     noise
 end
