@@ -985,7 +985,8 @@ function conj_grad(
     save_baseline_history = false,
     callback = nothing,
     unseen = NaN,
-    tod_mode = "sum")
+    tod_mode = "sum",
+    baselines_guess = nothing)
 
     T = eltype(tod)
     N = eltype(pix_idx)
@@ -996,7 +997,11 @@ function conj_grad(
     p = Array{T}(undef, num_of_baselines)
     Ap = Array{T}(undef, num_of_baselines)
     
-    baselines .= 0    #starting baselines
+    if (baselines_guess != nothing)
+        baselines .= baselines_guess
+    else
+        baselines .= 0    #starting baselines
+    end
     convergence_parameter = zero(T)
     rdotr = zero(T)
     rdotr_next = zero(T)
@@ -1077,7 +1082,8 @@ function conj_grad_prealloc(
     save_baseline_history = false,
     callback = nothing,
     unseen = NaN,
-    tod_mode = "sum")
+    tod_mode = "sum",
+    baselines_guess = nothing)
 
     T = eltype(tod)
     N = eltype(pix_idx)
@@ -1091,7 +1097,13 @@ function conj_grad_prealloc(
     map_buffer = zeros(T,(2,num_of_pixels))
     rnr_buffer = zeros(T,(3,num_of_pixels))
 
-    baselines .= 0    #starting baselines
+    #starting baselines
+    if (baselines_guess != nothing)
+        baselines .= baselines_guess
+    else
+        baselines .= 0
+    end
+
     convergence_parameter = zero(T)
     rdotr = zero(T)
     rdotr_next = zero(T)
@@ -1292,7 +1304,6 @@ function destripe(
     results
 end
 
-
 #if we already have good guess for baselines, we input it to the destriper
 function destripe(
     pix_idx,
@@ -1300,8 +1311,7 @@ function destripe(
     num_of_pixels,
     twopsi,
     data_properties,
-    rank,
-    baselines_sum;
+    rank;
     comm = nothing,
     threshold = 1e-9,
     max_iter = 1_000,
@@ -1309,7 +1319,8 @@ function destripe(
     unseen = NaN,
     callback = nothing,
     tod_mode = "sum",
-)
+    baselines_guess = nothing,
+    )
 
     @assert length(pix_idx) == length(tod)
     @assert length(twopsi)  == length(tod)
@@ -1318,6 +1329,17 @@ function destripe(
     for i in 1:length(data_properties)
         num_of_baselines += length(data_properties[i].baseline_lengths)
     end
+
+    baselines_sum = applyz_and_sum(pix_idx,
+        tod,
+        num_of_pixels,
+        twopsi,                             
+        data_properties,
+        num_of_baselines,
+        comm = comm,
+        unseen = unseen,
+        tod_mode = tod_mode,
+    )
 
     results = DestripingResults()
     results.threshold = threshold
@@ -1336,8 +1358,9 @@ function destripe(
         comm = comm,
         save_baseline_history = save_baseline_history,
         callback = callback,
-        unseen = unseen, 
+        unseen = unseen,
         tod_mode = tod_mode,
+        baselines_guess = baselines_guess,
     )
 
     # once we have an estimate of the baselines, we can build the destriped map
@@ -1355,7 +1378,6 @@ function destripe(
 
     results
 end
-
 
 @doc raw"""
     baselines_covmat(polarimeters, sigma_k, baseline_length_s, fsamp_hz, total_time) -> covariance_matrix
