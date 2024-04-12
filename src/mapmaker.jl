@@ -323,7 +323,7 @@ function tod2map_mpi!(pix_idx, tod, num_of_pixels, twopsi,
     T = eltype(tod)
 
     binned_map .= zero(T)
-    binned_rnr .= zero(T)
+    #binned_rnr .= zero(T)
 
     offset = 0
 
@@ -347,9 +347,9 @@ function tod2map_mpi!(pix_idx, tod, num_of_pixels, twopsi,
             binned_map[1,pix_idx[ioff]] += wq*tos#*tod[i]/sigma2
             binned_map[2,pix_idx[ioff]] += wu*tos#*tod[i]/sigma2
 
-            binned_rnr[1,pix_idx[ioff]] += wq*wq#/sigma2
-            binned_rnr[2,pix_idx[ioff]] += wq*wu#/sigma2
-            binned_rnr[3,pix_idx[ioff]] += wu*wu#/sigma2
+            #binned_rnr[1,pix_idx[ioff]] += wq*wq#/sigma2
+            #binned_rnr[2,pix_idx[ioff]] += wq*wu#/sigma2
+            #binned_rnr[3,pix_idx[ioff]] += wu*wu#/sigma2
 
         end
         #start_idx += data_properties[j].number_of_samples
@@ -358,7 +358,7 @@ function tod2map_mpi!(pix_idx, tod, num_of_pixels, twopsi,
 
     if comm != nothing
         MPI.Allreduce!(MPI.IN_PLACE, binned_map, MPI.SUM, comm)
-        MPI.Allreduce!(MPI.IN_PLACE, binned_rnr, MPI.SUM, comm)
+        #MPI.Allreduce!(MPI.IN_PLACE, binned_rnr, MPI.SUM, comm)
     end
 
     @inbounds for i in eachindex(binned_rnr[1,:])
@@ -458,6 +458,59 @@ function condnumber_mpi(pix_idx, num_of_pixels, twopsi,
     binned_rnr = nothing
     binned_map
 end
+
+
+function binned_noise_variance_mpi(pix_idx, num_of_pixels, twopsi, data_properties; comm = nothing, unseen = NaN,
+    tod_mode = "sum" )
+    @assert length(pix_idx) == length(twopsi)
+
+    #lpl
+    #computes the pixel (inverse) noise variance of binned map (R N^-1 R)
+
+    T = eltype(twopsi)
+
+    binned_rnr  = zeros(T,(3,num_of_pixels))
+    offset = 0
+    #loop on detectors
+    for j in eachindex(data_properties)                 
+        #end_idx = start_idx + data_properties[j].number_of_samples - 1
+
+        #loop on samples
+        for i in 1:data_properties[j].number_of_samples
+            ioff = i +offset             
+
+            wq , wu = get_QU_weights(twopsi[ioff],tod_mode=tod_mode)
+            sigma2 = (data_properties[j].sigma[i])^2       
+
+            binned_rnr[1,pix_idx[ioff]] += wq*wq/sigma2
+            binned_rnr[2,pix_idx[ioff]] += wq*wu/sigma2
+            binned_rnr[3,pix_idx[ioff]] += wu*wu/sigma2
+
+        end
+        #start_idx += data_properties[j].number_of_samples
+        offset += data_properties[j].number_of_samples
+
+    end
+
+    if comm != nothing
+        MPI.Allreduce!(MPI.IN_PLACE,binned_rnr, MPI.SUM, comm)
+    end
+
+    @inbounds for i in eachindex(binned_rnr[1,:])
+        if(binned_rnr[1,i] > 0) 
+            det = binned_rnr[1,i]*binned_rnr[3,i] -binned_rnr[2,i]^2
+            if (det > 0) 
+            else
+                #binned_map[:,i] .= unseen
+            end
+        else
+            binned_rnr[:,i] .= unseen
+        end
+    end
+
+    binned_rnr 
+end
+
 
 @doc raw"""
     baseline2map_mpi(pix_idx, baselines, baseline_lengths, num_of_pixels; comm = nothing)-> noise_map
@@ -632,7 +685,7 @@ function baseline2map_mpi!(pix_idx, baselines, num_of_pixels, twopsi,
     baseline_idx = 1
 
     binned_map .= zero(T)
-    binned_rnr .= zero(T)
+    #binned_rnr .= zero(T)
 
     for det_idx in eachindex(data_properties)  #loop on detectors
         sigma_offset = 0
@@ -656,9 +709,9 @@ function baseline2map_mpi!(pix_idx, baselines, num_of_pixels, twopsi,
             binned_map[1,pix_idx[joff]] += wq*bos
             binned_map[2,pix_idx[joff]] += wu*bos
 
-            binned_rnr[1,pix_idx[joff]] += wq*wq#/sigma2
-            binned_rnr[2,pix_idx[joff]] += wq*wu#/sigma2
-            binned_rnr[3,pix_idx[joff]] += wu*wu#/sigma2
+            #binned_rnr[1,pix_idx[joff]] += wq*wq#/sigma2
+            #binned_rnr[2,pix_idx[joff]] += wq*wu#/sigma2
+            #binned_rnr[3,pix_idx[joff]] += wu*wu#/sigma2
 
         end
         #startidx += data_properties[det_idx].baseline_lengths[sample_idx]
@@ -670,7 +723,7 @@ function baseline2map_mpi!(pix_idx, baselines, num_of_pixels, twopsi,
 
     if comm != nothing
         MPI.Allreduce!(MPI.IN_PLACE,binned_map, MPI.SUM, comm)
-        MPI.Allreduce!(MPI.IN_PLACE,binned_rnr, MPI.SUM, comm)
+        #MPI.Allreduce!(MPI.IN_PLACE,binned_rnr, MPI.SUM, comm)
     end
 
     @inbounds for i in eachindex(binned_rnr[1,:])
@@ -764,7 +817,6 @@ function applyz_and_sum!(pix_idx, tod, num_of_pixels, twopsi, data_properties,
     #baselines_sum = zeros(eltype(tod), num_of_baselines)
     baselines_sum .= zero(eltype(tod))
 
-
     tod2map_mpi!(pix_idx,
         tod,
         num_of_pixels,
@@ -803,7 +855,6 @@ function applyz_and_sum!(pix_idx, tod, num_of_pixels, twopsi, data_properties,
     end
 
 end
-
 
 function applya(baselines, pix_idx, num_of_baselines, num_of_pixels, twopsi,
                   data_properties;
@@ -866,7 +917,6 @@ function applya(baselines, pix_idx, num_of_baselines, num_of_pixels, twopsi,
 
     baselines_sum .+= total_sum
 end
-
 
 function applya!(baselines, pix_idx, num_of_baselines, num_of_pixels, twopsi,
         data_properties, baselines_sum, binned_map, binned_rnr;
@@ -934,7 +984,6 @@ function applya!(baselines, pix_idx, num_of_baselines, num_of_pixels, twopsi,
 end
 
 
-
 function mpi_dot_prod(x, y; comm = nothing)
 
     @assert eltype(x) == eltype(y)
@@ -943,7 +992,6 @@ function mpi_dot_prod(x, y; comm = nothing)
 
     if comm != nothing
         result = MPI.Allreduce([local_sum], MPI.SUM, comm)[1]
-        #result = MPI.Allreduce([local_sum], MPI.SUM, comm)[1]
     else
         result = local_sum
     end
@@ -1095,7 +1143,11 @@ function conj_grad_prealloc(
     Ap = Array{T}(undef, num_of_baselines)
     
     map_buffer = zeros(T,(2,num_of_pixels))
-    rnr_buffer = zeros(T,(3,num_of_pixels))
+    #rnr_buffer = zeros(T,(3,num_of_pixels))
+
+    rnr_buffer = binned_noise_variance_mpi(pix_idx, num_of_pixels, twopsi, data_properties; comm = comm, unseen = unseen,
+        tod_mode = tod_mode )
+     
 
     #starting baselines
     if (baselines_guess != nothing)
