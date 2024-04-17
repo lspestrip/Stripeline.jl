@@ -336,10 +336,10 @@ function tod2map_mpi!(pix_idx, tod, num_of_pixels, twopsi,
         for i in 1:data_properties[j].number_of_samples             
             ioff = i+offset
 
-            wq , wu = get_QU_weights(twopsi[ioff],data_properties[j].sigma[i],tod_mode=tod_mode)
+            wq , wu = get_QU_weights(twopsi[ioff],tod_mode=tod_mode)
             #sigma2 = (data_properties[j].sigma)^2       
 
-            tos = tod[ioff]/data_properties[j].sigma[i]
+            tos = tod[ioff]/data_properties[j].sigma[i]^2
 
             #partial_map[1,pix_idx[i]] += wq*tod[i]/sigma2
             #partial_map[2,pix_idx[i]] += wu*tod[i]/sigma2
@@ -479,12 +479,12 @@ function binned_noise_variance_mpi(pix_idx, num_of_pixels, twopsi, data_properti
         for i in 1:data_properties[j].number_of_samples
             ioff = i +offset             
 
-            wq , wu = get_QU_weights(twopsi[ioff],tod_mode=tod_mode)
-            sigma2 = (data_properties[j].sigma[i])^2       
+            wq , wu = get_QU_weights(twopsi[ioff],data_properties[j].sigma[i],
+                                     tod_mode=tod_mode)
 
-            binned_rnr[1,pix_idx[ioff]] += wq*wq/sigma2
-            binned_rnr[2,pix_idx[ioff]] += wq*wu/sigma2
-            binned_rnr[3,pix_idx[ioff]] += wu*wu/sigma2
+            binned_rnr[1,pix_idx[ioff]] += wq*wq#/sigma2
+            binned_rnr[2,pix_idx[ioff]] += wq*wu#/sigma2
+            binned_rnr[3,pix_idx[ioff]] += wu*wu#/sigma2
 
         end
         #start_idx += data_properties[j].number_of_samples
@@ -698,9 +698,9 @@ function baseline2map_mpi!(pix_idx, baselines, num_of_pixels, twopsi,
             #partial_map[pix_idx[j]] += baselines[baseline_idx] / (data_properties[det_idx].sigma)^2
             #sigma2 = data_properties[det_idx].sigma^2
 
-            wq , wu = get_QU_weights(twopsi[joff],data_properties[det_idx].sigma[jsoff],tod_mode=tod_mode)
+            wq , wu = get_QU_weights(twopsi[joff],tod_mode=tod_mode)
 
-            bos = baselines[baseline_idx]/data_properties[det_idx].sigma[jsoff]
+            bos = baselines[baseline_idx]/data_properties[det_idx].sigma[jsoff]^2
             #partial_map[1,pix_idx[j]] +=
             #    wq*(baselines[baseline_idx]/sigma2)
             #partial_map[2,pix_idx[j]] +=
@@ -1363,7 +1363,8 @@ function destripe(
     num_of_pixels,
     twopsi,
     data_properties,
-    rank;
+    rank,
+    baselines_guess;
     comm = nothing,
     threshold = 1e-9,
     max_iter = 1_000,
@@ -1371,7 +1372,6 @@ function destripe(
     unseen = NaN,
     callback = nothing,
     tod_mode = "sum",
-    baselines_guess = nothing,
     )
 
     @assert length(pix_idx) == length(tod)
