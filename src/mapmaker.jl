@@ -194,7 +194,7 @@ function tod2map_mpi(pix_idx, tod, num_of_pixels, twopsi;
     #Allocating a num_of_pixels array rather than just observed pixels is
     #wasteful, but likely small compared to the tod, and simplyfies life 
 
-    binned_map  = zeros(T, (2,num_of_pixels))
+    binned_map  = zeros(T,(2,num_of_pixels))
     binned_rnr  = zeros(T,(3,num_of_pixels))
 
     #don't need these anymore, since we check on (R^t N^-1 R) 
@@ -323,42 +323,27 @@ function tod2map_mpi!(pix_idx, tod, num_of_pixels, twopsi,
     T = eltype(tod)
 
     binned_map .= zero(T)
-    #binned_rnr .= zero(T)
 
     offset = 0
 
     #loop on detectors
     for j in eachindex(data_properties)                 
-        #end_idx = start_idx + data_properties[j].number_of_samples - 1
 
         #loop on samples
-        #for i in start_idx:end_idx             
         for i in 1:data_properties[j].number_of_samples             
             ioff = i+offset
-
             wq , wu = get_QU_weights(twopsi[ioff],tod_mode=tod_mode)
-            #sigma2 = (data_properties[j].sigma)^2       
-
             tos = tod[ioff]/data_properties[j].sigma[i]^2
 
-            #partial_map[1,pix_idx[i]] += wq*tod[i]/sigma2
-            #partial_map[2,pix_idx[i]] += wu*tod[i]/sigma2
-
-            binned_map[1,pix_idx[ioff]] += wq*tos#*tod[i]/sigma2
-            binned_map[2,pix_idx[ioff]] += wu*tos#*tod[i]/sigma2
-
-            #binned_rnr[1,pix_idx[ioff]] += wq*wq#/sigma2
-            #binned_rnr[2,pix_idx[ioff]] += wq*wu#/sigma2
-            #binned_rnr[3,pix_idx[ioff]] += wu*wu#/sigma2
+            binned_map[1,pix_idx[ioff]] += wq*tos
+            binned_map[2,pix_idx[ioff]] += wu*tos
 
         end
-        #start_idx += data_properties[j].number_of_samples
         offset += data_properties[j].number_of_samples
     end
 
     if comm != nothing
         MPI.Allreduce!(MPI.IN_PLACE, binned_map, MPI.SUM, comm)
-        #MPI.Allreduce!(MPI.IN_PLACE, binned_rnr, MPI.SUM, comm)
     end
 
     @inbounds for i in eachindex(binned_rnr[1,:])
@@ -379,6 +364,9 @@ function tod2map_mpi!(pix_idx, tod, num_of_pixels, twopsi,
             binned_map[:,i] .= unseen
         end
     end
+
+    return nothing
+
 end
 
 function condnumber_mpi(pix_idx, num_of_pixels, twopsi,
@@ -403,7 +391,6 @@ function condnumber_mpi(pix_idx, num_of_pixels, twopsi,
 
     #loop on detectors
     for j in eachindex(data_properties)                 
-        #end_idx = start_idx + data_properties[j].number_of_samples - 1
 
         #loop on samples
         for i in 1:data_properties[j].number_of_samples
@@ -420,7 +407,6 @@ function condnumber_mpi(pix_idx, num_of_pixels, twopsi,
             binned_rnr[3,pix_idx[ioff]] += wu*wu/sigma2
 
         end
-        #start_idx += data_properties[j].number_of_samples
         offset += data_properties[j].number_of_samples
 
     end
@@ -473,7 +459,6 @@ function binned_noise_variance_mpi(pix_idx, num_of_pixels, twopsi, data_properti
     offset = 0
     #loop on detectors
     for j in eachindex(data_properties)                 
-        #end_idx = start_idx + data_properties[j].number_of_samples - 1
 
         #loop on samples
         for i in 1:data_properties[j].number_of_samples
@@ -482,9 +467,9 @@ function binned_noise_variance_mpi(pix_idx, num_of_pixels, twopsi, data_properti
             wq , wu = get_QU_weights(twopsi[ioff],data_properties[j].sigma[i],
                                      tod_mode=tod_mode)
 
-            binned_rnr[1,pix_idx[ioff]] += wq*wq#/sigma2
-            binned_rnr[2,pix_idx[ioff]] += wq*wu#/sigma2
-            binned_rnr[3,pix_idx[ioff]] += wu*wu#/sigma2
+            binned_rnr[1,pix_idx[ioff]] += wq*wq
+            binned_rnr[2,pix_idx[ioff]] += wq*wu
+            binned_rnr[3,pix_idx[ioff]] += wu*wu
 
         end
         #start_idx += data_properties[j].number_of_samples
@@ -746,6 +731,7 @@ function baseline2map_mpi!(pix_idx, baselines, num_of_pixels, twopsi,
         end
     end
 
+    return nothing
 end
 
 function applyz_and_sum(pix_idx, tod, num_of_pixels, twopsi, data_properties,
@@ -756,7 +742,7 @@ function applyz_and_sum(pix_idx, tod, num_of_pixels, twopsi, data_properties,
 
     #lpl
     #maps a tod -> baselines, according to
-    #F^t N^-1 [ 1 - R(R^t N^-1 R) R^t N^-1 ] y = F^t N^-1 [y - R tod2map(y)]
+    #F^t N^-1 [y - R tod2map(y)]
     #so we can mostly use what's in place just accounting for the fact that
     #tod2map gives a (2 x n_pix) array  describing (Q,U) maps, and R encodes 
     #for polarization reference frame rotation
@@ -773,14 +759,11 @@ function applyz_and_sum(pix_idx, tod, num_of_pixels, twopsi, data_properties,
         tod_mode = tod_mode)
 
     baseline_idx = 1
-    #startidx = 1
 
     offset       = 0  
     for det_idx in eachindex(data_properties)  #loop on detectors
         sigma_offset = 0
         for baseline_idx in eachindex(data_properties[det_idx].baseline_lengths)
-            #endidx = data_properties[det_idx].baseline_lengths[baseline_idx] + startidx - 1
-
             for j in 1:data_properties[det_idx].baseline_lengths[baseline_idx]
                 joff  = j +offset
                 jsoff = j +sigma_offset 
@@ -793,7 +776,6 @@ function applyz_and_sum(pix_idx, tod, num_of_pixels, twopsi, data_properties,
             end
             sigma_offset += data_properties[det_idx].baseline_lengths[baseline_idx]
             offset       += data_properties[det_idx].baseline_lengths[baseline_idx]
-            #startidx += data_properties[det_idx].baseline_lengths[baseline_idx]
             baseline_idx += 1
         end
     end
@@ -809,12 +791,11 @@ function applyz_and_sum!(pix_idx, tod, num_of_pixels, twopsi, data_properties,
 
     #lpl
     #maps a tod -> baselines, according to
-    #F^t N^-1 [ 1 - R(R^t N^-1 R) R^t N^-1 ] y = F^t N^-1 [y - R tod2map(y)]
+    #F^t N^-1 [y - R tod2map(y)]
     #so we can mostly use what's in place just accounting for the fact that
     #tod2map gives a (2 x n_pix) array  describing (Q,U) maps, and R encodes 
     #for polarization reference frame rotation
 
-    #baselines_sum = zeros(eltype(tod), num_of_baselines)
     baselines_sum .= zero(eltype(tod))
 
     tod2map_mpi!(pix_idx,
@@ -829,13 +810,10 @@ function applyz_and_sum!(pix_idx, tod, num_of_pixels, twopsi, data_properties,
         tod_mode = tod_mode)
 
     baseline_idx = 1
-    #startidx = 1
-
     offset       = 0  
     for det_idx in eachindex(data_properties)  #loop on detectors
         sigma_offset = 0
         for baseline_idx in eachindex(data_properties[det_idx].baseline_lengths)
-            #endidx = data_properties[det_idx].baseline_lengths[baseline_idx] + startidx - 1
 
             for j in 1:data_properties[det_idx].baseline_lengths[baseline_idx]
                 joff  = j +offset
@@ -849,10 +827,11 @@ function applyz_and_sum!(pix_idx, tod, num_of_pixels, twopsi, data_properties,
             end
             sigma_offset += data_properties[det_idx].baseline_lengths[baseline_idx]
             offset       += data_properties[det_idx].baseline_lengths[baseline_idx]
-            #startidx += data_properties[det_idx].baseline_lengths[baseline_idx]
             baseline_idx += 1
         end
     end
+
+    return nothing
 
 end
 
@@ -879,7 +858,6 @@ function applya(baselines, pix_idx, num_of_baselines, num_of_pixels, twopsi,
         unseen = unseen,
         tod_mode = tod_mode)
 
-    #startidx = 1
     offset = 0
     baseline_idx = 1
 
@@ -944,14 +922,12 @@ function applya!(baselines, pix_idx, num_of_baselines, num_of_pixels, twopsi,
             unseen = unseen,
             tod_mode = tod_mode)
 
-        #startidx = 1
         offset = 0
         baseline_idx = 1
 
         for det_idx in eachindex(data_properties)
             sigma_offset = 0
             for baseline_idx in eachindex(data_properties[det_idx].baseline_lengths)
-                #endidx = data_properties[det_idx].baseline_lengths[baseline_idx] + startidx - 1
 
                 for j in 1:data_properties[det_idx].baseline_lengths[baseline_idx]
                     joff  = j +offset
@@ -964,7 +940,6 @@ function applya!(baselines, pix_idx, num_of_baselines, num_of_pixels, twopsi,
                            ) / (data_properties[det_idx].sigma[jsoff])^2
                 end
 
-                #startidx += data_properties[det_idx].baseline_lengths[baseline_idx]
                 offset       += data_properties[det_idx].baseline_lengths[baseline_idx]
                 sigma_offset += data_properties[det_idx].baseline_lengths[baseline_idx]
 
@@ -973,7 +948,6 @@ function applya!(baselines, pix_idx, num_of_baselines, num_of_pixels, twopsi,
         end
 
         #needed to assure that sum(baselines)==0
-
         if comm != nothing
             total_sum = MPI.Allreduce([sum(baselines)], MPI.SUM, comm)[1]
         else
@@ -981,6 +955,7 @@ function applya!(baselines, pix_idx, num_of_baselines, num_of_pixels, twopsi,
         end
 
         baselines_sum .+= total_sum
+        return nothing
 end
 
 
@@ -1055,7 +1030,7 @@ function conj_grad(
     rdotr_next = zero(T)
 
     best_convergence_parameter = zero(T)
-    best_baselines = zeros(T, num_of_baselines)
+    #best_baselines = zeros(T, num_of_baselines)
     results.best_iteration = 0
 
     r = baselines_sum - applya(baselines, pix_idx, num_of_baselines, num_of_pixels, twopsi, data_properties, comm = comm ,unseen = unseen ,tod_mode = tod_mode)
