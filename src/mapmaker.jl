@@ -251,37 +251,29 @@ function tod2map_mpi(pix_idx, tod, num_of_pixels, twopsi,
 
     T = eltype(tod)
     
-    binned_map   = zeros(T, (2,num_of_pixels))
+    binned_map  = zeros(T,(2,num_of_pixels))
     binned_rnr  = zeros(T,(3,num_of_pixels))
 
     offset = 0
 
     #loop on detectors
     for j in eachindex(data_properties)                 
-        #end_idx = start_idx + data_properties[j].number_of_samples - 1
 
         #loop on samples
-        #for i in start_idx:end_idx             
         for i in 1:data_properties[j].number_of_samples             
             ioff = i+offset
 
-            wq , wu = get_QU_weights(twopsi[ioff],data_properties[j].sigma[i],tod_mode=tod_mode)
-            #sigma2 = (data_properties[j].sigma)^2       
-            
+            wq , wu = get_QU_weights(twopsi[ioff],data_properties[j].sigma[i],tod_mode=tod_mode)            
             tos = tod[ioff]/data_properties[j].sigma[i]
 
-            #partial_map[1,pix_idx[i]] += wq*tod[i]/sigma2
-            #partial_map[2,pix_idx[i]] += wu*tod[i]/sigma2
+            binned_map[1,pix_idx[ioff]] += wq*tos
+            binned_map[2,pix_idx[ioff]] += wu*tos
 
-            binned_map[1,pix_idx[ioff]] += wq*tos#*tod[i]/sigma2
-            binned_map[2,pix_idx[ioff]] += wu*tos#*tod[i]/sigma2
-
-            binned_rnr[1,pix_idx[ioff]] += wq*wq#/sigma2
-            binned_rnr[2,pix_idx[ioff]] += wq*wu#/sigma2
-            binned_rnr[3,pix_idx[ioff]] += wu*wu#/sigma2
+            binned_rnr[1,pix_idx[ioff]] += wq*wq
+            binned_rnr[2,pix_idx[ioff]] += wq*wu
+            binned_rnr[3,pix_idx[ioff]] += wu*wu
 
         end
-        #start_idx += data_properties[j].number_of_samples
         offset += data_properties[j].number_of_samples
     end
 
@@ -531,9 +523,6 @@ function baseline2map_mpi(pix_idx, baselines, baseline_lengths, num_of_pixels,
     binned_map   = zeros(T, (2,num_of_pixels))
     binned_rnr   = zeros(T, (3,num_of_pixels))
 
-#    partial_hits = zeros(N, num_of_pixels)
-#    hits = zeros(N, num_of_pixels)
-
     startidx = 1
 
     for i in eachindex(baseline_lengths)
@@ -550,7 +539,6 @@ function baseline2map_mpi(pix_idx, baselines, baseline_lengths, num_of_pixels,
             binned_rnr[2,pix_idx[j]] += wq*wu
             binned_rnr[3,pix_idx[j]] += wu*wu
 
- #           partial_hits[pix_idx[j]] += 1
         end
         startidx += baseline_lengths[i]
     end
@@ -592,7 +580,6 @@ function baseline2map_mpi(pix_idx, baselines, num_of_pixels, twopsi,
     binned_map = zeros(T, (2,num_of_pixels))
     binned_rnr  = zeros(T, (3,num_of_pixels))
     
-    #startidx = 1
     offset = 0
     baseline_idx = 1
 

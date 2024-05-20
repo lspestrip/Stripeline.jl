@@ -533,11 +533,11 @@ function genpointings!(
         #    ]
         #end
 
-        poldir = let fact = cos(dec_pol)
+        poldir = let fact = cos(Dec_pol)
             @SVector [
-                cos(ra_pol) * fact,
-                sin(ra_pol) * fact,
-                sin(dec_pol),
+                cos(Ra_pol) * fact,
+                sin(Ra_pol) * fact,
+                sin(Dec_pol),
             ]
         end
 
