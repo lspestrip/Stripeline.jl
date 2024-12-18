@@ -769,10 +769,10 @@ function save_nominal_telescope_pointings(
     altitude_deg = 20.0,
     ground_rotation_rpm = 1.0,
     latitude_deg = TENERIFE_LATITUDE_DEG,
-    )
+)
 
     dirs, _ = genpointings(
-        [0., 0., 1.],
+        [0.0, 0.0, 1.0],
         timerange_s,
         latitude_deg = latitude_deg,
         ground = true,
