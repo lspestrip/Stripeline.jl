@@ -77,11 +77,13 @@ import StaticArrays
 import LinearAlgebra: ×, dot
 import AstroLib
 import Dates
+import HDF5
 
 export TENERIFE_LATITUDE_DEG, TENERIFE_LONGITUDE_DEG, TENERIFE_HEIGHT_M
 export configuration_angles, ConfigAngles
 export timetorotang, telescopetoground, groundtoearth
 export genpointings!, genpointings, northdir, eastdir, polarizationangle
+export save_nominal_telescope_pointings
 
 "Latitude of the LSPE/Strip site in Tenerife, in degrees"
 const TENERIFE_LATITUDE_DEG = 28.30026
@@ -116,11 +118,11 @@ abstract type ConfigAngles end
         zVAXang_rad :: Float64 = 0,
         panang_rad :: Float64 = 0,
         tiltang_rad :: Float64 = 0,
-        rollang_rad :: Float64 = 0,   
+        rollang_rad :: Float64 = 0,
     )
 
 Struct containing the configuration angles for the telescope i.e. the angles describing
-the non idealities in the telescope (all of these parameters are considered equal to 0 in 
+the non idealities in the telescope (all of these parameters are considered equal to 0 in
 an ideal telescope):
 
 (`wheel1ang_0_rad`, `wheel2ang_0_rad`, `wheel3ang_0_rad`): these are the zero points angles for the three motors
@@ -219,7 +221,7 @@ end
 
 Return a quaternion of type `Quaternion{Float64}` representing the
 coordinate transform from the focal plane to the ground of the
-telescope. 
+telescope.
 The parameter `config_ang` must be a configuration_angles struct
 containing the angles describing the non idealities of the telescope.
 
@@ -679,9 +681,9 @@ The meaning of the parameters/keywords is the following:
   As these corrections are only valid for optical wavelengths, the
   default is `false`.
 
-- `config_ang`: specifies the configuration angles for the camera and for the 
+- `config_ang`: specifies the configuration angles for the camera and for the
   telescope (see [`configuration_angles`](@ref) for more details). This is used
-  internally by [`telescopetoground`](@ref); if nothing is passes then the version 
+  internally by [`telescopetoground`](@ref); if nothing is passes then the version
   of telescopetoground for an ideal telescope will be used.
 
 # Return values
@@ -728,3 +730,110 @@ dirs, psi = genpointings(time_s -> (0, deg2rad(20),
 `````
 """
 genpointings
+
+@doc raw"""
+    save_nominal_telescope_pointings(
+        file::HDF5.File,
+        t_start::Dates.DateTime,
+        timerange_s;
+        altitude_deg = 20.0,
+        ground_rotation_rpm = 1.0,
+        latitude_deg = TENERIFE_LATITUDE_DEG,
+        longitude_deg = TENERIFE_LONGITUDE_DEG,
+        height_m = TENERIFE_HEIGHT_M,
+    )
+
+Simulate the reading of the two telescope encoders and save them
+in the HDF5 file `file`. The parameters have the same meaning as
+in the [`genpointings`](@ref) function.
+
+# Example
+
+`````julia
+import Dates
+import HDF5
+
+h5open("test.h5", "w") do file
+    save_nominal_telescope_pointings(
+        file,
+        Dates.DateTime(2025, 1, 1, 0, 0, 0),
+        0.0:0.1:1.0,
+    )
+end
+`````
+"""
+function save_nominal_telescope_pointings(
+    file::HDF5.File,
+    t_start::Dates.DateTime,
+    timerange_s;
+    altitude_deg = 20.0,
+    ground_rotation_rpm = 1.0,
+    latitude_deg = TENERIFE_LATITUDE_DEG,
+)
+
+    dirs, _ = genpointings(
+        [0.0, 0.0, 1.0],
+        timerange_s,
+        latitude_deg = latitude_deg,
+        ground = true,
+    ) do time_s
+        (0.0, deg2rad(altitude_deg), timetorotang(time_s, ground_rotation_rpm))
+    end
+    @assert size(dirs, 2) == 4
+
+    nsamples = length(timerange_s)
+
+
+    # Add file-level metadata
+    for (key, value) in Dict(
+        "Description" => "Telescope raw pointing file",
+        "Creator" => "Stripeline.jl",
+        "Created" => Dates.format(Dates.now(), "yyyy-mm-dd HH:MM:SS"),
+        "CreatorVersion" => "1.0",
+        "FileVersion" => "V0",
+        "Source" => "LevelS",
+        "Prescaler" => Int32(0),
+        "SamplingPeriod" => Float64(-1.0),
+        "Nsamp" => nsamples,
+        "MaximumHDFSize" => Int32(-1),
+    )
+        HDF5.attributes(file)[key] = value
+    end
+
+    timestamp_MC = Array{Int64}(undef, nsamples)
+    ticks_since_TOS = Int32(1):Int32(nsamples) |> collect
+    mjd = Array{Float64}(undef, nsamples)
+
+    for (i, time_s) in enumerate(timerange_s)
+        cur_time = t_start + Dates.Nanosecond(round(Int64, time_s * 1e9))
+        timestamp_MC[i] = Int64(floor(Dates.datetime2unix(cur_time)))
+        mjd[i] = AstroLib.jdcnv(cur_time)
+    end
+
+    # Create groups and save data in each group with group-level metadata
+    henc_group = HDF5.create_group(file, "H-ENC")
+    venc_group = HDF5.create_group(file, "V-ENC")
+
+    HDF5.attributes(henc_group)["Description"] = "Reading of the encoder for the H-AXIS"
+    HDF5.attributes(henc_group)["Encoder"] = "H-AXIS"
+
+    HDF5.attributes(venc_group)["Description"] = "Reading of the encoder for the V-AXIS"
+    HDF5.attributes(venc_group)["Encoder"] = "V-AXIS"
+
+    henc_group["encoder_pos"] = dirs[:, 3]
+    venc_group["encoder_pos"] = dirs[:, 4]
+
+    # Add dataset-level data and metadata that are common to the two groups
+    for cur_group in (henc_group, venc_group)
+        cur_group["timestamp_MC"] = timestamp_MC
+        cur_group["ticks_since_TOS"] = ticks_since_TOS
+        cur_group["status"] = fill(UInt32(0xffffffff), nsamples)
+        cur_group["fault"] = fill(UInt32(0x0), nsamples)
+        cur_group["mjd"] = mjd
+
+        HDF5.attributes(cur_group["encoder_pos"])["units"] = "adu"
+        HDF5.attributes(cur_group["timestamp_MC"])["units"] = "s"
+        HDF5.attributes(cur_group["ticks_since_TOS"])["units"] = "ticks"
+        HDF5.attributes(cur_group["mjd"])["units"] = "MJD"
+    end
+end

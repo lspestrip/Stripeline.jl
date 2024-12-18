@@ -4,6 +4,7 @@ using Dates
 using AstroLib
 using Healpix
 using StaticArrays
+using HDF5
 #const Sl = Stripeline
 
 # These are the old values that were used by @fincardona to test
@@ -430,4 +431,30 @@ let times = 0.0:0.1:1.0, latitude_deg = 28.29
     @test psi_solar[9] ≈ 1.4640145820540134
     @test psi_solar[10] ≈ 1.4501962359892084
     @test psi_solar[11] ≈ 1.4363879784382272
+end
+
+# Test that HDF5 files can be saved
+let time_range_s = 0.0:0.1:1.0, test_file = tempname()
+    h5open(test_file, "w") do file
+        save_nominal_telescope_pointings(
+            file,
+            Dates.DateTime(2025, 1, 1, 0, 0, 0),
+            time_range_s,
+        )
+    end
+
+    h5open(test_file, "r") do file
+        @test "H-ENC" in keys(file)
+        @test "V-ENC" in keys(file)
+
+        for cur_group_name in ("H-ENC", "V-ENC")
+            cur_group = file[cur_group_name]
+            @test length(cur_group["encoder_pos"]) == length(time_range_s)
+            @test length(cur_group["fault"]) == length(time_range_s)
+            @test length(cur_group["mjd"]) == length(time_range_s)
+            @test length(cur_group["status"]) == length(time_range_s)
+            @test length(cur_group["ticks_since_TOS"]) == length(time_range_s)
+            @test length(cur_group["timestamp_MC"]) == length(time_range_s)
+        end
+    end
 end
