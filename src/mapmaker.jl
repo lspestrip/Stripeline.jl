@@ -1309,6 +1309,9 @@ function destripe(
         tod_mode = tod_mode,                                   
     )
 
+
+
+    
     results
 end
 
