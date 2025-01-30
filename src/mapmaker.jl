@@ -376,8 +376,9 @@ function condnumber_mpi(pix_idx, num_of_pixels, twopsi,
     
     T = eltype(twopsi)
     
-    binned_map  = zeros(T,(4,num_of_pixels))
+    binned_map  = zeros(T,(5,num_of_pixels))
     binned_rnr  = zeros(T,(3,num_of_pixels))
+    sum_weights = zeros(T,(num_of_pixels))
 
     offset = 0
 
@@ -388,15 +389,17 @@ function condnumber_mpi(pix_idx, num_of_pixels, twopsi,
         for i in 1:data_properties[j].number_of_samples
             ioff = i +offset             
 
-            wq , wu = get_QU_weights(twopsi[ioff],tod_mode=tod_mode)
-            sigma2 = (data_properties[j].sigma[i])^2       
+            wq , wu = get_QU_weights(twopsi[ioff],data_properties[j].sigma[i],tod_mode=tod_mode)
+            #sigma2 = (data_properties[j].sigma[i])^2       
 
-            binned_map[1,pix_idx[ioff]] += wq*(wq +wu)/sigma2
-            binned_map[2,pix_idx[ioff]] += wu*(wq +wu)/sigma2
+            binned_map[1,pix_idx[ioff]] += wq*(wq +wu)#/sigma2
+            binned_map[2,pix_idx[ioff]] += wu*(wq +wu)#/sigma2
+            binned_map[5,pix_idx[ioff]] += twopsi[ioff]#/sigma2
+            sum_weights[pix_idx[ioff]] += 1/(data_properties[j].sigma[i])^2
 
-            binned_rnr[1,pix_idx[ioff]] += wq*wq/sigma2
-            binned_rnr[2,pix_idx[ioff]] += wq*wu/sigma2
-            binned_rnr[3,pix_idx[ioff]] += wu*wu/sigma2
+            binned_rnr[1,pix_idx[ioff]] += wq*wq#/sigma2
+            binned_rnr[2,pix_idx[ioff]] += wq*wu#/sigma2
+            binned_rnr[3,pix_idx[ioff]] += wu*wu#/sigma2
 
         end
         offset += data_properties[j].number_of_samples
@@ -406,6 +409,7 @@ function condnumber_mpi(pix_idx, num_of_pixels, twopsi,
     if comm != nothing
         MPI.Allreduce!(MPI.IN_PLACE,binned_map, MPI.SUM, comm)
         MPI.Allreduce!(MPI.IN_PLACE,binned_rnr, MPI.SUM, comm)
+        MPI.Allreduce!(MPI.IN_PLACE,sum_weights, MPI.SUM, comm)
     end
 
     @inbounds for i in eachindex(binned_rnr[1,:])
@@ -425,6 +429,7 @@ function condnumber_mpi(pix_idx, num_of_pixels, twopsi,
                 binned_map[2,i] = mu
                 binned_map[3,i] = det
                 binned_map[4,i] = λ_1/λ_2
+                binned_map[5,i] = binned_map[5,i]/sum_weights[i]
             else
                 binned_map[:,i] .= unseen
             end
@@ -873,7 +878,6 @@ function applya(baselines, pix_idx, num_of_baselines, num_of_pixels, twopsi,
     end
 
     #needed to assure that sum(baselines)==0
-
     if comm != nothing
         total_sum = MPI.Allreduce([sum(baselines)], MPI.SUM, comm)[1]
     else
@@ -1017,7 +1021,6 @@ function conj_grad(
     rdotr_next = zero(T)
 
     best_convergence_parameter = zero(T)
-    #best_baselines = zeros(T, num_of_baselines)
     results.best_iteration = 0
 
     r = baselines_sum - applya(baselines, pix_idx, num_of_baselines, num_of_pixels, twopsi, data_properties, comm = comm ,unseen = unseen ,tod_mode = tod_mode)
@@ -1068,9 +1071,6 @@ function conj_grad(
         ((convergence_parameter < results.threshold) || (iter_idx > results.max_iter)) && break
 
         beta = rdotr_next / rdotr
-        #if (rank ==0)
-        #    println("In ",rank," at ",iter_idx, "  Ap ",sum(Ap), "  rdotr ", rdotr,"  rdotr_next ",rdotr_next, "  pdotAp ",pdotAp, "  alpha ", alpha, "  beta ",beta )
-        #end 
         @. p = r_next + beta * p
         r .= r_next
         iter_idx += 1
@@ -1105,12 +1105,10 @@ function conj_grad_prealloc(
     Ap = Array{T}(undef, num_of_baselines)
     
     map_buffer = zeros(T,(2,num_of_pixels))
-    #rnr_buffer = zeros(T,(3,num_of_pixels))
 
     rnr_buffer = binned_noise_variance_mpi(pix_idx, num_of_pixels, twopsi, data_properties; comm = comm, unseen = unseen,
         tod_mode = tod_mode )
      
-
     #starting baselines
     if (baselines_guess != nothing)
         baselines .= baselines_guess
@@ -1126,7 +1124,6 @@ function conj_grad_prealloc(
     best_baselines = zeros(T, num_of_baselines)
     results.best_iteration = 0
 
-    #r = baselines_sum - applya(baselines, pix_idx, num_of_baselines, num_of_pixels, twopsi, data_properties, comm = comm ,unseen = unseen ,tod_mode = tod_mode)
     applya!(baselines, pix_idx, num_of_baselines, num_of_pixels, twopsi, data_properties, Ap, map_buffer, rnr_buffer, comm = comm ,unseen = unseen ,tod_mode = tod_mode)
     r = baselines_sum - Ap
 
@@ -1144,8 +1141,6 @@ function conj_grad_prealloc(
     results.convergence_param_list = Float64[]
     iter_idx = 0
     while true
-        #Ap = applya(p, pix_idx,  num_of_baselines, num_of_pixels, twopsi,
-        #              data_properties, comm = comm ,unseen = unseen ,tod_mode = tod_mode)
             
         applya!(p, pix_idx,  num_of_baselines, num_of_pixels, twopsi,
             data_properties, Ap, map_buffer, rnr_buffer, comm = comm ,unseen = unseen ,tod_mode = tod_mode)
@@ -1156,8 +1151,7 @@ function conj_grad_prealloc(
         alpha = rdotr / pdotAp
         @. baselines += alpha * p
         save_baseline_history && push!(results.baseline_history, copy(baselines))
-
-        
+     
         @. r_next = r - alpha * Ap
         rdotr_next = mpi_dot_prod(r_next, r_next, comm = comm)
         convergence_parameter = sqrt(rdotr_next)
